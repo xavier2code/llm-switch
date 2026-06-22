@@ -8,6 +8,8 @@ importers:
 
   .: {}
 
+  packages/claude-code-plugin: {}
+
   packages/cli:
     dependencies:
       commander:
