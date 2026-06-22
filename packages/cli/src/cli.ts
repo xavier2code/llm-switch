@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { Command } from 'commander';
 import { log } from './logger.js';
 import { toExitCode } from './exit.js';
