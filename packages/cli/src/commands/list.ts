@@ -17,12 +17,16 @@ export async function run(io: CommandIO): Promise<void> {
     );
   }
 
+  const maxAliasLen = Math.max(...profiles.map((p) => p.alias.length));
+
   const lines = ['Available profiles:', ''];
-  profiles.forEach((p, i) => {
-    const marker = p.active ? '*' : ' ';
-    lines.push(`  ${marker} ${i + 1}. ${p.alias}  (${p.path})`);
+  profiles.forEach((p) => {
+    const marker = p.active ? '●' : '○';
+    const tag = p.active ? ' (active)' : '';
+    const padded = p.alias.padEnd(maxAliasLen);
+    lines.push(`  ${marker} ${padded}${tag}  ${p.path}`);
   });
   lines.push('');
-  lines.push('* = currently active');
+  lines.push('Use `llm-switch switch` to change active profile.');
   io.stdout.write(lines.join('\n') + '\n');
 }
