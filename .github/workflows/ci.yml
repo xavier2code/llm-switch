@@ -68,6 +68,6 @@ jobs:
         run: pnpm -F llm-switch build
 
       - name: Publish to npm
-        run: pnpm -F llm-switch publish --no-git-checks --provenance
+        run: pnpm -F llm-switch publish --no-git-checks --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
