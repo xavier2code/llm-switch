@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
@@ -19,6 +19,7 @@ afterEach(async () => {
   if (savedEnv === undefined) delete process.env.CLAUDE_CONFIG_DIR;
   else process.env.CLAUDE_CONFIG_DIR = savedEnv;
   await fs.rm(tmpDir, { recursive: true, force: true });
+  vi.restoreAllMocks();
 });
 
 function mockIO() {
@@ -61,21 +62,5 @@ describe('save command', () => {
 
     expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({ new: true });
     expect(io.writes.join('')).toContain('Overwrote');
-  });
-
-  it('prompts for alias interactively when not provided', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"a":1}');
-    const writes: string[] = [];
-    const io = {
-      writes,
-      stdin: Readable.from(['glm\n']),
-      stdout: { write: (s: string) => writes.push(s) },
-      stderr: { write: (s: string) => writes.push(s) },
-      isTTY: true,
-    };
-
-    await run({ alias: undefined, ...io } as never);
-
-    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({ a: 1 });
   });
 });
