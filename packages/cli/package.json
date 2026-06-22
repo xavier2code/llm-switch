@@ -7,6 +7,14 @@
     "llm-switch": "./bin/llm-switch.js"
   },
   "files": ["bin", "dist"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xavier2code/llm-switch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/xavier2code/llm-switch/issues"
+  },
+  "homepage": "https://github.com/xavier2code/llm-switch#readme",
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
