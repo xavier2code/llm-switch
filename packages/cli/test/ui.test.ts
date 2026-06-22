@@ -1,11 +1,21 @@
-import { describe, it, expect } from 'vitest';
-import { Readable } from 'node:stream';
-import { pickProfile, promptAlias } from '../src/ui.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+
+const CANCEL = Symbol('cancel');
+const NEW_SENTINEL = Symbol.for('llm-switch:create-new');
+
+vi.mock('@inquirer/prompts', () => ({
+  select: vi.fn(),
+  input: vi.fn(),
+  isCancel: (v: unknown) => v === CANCEL,
+}));
+
+import { select, input } from '@inquirer/prompts';
+import { pickProfile, promptAlias, promptNewAlias } from '../src/ui.js';
+import { UserCancelledError } from '../src/errors.js';
 import type { Profile } from '../src/scanner.js';
 
-function mockReadline(input: string) {
-  return Readable.from([input]);
-}
+const mockSelect = vi.mocked(select);
+const mockInput = vi.mocked(input);
 
 describe('pickProfile', () => {
   const profiles: Profile[] = [
@@ -13,35 +23,161 @@ describe('pickProfile', () => {
     { alias: 'kimi', path: '/p/kimi', active: true },
   ];
 
-  it('returns the selected profile', async () => {
-    const result = await pickProfile(profiles, { input: mockReadline('1\n'), output: process.stdout });
+  let savedIsTTY: boolean | undefined;
+
+  beforeEach(() => {
+    savedIsTTY = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process.stdout, 'isTTY', { value: savedIsTTY, configurable: true });
+    vi.clearAllMocks();
+  });
+
+  it('returns selected profile', async () => {
+    mockSelect.mockResolvedValueOnce(profiles[0]!);
+    const result = await pickProfile(profiles);
     expect(result?.alias).toBe('glm');
   });
 
-  it('returns null on empty input (cancel)', async () => {
-    const result = await pickProfile(profiles, { input: mockReadline('\n'), output: process.stdout });
+  it('returns null on cancel', async () => {
+    mockSelect.mockResolvedValueOnce(CANCEL as never);
+    const result = await pickProfile(profiles);
     expect(result).toBeNull();
   });
 
-  it('returns null on invalid input', async () => {
-    const result = await pickProfile(profiles, { input: mockReadline('99\n'), output: process.stdout });
+  it('pre-selects active profile via default option', async () => {
+    mockSelect.mockResolvedValueOnce(profiles[1]!);
+    await pickProfile(profiles);
+    expect(mockSelect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        default: profiles[1],
+      }),
+    );
+  });
+
+  it('returns null for empty profiles without calling select', async () => {
+    const result = await pickProfile([]);
     expect(result).toBeNull();
+    expect(mockSelect).not.toHaveBeenCalled();
+  });
+
+  it('throws UserCancelledError when no TTY', async () => {
+    Object.defineProperty(process.stdout, 'isTTY', { value: false, configurable: true });
+    await expect(pickProfile(profiles)).rejects.toBeInstanceOf(UserCancelledError);
+    expect(mockSelect).not.toHaveBeenCalled();
   });
 });
 
 describe('promptAlias', () => {
+  let savedIsTTY: boolean | undefined;
+
+  beforeEach(() => {
+    savedIsTTY = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process.stdout, 'isTTY', { value: savedIsTTY, configurable: true });
+    vi.clearAllMocks();
+  });
+
+  it('returns existing alias when selected', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    const result = await promptAlias(['glm', 'kimi']);
+    expect(result).toBe('glm');
+  });
+
+  it('falls through to promptNewAlias on "+ Create new"', async () => {
+    mockSelect.mockResolvedValueOnce(NEW_SENTINEL as never);
+    mockInput.mockResolvedValueOnce('newalias');
+    const result = await promptAlias(['glm']);
+    expect(mockInput).toHaveBeenCalled();
+    expect(result).toBe('newalias');
+  });
+
+  it('skips select and calls input directly when existing is empty', async () => {
+    mockInput.mockResolvedValueOnce('first');
+    const result = await promptAlias([]);
+    expect(mockSelect).not.toHaveBeenCalled();
+    expect(result).toBe('first');
+  });
+
+  it('returns null on cancel at select', async () => {
+    mockSelect.mockResolvedValueOnce(CANCEL as never);
+    const result = await promptAlias(['glm']);
+    expect(result).toBeNull();
+  });
+
+  it('returns null on cancel at input (after "+ Create new")', async () => {
+    mockSelect.mockResolvedValueOnce(NEW_SENTINEL as never);
+    mockInput.mockResolvedValueOnce(CANCEL as never);
+    const result = await promptAlias(['glm']);
+    expect(result).toBeNull();
+  });
+
+  it('throws UserCancelledError when no TTY', async () => {
+    Object.defineProperty(process.stdout, 'isTTY', { value: false, configurable: true });
+    await expect(promptAlias(['glm'])).rejects.toBeInstanceOf(UserCancelledError);
+  });
+});
+
+describe('promptNewAlias', () => {
+  let savedIsTTY: boolean | undefined;
+
+  beforeEach(() => {
+    savedIsTTY = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process.stdout, 'isTTY', { value: savedIsTTY, configurable: true });
+    vi.clearAllMocks();
+  });
+
   it('returns trimmed alias', async () => {
-    const result = await promptAlias([], { input: mockReadline('  myprofile  \n'), output: process.stdout });
-    expect(result).toBe('myprofile');
+    mockInput.mockResolvedValueOnce('  myalias  ');
+    const result = await promptNewAlias([]);
+    expect(result).toBe('myalias');
   });
 
-  it('returns null on empty input', async () => {
-    const result = await promptAlias([], { input: mockReadline('\n'), output: process.stdout });
+  it('passes validate function that rejects empty input', async () => {
+    mockInput.mockResolvedValueOnce('valid');
+    await promptNewAlias([]);
+    const call = mockInput.mock.calls[0]![0] as { validate?: (v: string) => boolean | string };
+    expect(call.validate!('')).toBe('Required');
+  });
+
+  it('passes validate function that rejects invalid format', async () => {
+    mockInput.mockResolvedValueOnce('valid');
+    await promptNewAlias([]);
+    const call = mockInput.mock.calls[0]![0] as { validate?: (v: string) => boolean | string };
+    expect(call.validate!('BAD!')).toMatch(/Must match/);
+  });
+
+  it('passes validate function that rejects duplicates', async () => {
+    mockInput.mockResolvedValueOnce('valid');
+    await promptNewAlias(['glm']);
+    const call = mockInput.mock.calls[0]![0] as { validate?: (v: string) => boolean | string };
+    expect(call.validate!('glm')).toMatch(/already exists/);
+  });
+
+  it('accepts valid new alias', async () => {
+    mockInput.mockResolvedValueOnce('newalias');
+    await promptNewAlias(['glm']);
+    const call = mockInput.mock.calls[0]![0] as { validate?: (v: string) => boolean | string };
+    expect(call.validate!('newalias')).toBe(true);
+  });
+
+  it('returns null on cancel', async () => {
+    mockInput.mockResolvedValueOnce(CANCEL as never);
+    const result = await promptNewAlias([]);
     expect(result).toBeNull();
   });
 
-  it('returns null when input matches an existing alias', async () => {
-    const result = await promptAlias(['glm'], { input: mockReadline('glm\n'), output: process.stdout });
-    expect(result).toBeNull();
+  it('throws UserCancelledError when no TTY', async () => {
+    Object.defineProperty(process.stdout, 'isTTY', { value: false, configurable: true });
+    await expect(promptNewAlias([])).rejects.toBeInstanceOf(UserCancelledError);
   });
 });

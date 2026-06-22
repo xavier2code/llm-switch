@@ -1,68 +1,95 @@
-import readline from 'node:readline';
+import { select, input } from '@inquirer/prompts';
 import type { Readable, Writable } from 'node:stream';
 import type { Profile } from './scanner.js';
 import { ALIAS_RE } from './config.js';
+import { UserCancelledError } from './errors.js';
+
+const NEW_SENTINEL: unique symbol = Symbol.for('llm-switch:create-new');
+
+function isCancel(value: unknown): boolean {
+  return typeof value === 'symbol' && value !== NEW_SENTINEL;
+}
 
 export interface ReadlineIO {
   input: Readable;
   output: Writable;
 }
 
-function makeRl(io: ReadlineIO): readline.Interface {
-  return readline.createInterface({ input: io.input, output: io.output });
-}
-
-function ask(rl: readline.Interface, question: string): Promise<string> {
-  return new Promise((resolve) => rl.question(question, resolve));
+function ensureTTY(): void {
+  if (!process.stdout.isTTY) {
+    throw new UserCancelledError(
+      'Interactive mode requires a TTY. Use: llm-switch <alias>',
+    );
+  }
 }
 
 export async function pickProfile(
   profiles: Profile[],
-  io: ReadlineIO = { input: process.stdin, output: process.stdout },
+  _io?: ReadlineIO,
 ): Promise<Profile | null> {
-  const rl = makeRl(io);
-  try {
-    if (profiles.length === 0) return null;
+  ensureTTY();
+  if (profiles.length === 0) return null;
 
-    process.stdout.write('\n');
-    profiles.forEach((p, i) => {
-      const marker = p.active ? '*' : ' ';
-      process.stdout.write(`  ${marker} ${i + 1}. ${p.alias}\n`);
-    });
-    process.stdout.write(`\nSelect profile [1-${profiles.length}] (Enter to cancel): `);
+  const active = profiles.find((p) => p.active);
+  const result = (await select({
+    message: 'Select profile to switch to:',
+    choices: profiles.map((p) => ({
+      name: p.alias,
+      value: p,
+    })),
+    default: active,
+  })) as Profile | undefined;
 
-    const answer = (await ask(rl, '')).trim();
-    if (!answer) return null;
-
-    const idx = Number.parseInt(answer, 10);
-    if (!Number.isFinite(idx) || idx < 1 || idx > profiles.length) return null;
-    return profiles[idx - 1] ?? null;
-  } finally {
-    rl.close();
-  }
+  if (isCancel(result)) return null;
+  return result ?? null;
 }
 
 export async function promptAlias(
   existing: string[],
-  io: ReadlineIO = { input: process.stdin, output: process.stdout },
+  _io?: ReadlineIO,
 ): Promise<string | null> {
-  const rl = makeRl(io);
-  try {
-    process.stdout.write('\nAlias name (Enter to cancel): ');
-    const answer = (await ask(rl, '')).trim();
-    if (!answer) return null;
-    if (!ALIAS_RE.test(answer)) {
-      process.stderr.write(
-        `Invalid alias. Must match ${ALIAS_RE} (lowercase, digits, . _ -, 1-64 chars).\n`,
-      );
-      return null;
-    }
-    if (existing.includes(answer)) {
-      process.stderr.write(`Alias '${answer}' already exists.\n`);
-      return null;
-    }
-    return answer;
-  } finally {
-    rl.close();
+  ensureTTY();
+
+  if (existing.length === 0) {
+    return promptNewAlias(existing);
   }
+
+  const result = (await select({
+    message: 'Choose a profile name:',
+    choices: [
+      ...existing.map((name) => ({ name, value: name })),
+      { name: '+ Create new', value: NEW_SENTINEL },
+    ] as Array<{ name: string; value: string | typeof NEW_SENTINEL }>,
+  })) as string | typeof NEW_SENTINEL | undefined;
+
+  if (isCancel(result)) return null;
+  if (result === NEW_SENTINEL) {
+    return promptNewAlias(existing);
+  }
+  return result as string;
+}
+
+export async function promptNewAlias(
+  existing: string[],
+  _io?: ReadlineIO,
+): Promise<string | null> {
+  ensureTTY();
+
+  const result = (await input({
+    message: 'New alias name:',
+    validate: (value: string) => {
+      const trimmed = value.trim();
+      if (!trimmed) return 'Required';
+      if (!ALIAS_RE.test(trimmed)) {
+        return `Must match ${ALIAS_RE} (lowercase, digits, . _ -, 1-64 chars)`;
+      }
+      if (existing.includes(trimmed)) {
+        return `Alias '${trimmed}' already exists`;
+      }
+      return true;
+    },
+  })) as string | undefined;
+
+  if (isCancel(result)) return null;
+  return (result ?? '').trim();
 }
