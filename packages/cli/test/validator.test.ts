@@ -56,7 +56,7 @@ describe('validateAnthropic', () => {
   });
 
   it('throws ValidationError with 401 on unauthorized', async () => {
-    mockFetch.mockResolvedValueOnce(makeResponse({ status: 401, body: 'bad key' }));
+    mockFetch.mockResolvedValue(makeResponse({ status: 401, body: 'bad key' }));
     await expect(validateAnthropic('https://x', 'm', 'k')).rejects.toThrowError(
       /Invalid API key \(401\)/,
     );
