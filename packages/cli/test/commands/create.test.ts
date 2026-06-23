@@ -54,4 +54,88 @@ describe('create command', () => {
     await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
     expect(mockSelect).not.toHaveBeenCalled();
   });
+
+  it('throws UserCancelledError when provider select cancelled', async () => {
+    mockSelect.mockResolvedValueOnce(CANCEL as never);
+    const io = { ...mockIO(), isTTY: true };
+    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+  });
+
+  it('throws UserCancelledError when alias input cancelled', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce(CANCEL as never);
+    const io = { ...mockIO(), isTTY: true };
+    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+  });
+
+  it('alias input uses provider id as default', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const call = mockInput.mock.calls[0]?.[0] as { default?: string };
+    expect(call.default).toBe('glm');
+  });
+
+  it('alias input validate rejects empty', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const call = mockInput.mock.calls[0]?.[0] as { validate?: (v: string) => boolean | string };
+    expect(call.validate!('')).toBe('Required');
+    expect(call.validate!('   ')).toBe('Required');
+  });
+
+  it('alias input validate rejects invalid format', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const call = mockInput.mock.calls[0]?.[0] as { validate?: (v: string) => boolean | string };
+    expect(call.validate!('BAD!')).toMatch(/Invalid alias/);
+    expect(call.validate!('GLM')).toMatch(/Invalid alias/);
+  });
+
+  it('alias input validate accepts valid alias', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const call = mockInput.mock.calls[0]?.[0] as { validate?: (v: string) => boolean | string };
+    expect(call.validate!('glm')).toBe(true);
+    expect(call.validate!('glm-v2')).toBe(true);
+  });
+
+  it('provider select presents 5 choices with displayName', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const call = mockSelect.mock.calls[0]?.[0] as { choices?: Array<{ name: string; value: string }> };
+    expect(call.choices).toHaveLength(5);
+    const ids = call.choices!.map((c) => c.value).sort();
+    expect(ids).toEqual(['deepseek', 'glm', 'kimi', 'minimax', 'qwen']);
+    expect(call.choices!.find((c) => c.value === 'glm')?.name).toContain('GLM');
+  });
 });
