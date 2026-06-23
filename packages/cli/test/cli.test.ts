@@ -130,4 +130,15 @@ describe('cli e2e', () => {
     expect(r.stdout).toContain('Source: default');
     expect(r.stdout).toContain('Base URL: https://x');
   });
+
+  it('create --help mentions create subcommand', async () => {
+    const r = await run(['create', '--help']);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('create');
+  });
+
+  it('create exits 0 when no TTY (user cancel)', async () => {
+    const r = await run(['create'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
+    expect(r.code).toBe(0);
+  });
 });

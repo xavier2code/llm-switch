@@ -6,6 +6,7 @@ import * as listCmd from './commands/list.js';
 import * as switchCmd from './commands/switch.js';
 import * as restoreCmd from './commands/restore.js';
 import * as saveCmd from './commands/save.js';
+import * as createCmd from './commands/create.js';
 import * as currentCmd from './commands/current.js';
 
 const program = new Command();
@@ -47,6 +48,18 @@ program
   .action(async (alias?: string) => {
     await saveCmd.run({
       alias,
+      stdin: process.stdin,
+      stdout: process.stdout,
+      stderr: process.stderr,
+      isTTY: Boolean(process.stdout.isTTY),
+    });
+  });
+
+program
+  .command('create')
+  .description('Create a new profile from a built-in provider (interactive)')
+  .action(async () => {
+    await createCmd.run({
       stdin: process.stdin,
       stdout: process.stdout,
       stderr: process.stderr,
