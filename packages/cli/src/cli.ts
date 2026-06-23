@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import { log } from './logger.js';
 import { toExitCode } from './exit.js';
 import { AppError } from './errors.js';
+import { isInquirerCancelError } from './ui.js';
 import * as listCmd from './commands/list.js';
 import * as switchCmd from './commands/switch.js';
 import * as restoreCmd from './commands/restore.js';
@@ -78,6 +79,11 @@ async function main(): Promise<void> {
   try {
     await program.parseAsync(process.argv);
   } catch (err: unknown) {
+    if (isInquirerCancelError(err)) {
+      // User pressed Ctrl-C / Esc / abort during an interactive prompt.
+      // Treat as a clean cancellation: no error message, exit code 0.
+      process.exit(0);
+    }
     if (err instanceof AppError) {
       log.error(`Error: ${err.message}`);
     } else if (err instanceof Error) {

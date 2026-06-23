@@ -10,6 +10,18 @@ function isCancel(value: unknown): boolean {
   return typeof value === 'symbol' && value !== NEW_SENTINEL;
 }
 
+/**
+ * Detects cancellation errors thrown by `@inquirer/prompts` v7+ on Ctrl-C,
+ * Esc, or programmatic abort. v5 returned a Symbol on cancel; v7 throws an
+ * Error subclass identified by name. We duck-type on the name to avoid
+ * importing the class directly from the transitive `@inquirer/core` dep.
+ */
+export function isInquirerCancelError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  const name = err.name;
+  return name === 'ExitPromptError' || name === 'CancelPromptError' || name === 'AbortPromptError';
+}
+
 export interface ReadlineIO {
   input: Readable;
   output: Writable;

@@ -10,7 +10,7 @@ vi.mock('@inquirer/prompts', () => ({
 }));
 
 import { select, input } from '@inquirer/prompts';
-import { pickProfile, promptAlias, promptNewAlias } from '../src/ui.js';
+import { pickProfile, promptAlias, promptNewAlias, isInquirerCancelError } from '../src/ui.js';
 import { UserCancelledError } from '../src/errors.js';
 import type { Profile } from '../src/scanner.js';
 
@@ -179,5 +179,41 @@ describe('promptNewAlias', () => {
   it('throws UserCancelledError when no TTY', async () => {
     Object.defineProperty(process.stdout, 'isTTY', { value: false, configurable: true });
     await expect(promptNewAlias([])).rejects.toBeInstanceOf(UserCancelledError);
+  });
+});
+
+describe('isInquirerCancelError', () => {
+  function withName(name: string, msg = 'msg'): Error {
+    const e = new Error(msg);
+    e.name = name;
+    return e;
+  }
+
+  it('returns true for ExitPromptError (Ctrl-C)', () => {
+    expect(isInquirerCancelError(withName('ExitPromptError'))).toBe(true);
+  });
+
+  it('returns true for CancelPromptError (Esc)', () => {
+    expect(isInquirerCancelError(withName('CancelPromptError'))).toBe(true);
+  });
+
+  it('returns true for AbortPromptError', () => {
+    expect(isInquirerCancelError(withName('AbortPromptError'))).toBe(true);
+  });
+
+  it('returns false for AppError (already handled separately)', () => {
+    expect(isInquirerCancelError(new UserCancelledError('x'))).toBe(false);
+  });
+
+  it('returns false for plain Error', () => {
+    expect(isInquirerCancelError(new Error('boom'))).toBe(false);
+  });
+
+  it('returns false for non-error values', () => {
+    expect(isInquirerCancelError('string')).toBe(false);
+    expect(isInquirerCancelError(null)).toBe(false);
+    expect(isInquirerCancelError(undefined)).toBe(false);
+    expect(isInquirerCancelError(42)).toBe(false);
+    expect(isInquirerCancelError(Symbol('x'))).toBe(false);
   });
 });
