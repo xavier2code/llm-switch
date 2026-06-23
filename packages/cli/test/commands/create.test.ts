@@ -15,7 +15,7 @@ vi.mock('@inquirer/prompts', () => ({
 
 import { select, input, password, confirm } from '@inquirer/prompts';
 import { run } from '../../src/commands/create.js';
-import { UserCancelledError } from '../../src/errors.js';
+import { UserCancelledError, ValidationError } from '../../src/errors.js';
 
 const mockSelect = vi.mocked(select);
 const mockInput = vi.mocked(input);
@@ -210,5 +210,127 @@ describe('create command', () => {
       'glm-4.5',
       'key',
     );
+  });
+
+  it('password input uses mask * and rejects empty', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const call = mockPassword.mock.calls[0]?.[0] as { mask?: string; validate?: (v: string) => boolean | string };
+    expect(call.mask).toBe('*');
+    expect(call.validate!('')).toBe('Required');
+  });
+
+  it('happy path: validate succeeds and flow continues to write', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('sk-test-123');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    expect(validateFn).toHaveBeenCalledWith(
+      'https://open.bigmodel.cn/api/anthropic',
+      'glm-4.5',
+      'sk-test-123',
+    );
+    const profile = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'));
+    expect(profile.env.ANTHROPIC_AUTH_TOKEN).toBe('sk-test-123');
+  });
+
+  it('validation fails → submenu: Enter a different key → loops password then succeeds', async () => {
+    mockSelect
+      .mockResolvedValueOnce('glm')     // provider
+      .mockResolvedValueOnce('newkey'); // submenu
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword
+      .mockResolvedValueOnce('bad-key')
+      .mockResolvedValueOnce('good-key');
+    const validateFn = vi.fn()
+      .mockRejectedValueOnce(new ValidationError('Invalid API key (401).'))
+      .mockResolvedValueOnce(undefined);
+
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    expect(validateFn).toHaveBeenCalledTimes(2);
+    expect(validateFn.mock.calls[0]?.[2]).toBe('bad-key');
+    expect(validateFn.mock.calls[1]?.[2]).toBe('good-key');
+  });
+
+  it('validation fails → submenu: Cancel → UserCancelledError', async () => {
+    mockSelect
+      .mockResolvedValueOnce('glm')
+      .mockResolvedValueOnce('cancel');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('bad-key');
+    const validateFn = vi.fn().mockRejectedValueOnce(new ValidationError('boom'));
+
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+    expect(validateFn).toHaveBeenCalledOnce();
+  });
+
+  it('validation fails → submenu: Edit BASE_URL/model → prompts URL+model, re-validates with same key', async () => {
+    mockSelect
+      .mockResolvedValueOnce('glm')
+      .mockResolvedValueOnce('edit');
+    mockInput
+      .mockResolvedValueOnce('glm')
+      .mockResolvedValueOnce('https://my-proxy.example.com/anthropic')
+      .mockResolvedValueOnce('custom-model');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn()
+      .mockRejectedValueOnce(new ValidationError('boom'))
+      .mockResolvedValueOnce(undefined);
+
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    expect(validateFn).toHaveBeenCalledTimes(2);
+    expect(validateFn.mock.calls[1]?.[0]).toBe('https://my-proxy.example.com/anthropic');
+    expect(validateFn.mock.calls[1]?.[1]).toBe('custom-model');
+    expect(validateFn.mock.calls[1]?.[2]).toBe('key');
+  });
+
+  it('validation fails → submenu: Retry with same key → re-validates with same params', async () => {
+    mockSelect
+      .mockResolvedValueOnce('glm')
+      .mockResolvedValueOnce('retry');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn()
+      .mockRejectedValueOnce(new ValidationError('boom'))
+      .mockResolvedValueOnce(undefined);
+
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    expect(validateFn).toHaveBeenCalledTimes(2);
+    expect(validateFn.mock.calls[0]).toEqual(validateFn.mock.calls[1]);
+  });
+
+  it('validation error message is printed to stderr', async () => {
+    mockSelect
+      .mockResolvedValueOnce('glm')
+      .mockResolvedValueOnce('cancel');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('bad-key');
+    const validateFn = vi.fn().mockRejectedValueOnce(new ValidationError('boom: bad key'));
+
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+    expect(io.writes.join('')).toContain('boom: bad key');
   });
 });

@@ -1,4 +1,5 @@
 import type { Readable, Writable } from 'node:stream';
+import fs from 'node:fs/promises';
 import { select, input, password, confirm } from '@inquirer/prompts';
 import {
   getSettingsPath,
@@ -34,6 +35,8 @@ function ensure(condition: unknown, message: string): asserts condition {
 function nonEmpty(v: string): true | string {
   return v.trim() ? true : 'Required';
 }
+
+type SubmenuChoice = 'retry' | 'newkey' | 'edit' | 'cancel';
 
 export async function run(io: CreateIO): Promise<void> {
   if (!io.isTTY) {
@@ -96,21 +99,81 @@ export async function run(io: CreateIO): Promise<void> {
     model = (modelInput as string).trim();
   }
 
-  // 4. API key
-  const apiKeyInput = await pFn({
-    message: 'API key:',
-    mask: '*',
-  });
-  ensure(!isCancel(apiKeyInput), 'Cancelled.');
-  const apiKey = apiKeyInput as string;
+  // 4-6. API key + validate loop
+  let apiKey = '';
+  let needsNewKey = true;
+  while (true) {
+    if (needsNewKey) {
+      const keyInput = await pFn({
+        message: 'API key:',
+        mask: '*',
+        validate: nonEmpty,
+      });
+      ensure(!isCancel(keyInput), 'Cancelled.');
+      apiKey = (keyInput as string).trim();
+      needsNewKey = false;
+    }
 
-  // 5. Validate
-  await vFn(baseUrl, model, apiKey);
+    try {
+      await vFn(baseUrl, model, apiKey);
+      break;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      io.stderr.write(`Validation failed: ${message}\n`);
+
+      const sub = await sFn({
+        message: 'What now?',
+        choices: [
+          { name: 'Retry with same key', value: 'retry' as SubmenuChoice },
+          { name: 'Enter a different key', value: 'newkey' as SubmenuChoice },
+          { name: 'Edit BASE_URL or model', value: 'edit' as SubmenuChoice },
+          { name: 'Cancel', value: 'cancel' as SubmenuChoice },
+        ],
+      });
+      ensure(!isCancel(sub), 'Cancelled.');
+      const choice = sub as SubmenuChoice;
+
+      if (choice === 'cancel') throw new UserCancelledError('Cancelled.');
+      if (choice === 'retry') {
+        needsNewKey = false;
+        continue;
+      }
+      if (choice === 'newkey') {
+        needsNewKey = true;
+        continue;
+      }
+      // 'edit'
+      const urlInput = await iFn({
+        message: 'BASE URL:',
+        default: baseUrl,
+        validate: nonEmpty,
+      });
+      ensure(!isCancel(urlInput), 'Cancelled.');
+      baseUrl = (urlInput as string).trim();
+
+      const modelInput = await iFn({
+        message: 'Model:',
+        default: model,
+        validate: nonEmpty,
+      });
+      ensure(!isCancel(modelInput), 'Cancelled.');
+      model = (modelInput as string).trim();
+
+      needsNewKey = false;
+      continue;
+    }
+  }
 
   // 后续步骤补全
+  const profile = JSON.stringify({
+    env: {
+      ANTHROPIC_BASE_URL: baseUrl,
+      ANTHROPIC_MODEL: model,
+      ANTHROPIC_AUTH_TOKEN: apiKey,
+    },
+  });
+  await fs.writeFile(profilePath(alias), profile);
   void switchTo;
   void getSettingsPath;
   void getBackupPath;
-  void profilePath;
-  void alias;
 }
