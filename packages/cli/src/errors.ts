@@ -46,3 +46,9 @@ export class InvalidAliasError extends AppError {
     super(message, 'INVALID_ALIAS');
   }
 }
+
+export class ValidationError extends AppError {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message, 'VALIDATION_FAILED');
+  }
+}

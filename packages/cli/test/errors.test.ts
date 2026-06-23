@@ -7,6 +7,7 @@ import {
   NoBackupError,
   NoCurrentSettingsError,
   UserCancelledError,
+  ValidationError,
 } from '../src/errors.js';
 
 describe('AppError', () => {
@@ -35,5 +36,22 @@ describe('concrete errors', () => {
       expect(e.code).toMatch(/^[A-Z_]+$/);
       expect(e.message).toBe('x');
     }
+  });
+});
+
+describe('ValidationError', () => {
+  it('extends AppError with code VALIDATION_FAILED', () => {
+    const cause = new Error('underlying');
+    const err = new ValidationError('Invalid API key (401).', cause);
+    expect(err).toBeInstanceOf(AppError);
+    expect(err).toBeInstanceOf(Error);
+    expect(err.code).toBe('VALIDATION_FAILED');
+    expect(err.message).toBe('Invalid API key (401).');
+    expect(err.cause).toBe(cause);
+  });
+
+  it('cause is optional', () => {
+    const err = new ValidationError('boom');
+    expect(err.cause).toBeUndefined();
   });
 });
