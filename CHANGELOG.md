@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-23
+
+### Fixed
+- `--version` / `-V` now reports the actual version from `package.json` instead of the hardcoded `0.1.0` from the initial scaffold. Published 0.4.0 was affected by this.
+
 ## [0.4.0] - 2026-06-23
 
 ### Fixed
