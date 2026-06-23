@@ -138,4 +138,77 @@ describe('create command', () => {
     expect(ids).toEqual(['deepseek', 'glm', 'kimi', 'minimax', 'qwen']);
     expect(call.choices!.find((c) => c.value === 'glm')?.name).toContain('GLM');
   });
+
+  it('confirm shows Use default question with default true', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const call = mockConfirm.mock.calls[0]?.[0] as { message?: string; default?: boolean };
+    expect(call.message).toMatch(/Use default/);
+    expect(call.default).toBe(true);
+  });
+
+  it('when user rejects defaults, prompts for custom BASE_URL then model', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput
+      .mockResolvedValueOnce('glm')
+      .mockResolvedValueOnce('https://my-proxy.example.com/anthropic')
+      .mockResolvedValueOnce('custom-model');
+    mockConfirm.mockResolvedValueOnce(false);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    expect(mockInput).toHaveBeenCalledTimes(3);
+    const urlCall = mockInput.mock.calls[1]?.[0] as { message?: string };
+    expect(urlCall.message).toMatch(/BASE URL/i);
+    const modelCall = mockInput.mock.calls[2]?.[0] as { message?: string };
+    expect(modelCall.message).toBe('Model:');
+
+    expect(validateFn).toHaveBeenCalledWith(
+      'https://my-proxy.example.com/anthropic',
+      'custom-model',
+      'key',
+    );
+  });
+
+  it('BASE_URL and model inputs reject empty', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput
+      .mockResolvedValueOnce('glm')
+      .mockResolvedValueOnce('https://x')
+      .mockResolvedValueOnce('m');
+    mockConfirm.mockResolvedValueOnce(false);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const urlCall = mockInput.mock.calls[1]?.[0] as { validate?: (v: string) => boolean | string };
+    expect(urlCall.validate!('')).toBe('Required');
+    const modelCall = mockInput.mock.calls[2]?.[0] as { validate?: (v: string) => boolean | string };
+    expect(modelCall.validate!('')).toBe('Required');
+  });
+
+  it('when user accepts defaults, validator called with provider default URL and model', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    expect(validateFn).toHaveBeenCalledWith(
+      'https://open.bigmodel.cn/api/anthropic',
+      'glm-4.5',
+      'key',
+    );
+  });
 });

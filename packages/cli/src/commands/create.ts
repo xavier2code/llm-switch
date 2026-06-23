@@ -31,6 +31,10 @@ function ensure(condition: unknown, message: string): asserts condition {
   if (!condition) throw new UserCancelledError(message);
 }
 
+function nonEmpty(v: string): true | string {
+  return v.trim() ? true : 'Required';
+}
+
 export async function run(io: CreateIO): Promise<void> {
   if (!io.isTTY) {
     throw new UserCancelledError(
@@ -66,14 +70,47 @@ export async function run(io: CreateIO): Promise<void> {
   ensure(!isCancel(aliasInput), 'Cancelled.');
   const alias = (aliasInput as string).trim();
 
+  // 3. Confirm defaults
+  let baseUrl = provider.baseUrl;
+  let model = provider.defaultModel;
+  const useDefaults = await cFn({
+    message: 'Use default BASE_URL and model?',
+    default: true,
+  });
+  ensure(!isCancel(useDefaults), 'Cancelled.');
+  if (!useDefaults) {
+    const urlInput = await iFn({
+      message: 'BASE URL:',
+      default: provider.baseUrl,
+      validate: nonEmpty,
+    });
+    ensure(!isCancel(urlInput), 'Cancelled.');
+    baseUrl = (urlInput as string).trim();
+
+    const modelInput = await iFn({
+      message: 'Model:',
+      default: provider.defaultModel,
+      validate: nonEmpty,
+    });
+    ensure(!isCancel(modelInput), 'Cancelled.');
+    model = (modelInput as string).trim();
+  }
+
+  // 4. API key
+  const apiKeyInput = await pFn({
+    message: 'API key:',
+    mask: '*',
+  });
+  ensure(!isCancel(apiKeyInput), 'Cancelled.');
+  const apiKey = apiKeyInput as string;
+
+  // 5. Validate
+  await vFn(baseUrl, model, apiKey);
+
   // 后续步骤补全
-  void cFn;
-  void pFn;
-  void vFn;
   void switchTo;
   void getSettingsPath;
   void getBackupPath;
   void profilePath;
   void alias;
-  void provider;
 }
