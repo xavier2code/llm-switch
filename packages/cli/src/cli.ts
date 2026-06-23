@@ -1,4 +1,7 @@
 import { Command } from 'commander';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { log } from './logger.js';
 import { toExitCode } from './exit.js';
 import { AppError } from './errors.js';
@@ -10,11 +13,16 @@ import * as saveCmd from './commands/save.js';
 import * as createCmd from './commands/create.js';
 import * as currentCmd from './commands/current.js';
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pkg = JSON.parse(
+  readFileSync(resolve(__dirname, '../package.json'), 'utf8'),
+) as { version: string };
+
 const program = new Command();
 program
   .name('llm-switch')
   .description('Switch Claude Code settings.json profiles from the command line')
-  .version('0.1.0');
+  .version(pkg.version);
 
 program
   .command('list')

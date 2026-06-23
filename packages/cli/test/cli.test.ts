@@ -56,6 +56,16 @@ describe('cli e2e', () => {
     expect(r.stdout).toContain('list');
   });
 
+  it('--version matches package.json', async () => {
+    const pkgPath = path.resolve(__dirname, '../package.json');
+    const pkgRaw = await fs.readFile(pkgPath, 'utf8');
+    const expectedVersion = (JSON.parse(pkgRaw) as { version: string }).version;
+
+    const r = await run(['--version']);
+    expect(r.code).toBe(0);
+    expect(r.stdout.trim()).toBe(expectedVersion);
+  });
+
   it('list exits 1 when no profiles', async () => {
     const r = await run(['list'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
     expect(r.code).toBe(1);
