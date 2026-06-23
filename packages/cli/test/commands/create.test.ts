@@ -333,4 +333,94 @@ describe('create command', () => {
     await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
     expect(io.writes.join('')).toContain('boom: bad key');
   });
+
+  it('when profile exists, prompts Overwrite? with default false', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), JSON.stringify({ OLD: 'yes' }));
+
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm
+      .mockResolvedValueOnce(true)   // use defaults
+      .mockResolvedValueOnce(true);  // overwrite = yes
+    mockPassword.mockResolvedValueOnce('new-key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const overwriteCall = mockConfirm.mock.calls[1]?.[0] as { message?: string; default?: boolean };
+    expect(overwriteCall.message).toMatch(/exists.*Overwrite/);
+    expect(overwriteCall.default).toBe(false);
+
+    const profile = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'));
+    expect(profile.env.ANTHROPIC_AUTH_TOKEN).toBe('new-key');
+  });
+
+  it('when profile exists and user declines overwrite → UserCancelledError, file unchanged', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), JSON.stringify({ OLD: 'yes' }));
+
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+
+    const profile = await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8');
+    expect(JSON.parse(profile)).toEqual({ OLD: 'yes' });
+  });
+
+  it('writes JSON with env containing ANTHROPIC_BASE_URL, MODEL, AUTH_TOKEN', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('sk-xyz');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const profile = await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8');
+    const parsed = JSON.parse(profile);
+    expect(parsed).toEqual({
+      env: {
+        ANTHROPIC_BASE_URL: 'https://open.bigmodel.cn/api/anthropic',
+        ANTHROPIC_MODEL: 'glm-4.5',
+        ANTHROPIC_AUTH_TOKEN: 'sk-xyz',
+      },
+    });
+  });
+
+  it('activates profile: settings.json matches profile and backup created', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json'), JSON.stringify({ env: { PREV: 'yes' } }));
+
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const settings = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8'));
+    expect(settings.env.ANTHROPIC_AUTH_TOKEN).toBe('key');
+    const bak = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.bak'), 'utf8'));
+    expect(bak.env.PREV).toBe('yes');
+  });
+
+  it('prints success message to stdout', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('key');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    expect(io.writes.join('')).toContain("Created and activated 'glm'");
+    expect(io.writes.join('')).toMatch(/Restart Claude Code/);
+  });
 });

@@ -38,6 +38,15 @@ function nonEmpty(v: string): true | string {
 
 type SubmenuChoice = 'retry' | 'newkey' | 'edit' | 'cancel';
 
+async function fileExists(p: string): Promise<boolean> {
+  try {
+    await fs.access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function run(io: CreateIO): Promise<void> {
   if (!io.isTTY) {
     throw new UserCancelledError(
@@ -164,16 +173,36 @@ export async function run(io: CreateIO): Promise<void> {
     }
   }
 
-  // 后续步骤补全
-  const profile = JSON.stringify({
-    env: {
-      ANTHROPIC_BASE_URL: baseUrl,
-      ANTHROPIC_MODEL: model,
-      ANTHROPIC_AUTH_TOKEN: apiKey,
+  // 7. Overwrite confirm
+  const profileFile = profilePath(alias);
+  if (await fileExists(profileFile)) {
+    const overwrite = await cFn({
+      message: `Profile '${alias}' exists. Overwrite?`,
+      default: false,
+    });
+    ensure(!isCancel(overwrite), 'Cancelled.');
+    if (!overwrite) throw new UserCancelledError('Cancelled.');
+  }
+
+  // 8. Write profile
+  const content = JSON.stringify(
+    {
+      env: {
+        ANTHROPIC_BASE_URL: baseUrl,
+        ANTHROPIC_MODEL: model,
+        ANTHROPIC_AUTH_TOKEN: apiKey,
+      },
     },
-  });
-  await fs.writeFile(profilePath(alias), profile);
-  void switchTo;
-  void getSettingsPath;
-  void getBackupPath;
+    null,
+    2,
+  );
+  await fs.writeFile(profileFile, content);
+
+  // 9. Activate (atomic switch + backup)
+  const settingsPath = getSettingsPath();
+  const backupPath = getBackupPath();
+  await switchTo(profileFile, settingsPath, backupPath);
+
+  // 10. Output
+  io.stdout.write(`Created and activated '${alias}'. Restart Claude Code to apply.\n`);
 }
