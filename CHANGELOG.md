@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-23
+
+### Fixed
+- `@inquirer/prompts@7` cancellation (Ctrl-C / Esc) now exits cleanly with code 0 instead of surfacing as `Unexpected error: User force closed the prompt with 0 null`. Affects the new `create` command and the pre-existing `save` and `switch` commands.
+
+### Documentation
+- `CLAUDE.md` with versioning policy for the pre-1.0 `0.x.y` range: bump rules, criteria for graduating to `1.0.0`, and a release checklist.
+
 ## [0.3.0] - 2026-06-23
 
 ### Added
@@ -20,9 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - API keys stored in plaintext in `settings.json.<alias>` and `~/.claude/settings.json` — file permissions are the only protection. Same risk surface as existing `save` command.
-
-### Fixed
-- `@inquirer/prompts@7` cancellation (Ctrl-C / Esc) now exits cleanly with code 0 instead of surfacing as `Unexpected error: User force closed the prompt with 0 null`. Affects the new `create` command and the pre-existing `save` and `switch` commands.
 
 ## [0.2.0] - 2026-06-22
 
