@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-22
+
+### Changed
+- Interactive menus (`switch`, `save`) now use arrow-key navigation via `@inquirer/prompts` instead of numbered typing
+- `switch` menu pre-selects the currently active profile
+- `save` menu shows existing aliases + "+ Create new" option
+- `list` output reformatted with bullet markers (`●` / `○`) and column padding
+
+### Added
+- `promptNewAlias` exported from `ui.ts` for chained calls from `promptAlias`
+
+### Dependencies
+- Added `@inquirer/prompts` ^7.0.0
+
 ## [0.1.0] - 2026-06-22
 
 ### Added
