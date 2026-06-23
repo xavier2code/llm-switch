@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-06-23
+
+### Added
+- `create` subcommand: interactive wizard for creating profiles from 5 built-in providers (GLM, DeepSeek, Kimi, MiniMax, Qwen)
+- Steps: select provider → confirm alias → confirm/override default BASE_URL & model → enter API key (masked) → real API validation → write `settings.json.<alias>` → activate as current
+- Failure submenu on validation error: Retry / Enter different key / Edit URL or model / Cancel
+- `providers.ts` registry with `getProvider(id)` lookup
+- `validator.ts` Anthropic Messages protocol ping (`POST /v1/messages`, `max_tokens: 1`, 10s timeout)
+- `ValidationError` class for API validation failures
+- API key written in plaintext to settings.json (same as `save`)
+
+### Security
+- API keys stored in plaintext in `settings.json.<alias>` and `~/.claude/settings.json` — file permissions are the only protection. Same risk surface as existing `save` command.
+
 ## [0.2.0] - 2026-06-22
 
 ### Changed
