@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- CI now runs `pnpm audit --prod --audit-level=high` on every PR + push to main. Fails the build on `high` or `critical` vulnerabilities in production dependencies. Also added a `.github/dependabot.yml` that opens weekly PRs for `minor` and `patch` dependency updates (major bumps are ignored — they need manual review).
 - `list` now sorts the active profile to the top of the output. The previously-alphabetical order is preserved for the inactive profiles; only the active one is hoisted. Easier to spot the current profile at a glance, especially with many aliases.
 
 ### Changed
