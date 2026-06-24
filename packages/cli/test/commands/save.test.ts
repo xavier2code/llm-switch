@@ -59,17 +59,61 @@ describe('save command', () => {
     });
   });
 
-  it('overwrites existing profile (current is truth)', async () => {
+  it('overwrites existing profile when --force is set (no prompt)', async () => {
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"new":true}');
     await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{"old":true}');
     const io = mockIO();
 
-    await run({ alias: 'glm', ...io, isTTY: true } as never);
+    await run({ alias: 'glm', force: true, ...io, isTTY: true } as never);
 
     expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({
       new: true,
     });
     expect(io.writes.join('')).toContain('Overwrote');
+  });
+
+  it('prompts for confirmation when overwriting an existing profile (user confirms → overwrite)', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"new":true}');
+    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{"old":true}');
+    const io = mockIO();
+
+    const confirmFn = vi.fn().mockResolvedValueOnce(true);
+    await run({ alias: 'glm', confirmFn, ...io, isTTY: true } as never);
+
+    expect(confirmFn).toHaveBeenCalledOnce();
+    const arg = confirmFn.mock.calls[0]?.[0] as { message?: string; default?: boolean };
+    expect(arg.message).toMatch(/exists.*Overwrite|Overwrite/);
+    expect(arg.default).toBe(false);
+
+    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({
+      new: true,
+    });
+  });
+
+  it('prompts for confirmation when overwriting (user declines → UserCancelledError, file unchanged)', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"new":true}');
+    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{"old":true}');
+    const io = mockIO();
+
+    const confirmFn = vi.fn().mockResolvedValueOnce(false);
+    await expect(run({ alias: 'glm', confirmFn, ...io, isTTY: true } as never)).rejects.toThrow(
+      /ancelled/i,
+    );
+
+    // File is unchanged
+    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({
+      old: true,
+    });
+  });
+
+  it('does not prompt when saving a brand-new profile', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"a":1}');
+    const io = mockIO();
+
+    const confirmFn = vi.fn();
+    await run({ alias: 'glm', confirmFn, ...io, isTTY: true } as never);
+
+    expect(confirmFn).not.toHaveBeenCalled();
   });
 
   it('writes profile file with mode 0600 to protect API key', async () => {
@@ -88,7 +132,7 @@ describe('save command', () => {
     await fs.chmod(path.join(tmpDir, 'settings.json.glm'), 0o644);
     const io = mockIO();
 
-    await run({ alias: 'glm', ...io, isTTY: true } as never);
+    await run({ alias: 'glm', force: true, ...io, isTTY: true } as never);
 
     const stat = await fs.stat(path.join(tmpDir, 'settings.json.glm'));
     expect(stat.mode & 0o777).toBe(0o600);
