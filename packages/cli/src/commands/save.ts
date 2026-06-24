@@ -6,6 +6,7 @@ import { listProfiles } from '../scanner.js';
 import { promptAlias } from '../ui.js';
 import { exists } from '../fs-utils.js';
 import { NoCurrentSettingsError, UserCancelledError } from '../errors.js';
+import { interactiveTtyRequiredHint } from '../messages.js';
 
 export interface SaveIO {
   alias?: string;
@@ -30,16 +31,10 @@ export async function run(io: SaveIO): Promise<void> {
   let alias = io.alias;
   if (alias === undefined) {
     if (!io.isTTY) {
-      throw new UserCancelledError('Interactive mode requires a TTY. Use: llm-switch save <alias>');
+      throw new UserCancelledError(interactiveTtyRequiredHint('save'));
     }
     const profiles = await listProfiles(configDir);
-    const result = await promptAlias(
-      profiles.map((p) => p.alias),
-      {
-        input: io.stdin,
-        output: io.stdout,
-      },
-    );
+    const result = await promptAlias(profiles.map((p) => p.alias));
     if (!result) throw new UserCancelledError('Cancelled.');
     alias = result;
   } else {

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { ConfigDirNotFoundError } from './errors.js';
 import type { ConfigDir } from './config.js';
 import { sha256 } from './fs-utils.js';
+import { parseProfileAliases } from './scanner.js';
 
 export interface CurrentSummary {
   source: string;
@@ -53,9 +54,7 @@ export async function summarize(configDir: ConfigDir): Promise<CurrentSummary> {
   const data = safeParse(content);
 
   const entries = await fs.readdir(configDir);
-  const aliases = entries
-    .filter((n) => n.startsWith('settings.json.') && !n.endsWith('.bak'))
-    .map((n) => n.slice('settings.json.'.length));
+  const aliases = parseProfileAliases(entries);
 
   for (const alias of aliases) {
     const profileFile = path.join(configDir, `settings.json.${alias}`);

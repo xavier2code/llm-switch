@@ -10,6 +10,7 @@ import { listProfiles } from '../scanner.js';
 import { switchTo } from '../switcher.js';
 import { pickProfile } from '../ui.js';
 import { ProfileNotFoundError, UserCancelledError } from '../errors.js';
+import { RESTART_HINT, interactiveTtyRequiredHint } from '../messages.js';
 
 export interface SwitchIO {
   alias?: string;
@@ -34,19 +35,19 @@ export async function run(io: SwitchIO): Promise<void> {
       );
     }
     await switchTo(source, settingsPath, backupPath);
-    io.stdout.write(`Switched to ${io.alias}. Restart Claude Code to apply.\n`);
+    io.stdout.write(`Switched to ${io.alias}. ${RESTART_HINT}\n`);
     return;
   }
 
   if (!io.isTTY) {
-    throw new UserCancelledError('Interactive mode requires a TTY. Use: llm-switch <alias>');
+    throw new UserCancelledError(interactiveTtyRequiredHint('switch'));
   }
 
   const profiles = await listProfiles(configDir);
-  const chosen = await pickProfile(profiles, { input: io.stdin, output: io.stdout });
+  const chosen = await pickProfile(profiles);
   if (!chosen) {
     throw new UserCancelledError('Cancelled.');
   }
   await switchTo(chosen.path, settingsPath, backupPath);
-  io.stdout.write(`Switched to ${chosen.alias}. Restart Claude Code to apply.\n`);
+  io.stdout.write(`Switched to ${chosen.alias}. ${RESTART_HINT}\n`);
 }

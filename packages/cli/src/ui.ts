@@ -1,7 +1,7 @@
 import { select, input } from '@inquirer/prompts';
-import type { Readable, Writable } from 'node:stream';
 import type { Profile } from './scanner.js';
 import { ALIAS_RE } from './config.js';
+import { INTERACTIVE_TTY_REQUIRED } from './messages.js';
 import { UserCancelledError } from './errors.js';
 
 const NEW_SENTINEL: unique symbol = Symbol.for('llm-switch:create-new');
@@ -22,18 +22,13 @@ export function isInquirerCancelError(err: unknown): boolean {
   return name === 'ExitPromptError' || name === 'CancelPromptError' || name === 'AbortPromptError';
 }
 
-export interface ReadlineIO {
-  input: Readable;
-  output: Writable;
-}
-
 function ensureTTY(): void {
   if (!process.stdout.isTTY) {
-    throw new UserCancelledError('Interactive mode requires a TTY. Use: llm-switch <alias>');
+    throw new UserCancelledError(INTERACTIVE_TTY_REQUIRED);
   }
 }
 
-export async function pickProfile(profiles: Profile[], _io?: ReadlineIO): Promise<Profile | null> {
+export async function pickProfile(profiles: Profile[]): Promise<Profile | null> {
   ensureTTY();
   if (profiles.length === 0) return null;
 
@@ -51,7 +46,7 @@ export async function pickProfile(profiles: Profile[], _io?: ReadlineIO): Promis
   return result ?? null;
 }
 
-export async function promptAlias(existing: string[], _io?: ReadlineIO): Promise<string | null> {
+export async function promptAlias(existing: string[]): Promise<string | null> {
   ensureTTY();
 
   if (existing.length === 0) {
@@ -73,7 +68,7 @@ export async function promptAlias(existing: string[], _io?: ReadlineIO): Promise
   return result as string;
 }
 
-export async function promptNewAlias(existing: string[], _io?: ReadlineIO): Promise<string | null> {
+export async function promptNewAlias(existing: string[]): Promise<string | null> {
   ensureTTY();
 
   const result = (await input({
