@@ -28,16 +28,17 @@ export async function listProfiles(configDir: ConfigDir): Promise<Profile[]> {
     .filter((name) => !name.endsWith('.bak'))
     .map((name) => name.slice('settings.json.'.length));
 
-  const profiles: Profile[] = [];
-  for (const alias of matches) {
-    const profileFile = path.join(configDir, `settings.json.${alias}`);
-    const hash = await sha256(profileFile);
-    profiles.push({
-      alias,
-      path: profileFile,
-      active: hash !== null && hash === settingsHash,
-    });
-  }
+  const profiles: Profile[] = await Promise.all(
+    matches.map(async (alias) => {
+      const profileFile = path.join(configDir, `settings.json.${alias}`);
+      const hash = await sha256(profileFile);
+      return {
+        alias,
+        path: profileFile,
+        active: hash !== null && hash === settingsHash,
+      };
+    }),
+  );
 
   profiles.sort((a, b) => a.alias.localeCompare(b.alias));
   return profiles;
