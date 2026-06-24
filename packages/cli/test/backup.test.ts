@@ -45,6 +45,18 @@ describe('backupCurrent', () => {
 
     expect(await fs.readFile(backup, 'utf8')).toBe(raw);
   });
+
+  it('writes backup file with mode 0600 to protect any prior API key', async () => {
+    const settings = path.join(tmpDir, 'settings.json');
+    const backup = path.join(tmpDir, 'settings.json.bak');
+
+    await fs.writeFile(settings, JSON.stringify({ env: { ANTHROPIC_AUTH_TOKEN: 'sk-secret' } }));
+
+    await backupCurrent(settings, backup);
+
+    const stat = await fs.stat(backup);
+    expect(stat.mode & 0o777).toBe(0o600);
+  });
 });
 
 describe('restoreBackup', () => {
