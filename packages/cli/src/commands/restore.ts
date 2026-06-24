@@ -1,6 +1,6 @@
-import fs from 'node:fs/promises';
 import { getSettingsPath, getBackupPath } from '../config.js';
 import { restoreBackup, isSameContent } from '../backup.js';
+import { exists } from '../fs-utils.js';
 import { NoBackupError, NoCurrentSettingsError } from '../errors.js';
 
 export interface RestoreIO {
@@ -26,13 +26,4 @@ export async function run(io: RestoreIO): Promise<void> {
 
   await restoreBackup(settingsPath, backupPath);
   io.stdout.write('Restored from backup.\n');
-}
-
-async function exists(p: string): Promise<boolean> {
-  try {
-    await fs.access(p);
-    return true;
-  } catch {
-    return false;
-  }
 }

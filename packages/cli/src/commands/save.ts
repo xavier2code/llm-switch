@@ -3,6 +3,7 @@ import type { Readable, Writable } from 'node:stream';
 import { getConfigDir, getSettingsPath, profilePath, assertAlias } from '../config.js';
 import { listProfiles } from '../scanner.js';
 import { promptAlias } from '../ui.js';
+import { exists } from '../fs-utils.js';
 import { NoCurrentSettingsError, UserCancelledError } from '../errors.js';
 
 export interface SaveIO {
@@ -50,13 +51,4 @@ export async function run(io: SaveIO): Promise<void> {
     io.stderr.write(`Overwrote existing profile '${alias}'.\n`);
   }
   io.stdout.write(`Saved current settings as '${alias}'.\n`);
-}
-
-async function exists(p: string): Promise<boolean> {
-  try {
-    await fs.access(p);
-    return true;
-  } catch {
-    return false;
-  }
 }

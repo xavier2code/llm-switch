@@ -6,7 +6,7 @@ import { UserCancelledError } from './errors.js';
 
 const NEW_SENTINEL: unique symbol = Symbol.for('llm-switch:create-new');
 
-function isCancel(value: unknown): boolean {
+export function isCancel(value: unknown): boolean {
   return typeof value === 'symbol' && value !== NEW_SENTINEL;
 }
 

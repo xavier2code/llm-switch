@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Removed unused `log.info`, `log.success`, `log.warn`, `log.dim`, `log.bold`, `log.cyan` methods (only `log.error` was actually used by the CLI) and the dead `parseSettingsSafe` export from `schemas.ts`. Bundle is ~0.5 KB smaller as a result.
+- Extracted duplicated helpers to `src/fs-utils.ts`: `sha256()` (was defined in both `scanner.ts` and `display.ts`, with `scanner.ts` using a dynamic `await import('node:crypto')` per call) and `exists()` (was defined identically in `save.ts` and `restore.ts`). The local `isCancel` in `create.ts` is replaced by the export from `ui.ts`, which is the canonical version (the only one that correctly handles the `NEW_SENTINEL` symbol). Bundle is ~0.4 KB smaller as a result.
 
 ## [0.4.1] - 2026-06-23
 
