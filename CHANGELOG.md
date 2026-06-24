@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- The internal planning documents under `docs/superpowers/` have been renamed to `docs/internal/` and now have a top-level `README.md` explaining their purpose (AI-assistant TDD plans and design specs, kept for archaeology, **not** user-facing). The previous name "superpowers" was an internal codename that meant nothing to public readers.
+
 ## [0.4.3] - 2026-06-24
 
 ### Added
