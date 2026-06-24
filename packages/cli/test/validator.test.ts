@@ -101,4 +101,68 @@ describe('validateAnthropic', () => {
     const init = mockFetch.mock.calls[0]?.[1] as { signal?: AbortSignal };
     expect(init.signal).toBeInstanceOf(AbortSignal);
   });
+
+  describe('HTTPS enforcement', () => {
+    it('rejects http:// to a non-localhost host with an HTTPS-specific error', async () => {
+      await expect(
+        validateAnthropic('http://api.example.com', 'm', 'k'),
+      ).rejects.toBeInstanceOf(ValidationError);
+      await expect(
+        validateAnthropic('http://api.example.com', 'm', 'k'),
+      ).rejects.toThrowError(/HTTPS/);
+    });
+
+    it('does not call fetch when BASE_URL is rejected as insecure', async () => {
+      await expect(
+        validateAnthropic('http://api.example.com', 'm', 'k'),
+      ).rejects.toBeInstanceOf(ValidationError);
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('rejects http:// to a public-looking IP with an HTTPS-specific error', async () => {
+      await expect(
+        validateAnthropic('http://8.8.8.8', 'm', 'k'),
+      ).rejects.toThrowError(/HTTPS/);
+    });
+
+    it('rejects URLs that cannot be parsed', async () => {
+      await expect(
+        validateAnthropic('not a url', 'm', 'k'),
+      ).rejects.toThrowError(/HTTPS/);
+    });
+
+    it('rejects empty string', async () => {
+      await expect(
+        validateAnthropic('', 'm', 'k'),
+      ).rejects.toThrowError(/HTTPS/);
+    });
+
+    it('accepts http://localhost (local proxy exception)', async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ status: 200 }));
+      await expect(
+        validateAnthropic('http://localhost:11434', 'm', 'k'),
+      ).resolves.toBeUndefined();
+    });
+
+    it('accepts http://127.0.0.1 (IPv4 localhost exception)', async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ status: 200 }));
+      await expect(
+        validateAnthropic('http://127.0.0.1:8080', 'm', 'k'),
+      ).resolves.toBeUndefined();
+    });
+
+    it('accepts http://[::1] (IPv6 localhost exception)', async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ status: 200 }));
+      await expect(
+        validateAnthropic('http://[::1]:8080', 'm', 'k'),
+      ).resolves.toBeUndefined();
+    });
+
+    it('accepts https://localhost (https + localhost is fine)', async () => {
+      mockFetch.mockResolvedValueOnce(makeResponse({ status: 200 }));
+      await expect(
+        validateAnthropic('https://localhost:11434', 'm', 'k'),
+      ).resolves.toBeUndefined();
+    });
+  });
 });

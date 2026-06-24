@@ -2,6 +2,24 @@ import { ValidationError } from './errors.js';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 const BODY_SNIPPET_LEN = 200;
+const LOCALHOST_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
+const HTTPS_REQUIRED_MSG =
+  'BASE_URL must use HTTPS (HTTP is allowed only for localhost/127.0.0.1/::1).';
+
+function assertSecureBaseUrl(baseUrl: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(baseUrl);
+  } catch {
+    throw new ValidationError(HTTPS_REQUIRED_MSG);
+  }
+  const isHttps = parsed.protocol === 'https:';
+  const isLocalhostHttp =
+    parsed.protocol === 'http:' && LOCALHOST_HOSTS.has(parsed.hostname.toLowerCase());
+  if (!isHttps && !isLocalhostHttp) {
+    throw new ValidationError(HTTPS_REQUIRED_MSG);
+  }
+}
 
 export interface ValidateOptions {
   timeoutMs?: number;
@@ -13,6 +31,7 @@ export async function validateAnthropic(
   apiKey: string,
   opts?: ValidateOptions,
 ): Promise<void> {
+  assertSecureBaseUrl(baseUrl);
   const url = `${baseUrl.replace(/\/$/, '')}/v1/messages`;
   const controller = new AbortController();
   const timeoutMs = opts?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
