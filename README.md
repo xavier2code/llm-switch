@@ -33,32 +33,41 @@ npm i -g llm-switch
 ## Usage
 
 ```bash
-llm-switch list                 # show available profiles
+llm-switch list                 # show available profiles (active first)
 llm-switch switch               # interactive menu
 llm-switch switch glm           # switch directly
 llm-switch save glm-v2          # save current settings as new profile
+llm-switch save -f glm          # overwrite existing profile (skip confirm)
 llm-switch restore              # restore previous backup
 llm-switch current              # show active profile
 llm-switch create               # interactive wizard to create a new profile
+
+llm-switch --help               # full help, including CLAUDE_CONFIG_DIR
+llm-switch <cmd> --help         # per-command help with examples + exit codes
 ```
 
 Set `CLAUDE_CONFIG_DIR` to override the default `~/.claude`.
 
+### `save` overwrite behavior
+
+`save <alias>` asks before overwriting an existing profile (mirrors the `create` wizard). Pass `-f` / `--force` to skip the prompt, or run in a TTY to get the interactive `Overwrite? [y/N]` prompt. In non-TTY contexts without `--force`, `save` exits 0 with a clear error instead of silently destroying the profile.
+
 ## Claude Code plugin
 
-The `packages/claude-code-plugin/` directory is a Claude Code plugin. Symlink or copy it into `~/.claude/plugins/llm-switch/` to use `/switch-config` inside Claude Code.
+The `packages/claude-code-plugin/` directory is a Claude Code plugin. Symlink or copy it into `~/.claude/plugins/llm-switch/` to use `/switch-config` inside Claude Code. The plugin version tracks the CLI version.
 
 ## Development
 
 ```bash
 pnpm install
-pnpm test
+pnpm test                    # 192 tests across 20 files
+pnpm -F llm-switch test:coverage   # 96% lines, 92% functions, 100% branches
 pnpm build
 pnpm -F llm-switch lint
 pnpm -F llm-switch format
 ```
 
-`pnpm install` also enables a pre-commit hook that runs `lint` and `format:check` on every commit.
+`pnpm install` also enables a pre-commit hook that runs `lint` and `format:check` on every commit. CI runs the same checks plus a `pnpm audit` job for dependency vulnerabilities. See [CONTRIBUTING.md](./CONTRIBUTING.md) for commit conventions and the PR process, and [SECURITY.md](./SECURITY.md) for how to report a vulnerability.
 
 ## License
 
