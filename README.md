@@ -14,7 +14,7 @@ If you maintain multiple `settings.json.<alias>` files (e.g. `settings.json.glm`
 | ------------- | ---------------------------------------------------------- | ------------------- |
 | GLM (智谱)    | `https://open.bigmodel.cn/api/anthropic`                   | `glm-4.5`           |
 | DeepSeek      | `https://api.deepseek.com/anthropic`                       | `deepseek-chat`     |
-| Kimi (Moonshot)| `https://api.moonshot.cn/anthropic`                       | `moonshot-v1-8k`    |
+| Kimi (Moonshot)| `https://api.kimi.com/coding/`                             | `kimi-for-coding`   |
 | MiniMax       | `https://api.minimaxi.com/anthropic`                       | `MiniMax-Text-01`   |
 | Qwen (DashScope)| `https://dashscope.aliyuncs.com/compatible-mode/anthropic`| `qwen-plus`         |
 
