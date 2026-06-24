@@ -53,7 +53,9 @@ describe('restore command', () => {
 
     await run(io as never);
 
-    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8'))).toEqual({ previous: true });
+    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8'))).toEqual({
+      previous: true,
+    });
     expect(writes.join('')).toContain('Restored from backup');
   });
 });

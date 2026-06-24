@@ -6,7 +6,10 @@
   "bin": {
     "llm-switch": "./bin/llm-switch.js"
   },
-  "files": ["bin", "dist"],
+  "files": [
+    "bin",
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/xavier2code/llm-switch.git"
@@ -20,6 +23,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "git config core.hooksPath packages/cli/.githooks",
     "prepublishOnly": "pnpm test && pnpm build"
   },
   "dependencies": {
@@ -29,7 +36,12 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "prettier": "^3.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"

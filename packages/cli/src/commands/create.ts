@@ -1,12 +1,7 @@
 import type { Readable, Writable } from 'node:stream';
 import fs from 'node:fs/promises';
 import { select, input, password, confirm } from '@inquirer/prompts';
-import {
-  getSettingsPath,
-  getBackupPath,
-  profilePath,
-  validateAlias,
-} from '../config.js';
+import { getSettingsPath, getBackupPath, profilePath, validateAlias } from '../config.js';
 import { switchTo } from '../switcher.js';
 import { PROVIDERS, getProvider, type ProviderId } from '../providers.js';
 import { validateAnthropic } from '../validator.js';
@@ -46,9 +41,7 @@ async function fileExists(p: string): Promise<boolean> {
 
 export async function run(io: CreateIO): Promise<void> {
   if (!io.isTTY) {
-    throw new UserCancelledError(
-      'Interactive mode requires a TTY. Use: llm-switch <alias>',
-    );
+    throw new UserCancelledError('Interactive mode requires a TTY. Use: llm-switch <alias>');
   }
 
   const sFn = io.selectFn ?? select;
@@ -117,7 +110,6 @@ export async function run(io: CreateIO): Promise<void> {
       });
       ensure(!isCancel(keyInput), 'Cancelled.');
       apiKey = (keyInput as string).trim();
-      needsNewKey = false;
     }
 
     try {

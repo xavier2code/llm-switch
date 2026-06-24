@@ -12,9 +12,7 @@ export async function run(io: CommandIO): Promise<void> {
   const profiles = await listProfiles(configDir);
 
   if (profiles.length === 0) {
-    throw new NoProfilesError(
-      "No profiles found. Create one with: llm-switch save <alias>",
-    );
+    throw new NoProfilesError('No profiles found. Create one with: llm-switch save <alias>');
   }
 
   const maxAliasLen = Math.max(...profiles.map((p) => p.alias.length));

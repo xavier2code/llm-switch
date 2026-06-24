@@ -3,8 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { run } from '../../src/commands/list.js';
-import { NoProfilesError, ConfigDirNotFoundError } from '../../src/errors.js';
-import { ConfigDir } from '../../src/config.js';
+import { NoProfilesError } from '../../src/errors.js';
 
 let tmpDir: string;
 let savedEnv: string | undefined;
@@ -23,7 +22,9 @@ afterEach(async () => {
 
 describe('list command', () => {
   it('throws NoProfilesError when no profiles', async () => {
-    await expect(run({ stdout: { write: () => {} } } as never)).rejects.toBeInstanceOf(NoProfilesError);
+    await expect(run({ stdout: { write: () => {} } } as never)).rejects.toBeInstanceOf(
+      NoProfilesError,
+    );
   });
 
   it('lists profiles via injected writer', async () => {

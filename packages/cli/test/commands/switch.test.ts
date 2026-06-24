@@ -4,11 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { Readable } from 'node:stream';
 import { run } from '../../src/commands/switch.js';
-import {
-  ProfileNotFoundError,
-  UserCancelledError,
-  InvalidAliasError,
-} from '../../src/errors.js';
+import { ProfileNotFoundError, UserCancelledError, InvalidAliasError } from '../../src/errors.js';
 
 let tmpDir: string;
 let savedEnv: string | undefined;
@@ -40,12 +36,16 @@ describe('switch command', () => {
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{}');
     const io = mockIO();
 
-    await expect(run({ alias: 'nope', ...io, isTTY: true } as never)).rejects.toBeInstanceOf(ProfileNotFoundError);
+    await expect(run({ alias: 'nope', ...io, isTTY: true } as never)).rejects.toBeInstanceOf(
+      ProfileNotFoundError,
+    );
   });
 
   it('throws InvalidAliasError for bad alias', async () => {
     const io = mockIO();
-    await expect(run({ alias: 'BAD!', ...io, isTTY: true } as never)).rejects.toBeInstanceOf(InvalidAliasError);
+    await expect(run({ alias: 'BAD!', ...io, isTTY: true } as never)).rejects.toBeInstanceOf(
+      InvalidAliasError,
+    );
   });
 
   it('switches when alias given and profile exists', async () => {
@@ -55,7 +55,9 @@ describe('switch command', () => {
 
     await run({ alias: 'glm', ...io, isTTY: true } as never);
 
-    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8'))).toEqual({ a: 2 });
+    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8'))).toEqual({
+      a: 2,
+    });
     expect(io.writes.join('')).toContain('Switched to glm');
   });
 
@@ -63,6 +65,8 @@ describe('switch command', () => {
     await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{}');
     const io = mockIO('\n');
 
-    await expect(run({ alias: undefined, ...io, isTTY: false } as never)).rejects.toBeInstanceOf(UserCancelledError);
+    await expect(run({ alias: undefined, ...io, isTTY: false } as never)).rejects.toBeInstanceOf(
+      UserCancelledError,
+    );
   });
 });

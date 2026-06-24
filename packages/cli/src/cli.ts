@@ -14,9 +14,9 @@ import * as createCmd from './commands/create.js';
 import * as currentCmd from './commands/current.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const pkg = JSON.parse(
-  readFileSync(resolve(__dirname, '../package.json'), 'utf8'),
-) as { version: string };
+const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8')) as {
+  version: string;
+};
 
 const program = new Command();
 program

@@ -132,7 +132,9 @@ describe('create command', () => {
     const io = { ...mockIO(), isTTY: true, validateFn };
     await run(io as never);
 
-    const call = mockSelect.mock.calls[0]?.[0] as { choices?: Array<{ name: string; value: string }> };
+    const call = mockSelect.mock.calls[0]?.[0] as {
+      choices?: Array<{ name: string; value: string }>;
+    };
     expect(call.choices).toHaveLength(5);
     const ids = call.choices!.map((c) => c.value).sort();
     expect(ids).toEqual(['deepseek', 'glm', 'kimi', 'minimax', 'qwen']);
@@ -192,7 +194,9 @@ describe('create command', () => {
 
     const urlCall = mockInput.mock.calls[1]?.[0] as { validate?: (v: string) => boolean | string };
     expect(urlCall.validate!('')).toBe('Required');
-    const modelCall = mockInput.mock.calls[2]?.[0] as { validate?: (v: string) => boolean | string };
+    const modelCall = mockInput.mock.calls[2]?.[0] as {
+      validate?: (v: string) => boolean | string;
+    };
     expect(modelCall.validate!('')).toBe('Required');
   });
 
@@ -221,7 +225,10 @@ describe('create command', () => {
     const io = { ...mockIO(), isTTY: true, validateFn };
     await run(io as never);
 
-    const call = mockPassword.mock.calls[0]?.[0] as { mask?: string; validate?: (v: string) => boolean | string };
+    const call = mockPassword.mock.calls[0]?.[0] as {
+      mask?: string;
+      validate?: (v: string) => boolean | string;
+    };
     expect(call.mask).toBe('*');
     expect(call.validate!('')).toBe('Required');
   });
@@ -246,14 +253,13 @@ describe('create command', () => {
 
   it('validation fails → submenu: Enter a different key → loops password then succeeds', async () => {
     mockSelect
-      .mockResolvedValueOnce('glm')     // provider
+      .mockResolvedValueOnce('glm') // provider
       .mockResolvedValueOnce('newkey'); // submenu
     mockInput.mockResolvedValueOnce('glm');
     mockConfirm.mockResolvedValueOnce(true);
-    mockPassword
-      .mockResolvedValueOnce('bad-key')
-      .mockResolvedValueOnce('good-key');
-    const validateFn = vi.fn()
+    mockPassword.mockResolvedValueOnce('bad-key').mockResolvedValueOnce('good-key');
+    const validateFn = vi
+      .fn()
       .mockRejectedValueOnce(new ValidationError('Invalid API key (401).'))
       .mockResolvedValueOnce(undefined);
 
@@ -266,9 +272,7 @@ describe('create command', () => {
   });
 
   it('validation fails → submenu: Cancel → UserCancelledError', async () => {
-    mockSelect
-      .mockResolvedValueOnce('glm')
-      .mockResolvedValueOnce('cancel');
+    mockSelect.mockResolvedValueOnce('glm').mockResolvedValueOnce('cancel');
     mockInput.mockResolvedValueOnce('glm');
     mockConfirm.mockResolvedValueOnce(true);
     mockPassword.mockResolvedValueOnce('bad-key');
@@ -280,16 +284,15 @@ describe('create command', () => {
   });
 
   it('validation fails → submenu: Edit BASE_URL/model → prompts URL+model, re-validates with same key', async () => {
-    mockSelect
-      .mockResolvedValueOnce('glm')
-      .mockResolvedValueOnce('edit');
+    mockSelect.mockResolvedValueOnce('glm').mockResolvedValueOnce('edit');
     mockInput
       .mockResolvedValueOnce('glm')
       .mockResolvedValueOnce('https://my-proxy.example.com/anthropic')
       .mockResolvedValueOnce('custom-model');
     mockConfirm.mockResolvedValueOnce(true);
     mockPassword.mockResolvedValueOnce('key');
-    const validateFn = vi.fn()
+    const validateFn = vi
+      .fn()
       .mockRejectedValueOnce(new ValidationError('boom'))
       .mockResolvedValueOnce(undefined);
 
@@ -303,13 +306,12 @@ describe('create command', () => {
   });
 
   it('validation fails → submenu: Retry with same key → re-validates with same params', async () => {
-    mockSelect
-      .mockResolvedValueOnce('glm')
-      .mockResolvedValueOnce('retry');
+    mockSelect.mockResolvedValueOnce('glm').mockResolvedValueOnce('retry');
     mockInput.mockResolvedValueOnce('glm');
     mockConfirm.mockResolvedValueOnce(true);
     mockPassword.mockResolvedValueOnce('key');
-    const validateFn = vi.fn()
+    const validateFn = vi
+      .fn()
       .mockRejectedValueOnce(new ValidationError('boom'))
       .mockResolvedValueOnce(undefined);
 
@@ -321,9 +323,7 @@ describe('create command', () => {
   });
 
   it('validation error message is printed to stderr', async () => {
-    mockSelect
-      .mockResolvedValueOnce('glm')
-      .mockResolvedValueOnce('cancel');
+    mockSelect.mockResolvedValueOnce('glm').mockResolvedValueOnce('cancel');
     mockInput.mockResolvedValueOnce('glm');
     mockConfirm.mockResolvedValueOnce(true);
     mockPassword.mockResolvedValueOnce('bad-key');
@@ -340,8 +340,8 @@ describe('create command', () => {
     mockSelect.mockResolvedValueOnce('glm');
     mockInput.mockResolvedValueOnce('glm');
     mockConfirm
-      .mockResolvedValueOnce(true)   // use defaults
-      .mockResolvedValueOnce(true);  // overwrite = yes
+      .mockResolvedValueOnce(true) // use defaults
+      .mockResolvedValueOnce(true); // overwrite = yes
     mockPassword.mockResolvedValueOnce('new-key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
 
@@ -361,9 +361,7 @@ describe('create command', () => {
 
     mockSelect.mockResolvedValueOnce('glm');
     mockInput.mockResolvedValueOnce('glm');
-    mockConfirm
-      .mockResolvedValueOnce(true)
-      .mockResolvedValueOnce(false);
+    mockConfirm.mockResolvedValueOnce(true).mockResolvedValueOnce(false);
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
 
@@ -395,7 +393,10 @@ describe('create command', () => {
   });
 
   it('activates profile: settings.json matches profile and backup created', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json'), JSON.stringify({ env: { PREV: 'yes' } }));
+    await fs.writeFile(
+      path.join(tmpDir, 'settings.json'),
+      JSON.stringify({ env: { PREV: 'yes' } }),
+    );
 
     mockSelect.mockResolvedValueOnce('glm');
     mockInput.mockResolvedValueOnce('glm');

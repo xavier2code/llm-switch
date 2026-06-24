@@ -15,9 +15,7 @@ export async function run(io: RestoreIO): Promise<void> {
     throw new NoBackupError(`No backup found at ${backupPath}.`);
   }
   if (!(await exists(settingsPath))) {
-    throw new NoCurrentSettingsError(
-      `No current settings.json to restore at ${settingsPath}.`,
-    );
+    throw new NoCurrentSettingsError(`No current settings.json to restore at ${settingsPath}.`);
   }
   if (await isSameContent(settingsPath, backupPath)) {
     io.stdout.write('Already at backup state. Nothing to do.\n');

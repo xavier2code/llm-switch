@@ -1,5 +1,8 @@
 export class AppError extends Error {
-  constructor(message: string, public readonly code: string) {
+  constructor(
+    message: string,
+    public readonly code: string,
+  ) {
     super(message);
     this.name = new.target.name;
   }
@@ -48,7 +51,10 @@ export class InvalidAliasError extends AppError {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, public readonly cause?: unknown) {
+  constructor(
+    message: string,
+    public readonly cause?: unknown,
+  ) {
     super(message, 'VALIDATION_FAILED');
   }
 }

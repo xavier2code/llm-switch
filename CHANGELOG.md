@@ -11,9 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - All profile files (`settings.json`, `settings.json.<alias>`, `settings.json.bak`) are now written with mode `0600` automatically. Previously these files inherited the default umask (typically `0644`), allowing other local users to read API keys. The tool no longer requires a manual `chmod 600` after use.
 - The `validate` step now rejects non-HTTPS `BASE_URL` values to prevent accidentally sending the API key in plaintext over HTTP. `https://` is required; `http://` is only allowed for `localhost`, `127.0.0.1`, and `::1` (so local proxies like LiteLLM still work). Malformed URLs are also rejected. On rejection the existing failure submenu in `create` prompts the user to edit the URL or model.
 
+### Added
+- ESLint flat config (TypeScript-aware via `@typescript-eslint`), Prettier, `.editorconfig`, and a pre-commit hook that runs `lint` + `format:check` on every commit. CI now has explicit `Lint` and `Format check` jobs. `pnpm -F llm-switch lint` and `pnpm -F llm-switch format` are the new developer commands.
+
 ### Changed
 - Removed unused `log.info`, `log.success`, `log.warn`, `log.dim`, `log.bold`, `log.cyan` methods (only `log.error` was actually used by the CLI) and the dead `parseSettingsSafe` export from `schemas.ts`. Bundle is ~0.5 KB smaller as a result.
 - Extracted duplicated helpers to `src/fs-utils.ts`: `sha256()` (was defined in both `scanner.ts` and `display.ts`, with `scanner.ts` using a dynamic `await import('node:crypto')` per call) and `exists()` (was defined identically in `save.ts` and `restore.ts`). The local `isCancel` in `create.ts` is replaced by the export from `ui.ts`, which is the canonical version (the only one that correctly handles the `NEW_SENTINEL` symbol). Bundle is ~0.4 KB smaller as a result.
+- Removed dead `needsNewKey = false` assignment in `create.ts:120` (the catch block always reassigns it). Removed unused `ConfigDirNotFoundError` and `ConfigDir` imports from `test/commands/list.test.ts`. Re-formatted the whole tree with Prettier.
 
 ## [0.4.1] - 2026-06-23
 

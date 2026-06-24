@@ -10,10 +10,7 @@ export async function switchTo(
 ): Promise<void> {
   await backupCurrent(settingsPath, backupPath);
 
-  const tmpPath = path.join(
-    path.dirname(settingsPath),
-    `.settings.${crypto.randomUUID()}.tmp`,
-  );
+  const tmpPath = path.join(path.dirname(settingsPath), `.settings.${crypto.randomUUID()}.tmp`);
 
   try {
     await fs.copyFile(sourcePath, tmpPath);

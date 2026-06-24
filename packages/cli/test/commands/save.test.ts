@@ -35,13 +35,17 @@ function mockIO() {
 describe('save command', () => {
   it('throws NoCurrentSettingsError when settings.json missing', async () => {
     const io = mockIO();
-    await expect(run({ alias: 'glm', ...io, isTTY: true } as never)).rejects.toBeInstanceOf(NoCurrentSettingsError);
+    await expect(run({ alias: 'glm', ...io, isTTY: true } as never)).rejects.toBeInstanceOf(
+      NoCurrentSettingsError,
+    );
   });
 
   it('throws InvalidAliasError for bad alias', async () => {
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{}');
     const io = mockIO();
-    await expect(run({ alias: 'BAD!', ...io, isTTY: true } as never)).rejects.toBeInstanceOf(InvalidAliasError);
+    await expect(run({ alias: 'BAD!', ...io, isTTY: true } as never)).rejects.toBeInstanceOf(
+      InvalidAliasError,
+    );
   });
 
   it('saves current settings to profile path', async () => {
@@ -50,7 +54,9 @@ describe('save command', () => {
 
     await run({ alias: 'glm', ...io, isTTY: true } as never);
 
-    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({ a: 1 });
+    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({
+      a: 1,
+    });
   });
 
   it('overwrites existing profile (current is truth)', async () => {
@@ -60,7 +66,9 @@ describe('save command', () => {
 
     await run({ alias: 'glm', ...io, isTTY: true } as never);
 
-    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({ new: true });
+    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({
+      new: true,
+    });
     expect(io.writes.join('')).toContain('Overwrote');
   });
 

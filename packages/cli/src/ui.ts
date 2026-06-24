@@ -29,16 +29,11 @@ export interface ReadlineIO {
 
 function ensureTTY(): void {
   if (!process.stdout.isTTY) {
-    throw new UserCancelledError(
-      'Interactive mode requires a TTY. Use: llm-switch <alias>',
-    );
+    throw new UserCancelledError('Interactive mode requires a TTY. Use: llm-switch <alias>');
   }
 }
 
-export async function pickProfile(
-  profiles: Profile[],
-  _io?: ReadlineIO,
-): Promise<Profile | null> {
+export async function pickProfile(profiles: Profile[], _io?: ReadlineIO): Promise<Profile | null> {
   ensureTTY();
   if (profiles.length === 0) return null;
 
@@ -56,10 +51,7 @@ export async function pickProfile(
   return result ?? null;
 }
 
-export async function promptAlias(
-  existing: string[],
-  _io?: ReadlineIO,
-): Promise<string | null> {
+export async function promptAlias(existing: string[], _io?: ReadlineIO): Promise<string | null> {
   ensureTTY();
 
   if (existing.length === 0) {
@@ -81,10 +73,7 @@ export async function promptAlias(
   return result as string;
 }
 
-export async function promptNewAlias(
-  existing: string[],
-  _io?: ReadlineIO,
-): Promise<string | null> {
+export async function promptNewAlias(existing: string[], _io?: ReadlineIO): Promise<string | null> {
   ensureTTY();
 
   const result = (await input({

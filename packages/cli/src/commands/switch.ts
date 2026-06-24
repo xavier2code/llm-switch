@@ -9,10 +9,7 @@ import {
 import { listProfiles } from '../scanner.js';
 import { switchTo } from '../switcher.js';
 import { pickProfile } from '../ui.js';
-import {
-  ProfileNotFoundError,
-  UserCancelledError,
-} from '../errors.js';
+import { ProfileNotFoundError, UserCancelledError } from '../errors.js';
 
 export interface SwitchIO {
   alias?: string;
@@ -42,9 +39,7 @@ export async function run(io: SwitchIO): Promise<void> {
   }
 
   if (!io.isTTY) {
-    throw new UserCancelledError(
-      'Interactive mode requires a TTY. Use: llm-switch <alias>',
-    );
+    throw new UserCancelledError('Interactive mode requires a TTY. Use: llm-switch <alias>');
   }
 
   const profiles = await listProfiles(configDir);
