@@ -25,8 +25,8 @@ export const PROVIDERS: readonly Provider[] = [
   {
     id: 'kimi',
     displayName: 'Kimi (Moonshot)',
-    baseUrl: 'https://api.moonshot.cn/anthropic',
-    defaultModel: 'moonshot-v1-8k',
+    baseUrl: 'https://api.kimi.com/coding/',
+    defaultModel: 'kimi-for-coding',
   },
   {
     id: 'minimax',
