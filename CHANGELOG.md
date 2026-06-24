@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- CI now runs `pnpm audit --prod --audit-level=high` on every PR + push to main. Fails the build on `high` or `critical` vulnerabilities in production dependencies. Also added a `.github/dependabot.yml` that opens weekly PRs for `minor` and `patch` dependency updates (major bumps are ignored — they need manual review).
+
 ### Changed
 - Bumped the `claude-code-plugin` package version from `0.1.0` (frozen since initial release) to `0.4.2` to match the CLI. Going forward, the plugin version always tracks the CLI version per the release checklist in `CLAUDE.md`. Issue #14.
 - Added `isProviderId()` type guard in `providers.ts`. `create.ts` now uses it to validate the return value of `@inquirer/prompts select()` before passing it to `getProvider()`, replacing an unsafe `as ProviderId` cast. If a non-string or non-ProviderId value ever slips through, the wizard now aborts with a clear error instead of crashing deep inside `getProvider()`.
