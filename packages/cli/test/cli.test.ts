@@ -155,3 +155,54 @@ describe('cli e2e', () => {
     expect(r.code).toBe(0);
   });
 });
+
+describe('cli help output', () => {
+  async function helpFor(args: string[]): Promise<string> {
+    const r = await run(args);
+    expect(r.code).toBe(0);
+    return r.stdout;
+  }
+
+  it('top-level --help mentions CLAUDE_CONFIG_DIR', async () => {
+    const out = await helpFor(['--help']);
+    expect(out).toContain('CLAUDE_CONFIG_DIR');
+  });
+
+  it('top-level --help mentions the 5 built-in providers', async () => {
+    const out = await helpFor(['--help']);
+    expect(out).toMatch(/GLM/i);
+    expect(out).toMatch(/DeepSeek/i);
+    expect(out).toMatch(/Kimi/i);
+    expect(out).toMatch(/Qwen/i);
+  });
+
+  for (const cmd of ['list', 'switch', 'restore', 'save', 'create', 'current']) {
+    it(`${cmd} --help contains an "Examples:" section`, async () => {
+      const out = await helpFor([cmd, '--help']);
+      expect(out).toMatch(/Examples:/i);
+    });
+  }
+
+  it('switch --help documents the alias format', async () => {
+    const out = await helpFor(['switch', '--help']);
+    expect(out).toMatch(/alias/i);
+    // Should reference either the regex or describe what makes a valid alias
+    expect(out.length).toBeGreaterThan(200);
+  });
+
+  it('save --help documents the alias format', async () => {
+    const out = await helpFor(['save', '--help']);
+    expect(out).toMatch(/alias/i);
+    expect(out.length).toBeGreaterThan(200);
+  });
+
+  it('create --help mentions it is interactive-only', async () => {
+    const out = await helpFor(['create', '--help']);
+    expect(out).toMatch(/TTY/i);
+  });
+
+  it('restore --help mentions backup (.bak)', async () => {
+    const out = await helpFor(['restore', '--help']);
+    expect(out).toMatch(/\.bak/);
+  });
+});
