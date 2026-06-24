@@ -59,9 +59,7 @@ export async function validateAnthropic(
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       const snippet = text.slice(0, BODY_SNIPPET_LEN);
-      throw new ValidationError(
-        `Provider rejected request (${res.status}): ${snippet}`,
-      );
+      throw new ValidationError(`Provider rejected request (${res.status}): ${snippet}`);
     }
   } catch (err: unknown) {
     if (err instanceof ValidationError) throw err;

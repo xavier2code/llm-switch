@@ -9,6 +9,6 @@ export default defineConfig({
   sourcemap: true,
   shims: false,
   banner: {
-    js: "#!/usr/bin/env node",
+    js: '#!/usr/bin/env node',
   },
 });

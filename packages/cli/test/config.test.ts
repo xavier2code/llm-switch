@@ -56,12 +56,9 @@ describe('derived paths', () => {
 });
 
 describe('ALIAS_RE', () => {
-  it.each(['glm', 'kimi', 'glm-v2', 'a.b', 'x_y', '123abc'])(
-    'accepts valid alias: %s',
-    (alias) => {
-      expect(ALIAS_RE.test(alias)).toBe(true);
-    },
-  );
+  it.each(['glm', 'kimi', 'glm-v2', 'a.b', 'x_y', '123abc'])('accepts valid alias: %s', (alias) => {
+    expect(ALIAS_RE.test(alias)).toBe(true);
+  });
 
   it.each(['GLM', '-glm', '.glm', 'glm!', '', 'a'.repeat(65)])(
     'rejects invalid alias: %s',

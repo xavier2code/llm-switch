@@ -12,7 +12,10 @@ interface RunResult {
   code: number | null;
 }
 
-function run(args: string[], opts: { cwd?: string; env?: Record<string, string> } = {}): Promise<RunResult> {
+function run(
+  args: string[],
+  opts: { cwd?: string; env?: Record<string, string> } = {},
+): Promise<RunResult> {
   return new Promise((resolve, reject) => {
     const proc = spawn('node', [BIN, ...args], {
       cwd: opts.cwd,

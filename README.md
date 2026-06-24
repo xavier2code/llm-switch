@@ -54,7 +54,11 @@ The `packages/claude-code-plugin/` directory is a Claude Code plugin. Symlink or
 pnpm install
 pnpm test
 pnpm build
+pnpm -F llm-switch lint
+pnpm -F llm-switch format
 ```
+
+`pnpm install` also enables a pre-commit hook that runs `lint` and `format:check` on every commit.
 
 ## License
 

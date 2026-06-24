@@ -27,15 +27,16 @@ export async function run(io: SaveIO): Promise<void> {
   let alias = io.alias;
   if (alias === undefined) {
     if (!io.isTTY) {
-      throw new UserCancelledError(
-        'Interactive mode requires a TTY. Use: llm-switch save <alias>',
-      );
+      throw new UserCancelledError('Interactive mode requires a TTY. Use: llm-switch save <alias>');
     }
     const profiles = await listProfiles(configDir);
-    const result = await promptAlias(profiles.map((p) => p.alias), {
-      input: io.stdin,
-      output: io.stdout,
-    });
+    const result = await promptAlias(
+      profiles.map((p) => p.alias),
+      {
+        input: io.stdin,
+        output: io.stdout,
+      },
+    );
     if (!result) throw new UserCancelledError('Cancelled.');
     alias = result;
   } else {

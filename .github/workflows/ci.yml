@@ -33,6 +33,12 @@ jobs:
       - name: Typecheck
         run: pnpm -F llm-switch typecheck
 
+      - name: Lint
+        run: pnpm -F llm-switch lint
+
+      - name: Format check
+        run: pnpm -F llm-switch format:check
+
       - name: Test
         run: pnpm test
 
