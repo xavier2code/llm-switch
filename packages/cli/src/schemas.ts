@@ -13,11 +13,3 @@ export function parseSettings(json: string): Settings {
   const raw = JSON.parse(json);
   return SettingsSchema.parse(raw);
 }
-
-export function parseSettingsSafe(json: string): Settings | null {
-  try {
-    return parseSettings(json);
-  } catch {
-    return null;
-  }
-}

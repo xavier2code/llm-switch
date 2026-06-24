@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import * as schemas from '../src/schemas.js';
 import { SettingsSchema, parseSettings } from '../src/schemas.js';
 
 describe('SettingsSchema', () => {
@@ -33,5 +34,15 @@ describe('parseSettings', () => {
 
   it('throws on invalid JSON', () => {
     expect(() => parseSettings('not json')).toThrow();
+  });
+});
+
+describe('schemas module surface', () => {
+  it('does not export parseSettingsSafe (dead code)', () => {
+    expect('parseSettingsSafe' in schemas).toBe(false);
+  });
+
+  it('exposes parseSettings and SettingsSchema only', () => {
+    expect(Object.keys(schemas).sort()).toEqual(['SettingsSchema', 'parseSettings']);
   });
 });
