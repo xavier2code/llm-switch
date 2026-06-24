@@ -17,8 +17,14 @@ export async function run(io: CommandIO): Promise<void> {
 
   const maxAliasLen = Math.max(...profiles.map((p) => p.alias.length));
 
+  const sorted = [...profiles].sort((a, b) => {
+    if (a.active && !b.active) return -1;
+    if (!a.active && b.active) return 1;
+    return a.alias.localeCompare(b.alias);
+  });
+
   const lines = ['Available profiles:', ''];
-  profiles.forEach((p) => {
+  sorted.forEach((p) => {
     const marker = p.active ? '●' : '○';
     const tag = p.active ? ' (active)' : '';
     const padded = p.alias.padEnd(maxAliasLen);
