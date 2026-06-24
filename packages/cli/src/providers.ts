@@ -48,6 +48,12 @@ const BY_ID: Record<ProviderId, Provider> = (() => {
   return map;
 })();
 
+const PROVIDER_IDS: readonly string[] = PROVIDERS.map((p) => p.id);
+
+export function isProviderId(value: unknown): value is ProviderId {
+  return typeof value === 'string' && (PROVIDER_IDS as readonly string[]).includes(value);
+}
+
 export function getProvider(id: ProviderId): Provider {
   const p = BY_ID[id];
   if (!p) {
