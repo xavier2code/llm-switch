@@ -22,18 +22,66 @@ const program = new Command();
 program
   .name('llm-switch')
   .description('Switch Claude Code settings.json profiles from the command line')
-  .version(pkg.version);
+  .version(pkg.version)
+  .addHelpText(
+    'after',
+    `
+Environment:
+  CLAUDE_CONFIG_DIR   Config directory (default: ~/.claude). Holds settings.json,
+                      settings.json.<alias> profile files, and settings.json.bak.
+
+Built-in providers for \`create\`:
+  GLM (智谱)        https://open.bigmodel.cn/api/anthropic          glm-4.5
+  DeepSeek           https://api.deepseek.com/anthropic              deepseek-chat
+  Kimi (Moonshot)    https://api.moonshot.cn/anthropic               moonshot-v1-8k
+  MiniMax            https://api.minimaxi.com/anthropic               MiniMax-Text-01
+  Qwen (DashScope)   https://dashscope.aliyuncs.com/compatible-mode/  qwen-plus
+
+Profile file convention:
+  settings.json              the currently active profile (atomic-renamed on switch)
+  settings.json.<alias>      each saved profile
+  settings.json.bak          backup of the previous active profile
+`,
+  );
 
 program
   .command('list')
-  .description('List available profiles')
+  .description('List available profiles (active first, others alphabetical)')
+  .addHelpText(
+    'after',
+    `
+Examples:
+  $ llm-switch list
+  $ CLAUDE_CONFIG_DIR=/tmp/llm-switch-test llm-switch list
+
+Output columns: ●/○ marker, alias, full path. Active profile is always listed first.
+`,
+  )
   .action(async () => {
     await listCmd.run({ stdout: process.stdout });
   });
 
 program
   .command('switch [alias]')
-  .description('Switch to a profile (interactive if no alias given)')
+  .description('Switch to a profile (interactive if no alias is given)')
+  .addHelpText(
+    'after',
+    `
+Arguments:
+  [alias]   Profile name to switch to. Must match ^[a-z0-9][a-z0-9._-]{0,63}$.
+            If omitted, an interactive picker is shown (requires a TTY).
+
+The previous settings.json is moved to settings.json.bak before the swap, so
+\`llm-switch restore\` can undo the change.
+
+Examples:
+  $ llm-switch switch            # interactive picker
+  $ llm-switch switch glm        # switch directly to the 'glm' profile
+
+Exit codes: 0 on success, 2 if the named profile does not exist, 0 (no error)
+if cancelled via Ctrl-C.
+`,
+  )
   .action(async (alias?: string) => {
     await switchCmd.run({
       alias,
@@ -46,14 +94,46 @@ program
 
 program
   .command('restore')
-  .description('Restore from the most recent backup')
+  .description('Restore settings.json from the most recent backup')
+  .addHelpText(
+    'after',
+    `
+Restores settings.json from settings.json.bak (the file written by the most
+recent successful \`switch\` or \`save\`). The backup is removed after restore.
+
+If the current settings.json and the backup are byte-identical, the command
+prints 'Already at backup state' and exits 0 without touching anything.
+
+Examples:
+  $ llm-switch restore
+
+Exit codes: 1 if no settings.json.bak exists, 0 otherwise.
+`,
+  )
   .action(async () => {
     await restoreCmd.run({ stdout: process.stdout });
   });
 
 program
   .command('save [alias]')
-  .description('Save current settings.json as a named profile')
+  .description('Save the current settings.json as a named profile')
+  .addHelpText(
+    'after',
+    `
+Arguments:
+  [alias]   Profile name to save under. Must match ^[a-z0-9][a-z0-9._-]{0,63}$.
+            If omitted, an interactive picker is shown (requires a TTY).
+
+If the target settings.json.<alias> already exists it is overwritten silently
+(\`create\` prompts for confirmation; \`save\` does not).
+
+Examples:
+  $ llm-switch save glm           # save settings.json as 'glm'
+  $ llm-switch save               # interactive picker
+
+Exit codes: 1 if no settings.json exists, 0 otherwise.
+`,
+  )
   .action(async (alias?: string) => {
     await saveCmd.run({
       alias,
@@ -66,7 +146,28 @@ program
 
 program
   .command('create')
-  .description('Create a new profile from a built-in provider (interactive)')
+  .description('Create a new profile from a built-in provider (interactive wizard)')
+  .addHelpText(
+    'after',
+    `
+Interactive wizard: select provider → confirm alias → confirm/override the
+default BASE_URL and model → enter an API key (masked) → real API validation
+against the chosen provider's /v1/messages endpoint → write
+settings.json.<alias> → atomically activate as the current profile.
+
+Requires a TTY. In non-interactive contexts (CI, piped input) the command
+exits 0 with no effect.
+
+The validator rejects non-HTTPS BASE_URLs; http:// is allowed only for
+localhost/127.0.0.1/::1 (so local proxies like LiteLLM still work).
+
+Examples:
+  $ llm-switch create             # run the wizard
+
+Exit codes: 0 if created (or cleanly cancelled), non-zero on validation
+failure that isn't recovered via the failure submenu.
+`,
+  )
   .action(async () => {
     await createCmd.run({
       stdin: process.stdin,
@@ -79,6 +180,19 @@ program
 program
   .command('current')
   .description('Show the current active profile')
+  .addHelpText(
+    'after',
+    `
+Prints a summary of settings.json: which profile it matches (by SHA256 of
+contents), or 'default' if no profile file matches. Also prints the
+BASE_URL, model, and whether any MCP servers are configured.
+
+Examples:
+  $ llm-switch current
+
+Exit codes: 0 on success, 2 if the config directory is not found.
+`,
+  )
   .action(async () => {
     await currentCmd.run({ stdout: process.stdout });
   });
