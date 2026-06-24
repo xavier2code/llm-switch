@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Test coverage reporting via `@vitest/coverage-v8`. Coverage runs in CI on every PR + push to main with thresholds (80% lines/functions/statements, 75% branches). The HTML + lcov report is uploaded as an artifact from the Node 22 matrix run. Currently 96.35% lines, 92.54% functions, 100% branches across `src/`. New `pnpm -F llm-switch test:coverage` script for local runs.
+
 ## [0.4.3] - 2026-06-24
 
 ### Added
