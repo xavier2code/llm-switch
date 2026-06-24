@@ -7,6 +7,8 @@ import { PROVIDERS, getProvider, isProviderId } from '../providers.js';
 import { validateAnthropic } from '../validator.js';
 import { isCancel } from '../ui.js';
 import { UserCancelledError } from '../errors.js';
+import { exists } from '../fs-utils.js';
+import { INTERACTIVE_TTY_REQUIRED, RESTART_HINT } from '../messages.js';
 
 export interface CreateIO {
   stdin: Readable;
@@ -30,18 +32,9 @@ function nonEmpty(v: string): true | string {
 
 type SubmenuChoice = 'retry' | 'newkey' | 'edit' | 'cancel';
 
-async function fileExists(p: string): Promise<boolean> {
-  try {
-    await fs.access(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 export async function run(io: CreateIO): Promise<void> {
   if (!io.isTTY) {
-    throw new UserCancelledError('Interactive mode requires a TTY. Use: llm-switch <alias>');
+    throw new UserCancelledError(INTERACTIVE_TTY_REQUIRED);
   }
 
   const sFn = io.selectFn ?? select;
@@ -167,7 +160,7 @@ export async function run(io: CreateIO): Promise<void> {
 
   // 7. Overwrite confirm
   const profileFile = profilePath(alias);
-  if (await fileExists(profileFile)) {
+  if (await exists(profileFile)) {
     const overwrite = await cFn({
       message: `Profile '${alias}' exists. Overwrite?`,
       default: false,
@@ -197,5 +190,5 @@ export async function run(io: CreateIO): Promise<void> {
   await switchTo(profileFile, settingsPath, backupPath);
 
   // 10. Output
-  io.stdout.write(`Created and activated '${alias}'. Restart Claude Code to apply.\n`);
+  io.stdout.write(`Created and activated '${alias}'. ${RESTART_HINT}\n`);
 }

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+- Dropped the `zod` runtime dependency and deleted the orphan `src/schemas.ts` module. `zod` was only referenced by `test/schemas.test.ts` — no production code used `SettingsSchema` or `parseSettings` (the live parser in `display.ts` has its own `safeParse`). One fewer shipped dependency, smaller install footprint, no behavior change.
+- Removed the dead `ReadlineIO` interface and the unused `_io` parameter from `pickProfile`, `promptAlias`, and `promptNewAlias` in `ui.ts`. These were dependency-injection hooks that were never wired up — the functions read `process.stdout.isTTY` directly and ignored the passed-in streams.
+
+### Changed
+- Extracted `parseProfileAliases()` in `scanner.ts`, now shared by `scanner.ts` and `display.ts`. The `settings.json.<alias>` prefix-parsing filter chain was duplicated verbatim in both files.
+- Centralized repeated user-facing strings in a new `src/messages.ts` (`RESTART_HINT`, plus the `interactiveTtyRequiredHint()` / `INTERACTIVE_TTY_REQUIRED` helpers) so wording can be reworded in one place.
+- `create.ts` now reuses `exists()` from `fs-utils.ts` instead of a local `fileExists()` copy that was identical to it.
+
+### Fixed
+- `current --help` now documents the correct exit code: the config-directory-not-found case exits `1` (matching `exit.ts` and `exit.test.ts`), not `2` as previously written.
+- Non-TTY error hints now name the actual subcommand: `switch` suggests `llm-switch switch <alias>` and `save` suggests `llm-switch save <alias>`. `create` and the shared `ui.ts` guard use a plain "Interactive mode requires a TTY." with no `Use:` suffix, since neither has a non-interactive equivalent (the previous `llm-switch <alias>` suggestion was misleading for both).
+
 ## [0.5.0] - 2026-06-24
 
 ### Added

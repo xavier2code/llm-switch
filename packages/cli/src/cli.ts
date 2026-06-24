@@ -201,7 +201,7 @@ BASE_URL, model, and whether any MCP servers are configured.
 Examples:
   $ llm-switch current
 
-Exit codes: 0 on success, 2 if the config directory is not found.
+Exit codes: 0 on success, 1 if the config directory is not found.
 `,
   )
   .action(async () => {
