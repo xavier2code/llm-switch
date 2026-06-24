@@ -63,4 +63,26 @@ describe('save command', () => {
     expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'))).toEqual({ new: true });
     expect(io.writes.join('')).toContain('Overwrote');
   });
+
+  it('writes profile file with mode 0600 to protect API key', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"a":1}');
+    const io = mockIO();
+
+    await run({ alias: 'glm', ...io, isTTY: true } as never);
+
+    const stat = await fs.stat(path.join(tmpDir, 'settings.json.glm'));
+    expect(stat.mode & 0o777).toBe(0o600);
+  });
+
+  it('tightens permissions when overwriting an existing profile (was 0644 → now 0600)', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"new":true}');
+    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{"old":true}');
+    await fs.chmod(path.join(tmpDir, 'settings.json.glm'), 0o644);
+    const io = mockIO();
+
+    await run({ alias: 'glm', ...io, isTTY: true } as never);
+
+    const stat = await fs.stat(path.join(tmpDir, 'settings.json.glm'));
+    expect(stat.mode & 0o777).toBe(0o600);
+  });
 });

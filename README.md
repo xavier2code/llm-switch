@@ -22,7 +22,7 @@ You can override the BASE URL and model during the wizard. The default alias for
 
 ## Security note
 
-API keys entered into `create` are stored in plaintext in `~/.claude/settings.json` (and `settings.json.<alias>`). This matches how `save` works. Use file permissions (`chmod 600`) to protect the file if your machine is shared.
+API keys entered into `create` (and copied by `save`) are stored in plaintext in `~/.claude/settings.json` and `settings.json.<alias>`. The tool automatically applies `0600` permissions to every file it writes, so the API key is only readable by your user account on Unix systems.
 
 ## Install
 

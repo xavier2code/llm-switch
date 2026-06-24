@@ -4,6 +4,7 @@ import { NoBackupError } from './errors.js';
 export async function backupCurrent(settingsPath: string, backupPath: string): Promise<void> {
   try {
     await fs.copyFile(settingsPath, backupPath);
+    await fs.chmod(backupPath, 0o600);
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       return;

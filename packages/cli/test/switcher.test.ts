@@ -75,4 +75,17 @@ describe('switchTo', () => {
 
     spy.mockRestore();
   });
+
+  it('writes activated settings.json with mode 0600 to protect API key', async () => {
+    const settings = path.join(tmpDir, 'settings.json');
+    const backup = path.join(tmpDir, 'settings.json.bak');
+    const source = path.join(tmpDir, 'settings.json.glm');
+
+    await fs.writeFile(source, '{"new":true}');
+
+    await switchTo(source, settings, backup);
+
+    const stat = await fs.stat(settings);
+    expect(stat.mode & 0o777).toBe(0o600);
+  });
 });

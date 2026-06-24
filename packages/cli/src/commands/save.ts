@@ -44,6 +44,7 @@ export async function run(io: SaveIO): Promise<void> {
   const target = profilePath(alias);
   const existed = await exists(target);
   await fs.copyFile(settingsPath, target);
+  await fs.chmod(target, 0o600);
 
   if (existed) {
     io.stderr.write(`Overwrote existing profile '${alias}'.\n`);

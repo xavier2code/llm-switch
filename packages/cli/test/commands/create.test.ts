@@ -411,6 +411,19 @@ describe('create command', () => {
     expect(bak.env.PREV).toBe('yes');
   });
 
+  it('writes profile file with mode 0600 to protect API key', async () => {
+    mockSelect.mockResolvedValueOnce('glm');
+    mockInput.mockResolvedValueOnce('glm');
+    mockConfirm.mockResolvedValueOnce(true);
+    mockPassword.mockResolvedValueOnce('sk-secret-123');
+    const validateFn = vi.fn().mockResolvedValueOnce(undefined);
+    const io = { ...mockIO(), isTTY: true, validateFn };
+    await run(io as never);
+
+    const stat = await fs.stat(path.join(tmpDir, 'settings.json.glm'));
+    expect(stat.mode & 0o777).toBe(0o600);
+  });
+
   it('prints success message to stdout', async () => {
     mockSelect.mockResolvedValueOnce('glm');
     mockInput.mockResolvedValueOnce('glm');

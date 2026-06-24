@@ -197,6 +197,7 @@ export async function run(io: CreateIO): Promise<void> {
     2,
   );
   await fs.writeFile(profileFile, content);
+  await fs.chmod(profileFile, 0o600);
 
   // 9. Activate (atomic switch + backup)
   const settingsPath = getSettingsPath();
