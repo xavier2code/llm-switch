@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Security
 - All profile files (`settings.json`, `settings.json.<alias>`, `settings.json.bak`) are now written with mode `0600` automatically. Previously these files inherited the default umask (typically `0644`), allowing other local users to read API keys. The tool no longer requires a manual `chmod 600` after use.
+- The `validate` step now rejects non-HTTPS `BASE_URL` values to prevent accidentally sending the API key in plaintext over HTTP. `https://` is required; `http://` is only allowed for `localhost`, `127.0.0.1`, and `::1` (so local proxies like LiteLLM still work). Malformed URLs are also rejected. On rejection the existing failure submenu in `create` prompts the user to edit the URL or model.
 
 ## [0.4.1] - 2026-06-23
 
