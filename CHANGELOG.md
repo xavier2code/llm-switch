@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `list` now sorts the active profile to the top of the output. The previously-alphabetical order is preserved for the inactive profiles; only the active one is hoisted. Easier to spot the current profile at a glance, especially with many aliases.
 - `CONTRIBUTING.md` with dev setup, command reference, commit conventions, PR process, code layout, testing approach, and code of conduct.
 - `SECURITY.md` with supported-versions policy, vulnerability disclosure instructions, intentional-security behaviors, and a list of historical fixes.
+- Each subcommand's `--help` now includes usage examples, argument format hints (for `[alias]`), behavior notes, and exit codes. The top-level `--help` documents `CLAUDE_CONFIG_DIR` and lists the 5 built-in providers.
+- `list` now hashes profile files in parallel using `Promise.all` instead of serially awaiting each one. With N profiles, the read+hash phase goes from O(N × t_per_file) to roughly O(t_slowest). The result order is unchanged (still alphabetical after the active-first sort applied in `list`).
 
 ### Changed
 - Bumped the `claude-code-plugin` package version from `0.1.0` (frozen since initial release) to `0.4.2` to match the CLI. Going forward, the plugin version always tracks the CLI version per the release checklist in `CLAUDE.md`. Issue #14.
