@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { PROVIDERS, getProvider } from '../src/providers.js';
+import { PROVIDERS, getProvider, isProviderId } from '../src/providers.js';
 import { AppError } from '../src/errors.js';
 
 describe('PROVIDERS', () => {
@@ -32,5 +32,35 @@ describe('getProvider', () => {
   it('throws AppError for unknown id', () => {
     // @ts-expect-error testing runtime guard against invalid ids
     expect(() => getProvider('nope')).toThrow(AppError);
+  });
+});
+
+describe('isProviderId', () => {
+  it('returns true for every id in PROVIDERS', () => {
+    for (const p of PROVIDERS) {
+      expect(isProviderId(p.id)).toBe(true);
+    }
+  });
+
+  it('returns false for an unknown lowercase string', () => {
+    expect(isProviderId('nope')).toBe(false);
+  });
+
+  it('returns false for an empty string', () => {
+    expect(isProviderId('')).toBe(false);
+  });
+
+  it('returns false for a non-string', () => {
+    expect(isProviderId(undefined)).toBe(false);
+    expect(isProviderId(null)).toBe(false);
+    expect(isProviderId(42)).toBe(false);
+    expect(isProviderId({})).toBe(false);
+    expect(isProviderId([])).toBe(false);
+    expect(isProviderId(Symbol('x'))).toBe(false);
+  });
+
+  it('returns false for case-mismatched strings', () => {
+    expect(isProviderId('GLM')).toBe(false);
+    expect(isProviderId('Glm')).toBe(false);
   });
 });
