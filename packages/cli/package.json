@@ -1,6 +1,6 @@
 {
   "name": "llm-switch",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Switch Claude Code settings.json profiles from the command line",
   "type": "module",
   "bin": {

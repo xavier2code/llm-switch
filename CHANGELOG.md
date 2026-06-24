@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-06-24
+
 ### Removed
 - Dropped the `zod` runtime dependency and deleted the orphan `src/schemas.ts` module. `zod` was only referenced by `test/schemas.test.ts` — no production code used `SettingsSchema` or `parseSettings` (the live parser in `display.ts` has its own `safeParse`). One fewer shipped dependency, smaller install footprint, no behavior change.
 - Removed the dead `ReadlineIO` interface and the unused `_io` parameter from `pickProfile`, `promptAlias`, and `promptNewAlias` in `ui.ts`. These were dependency-injection hooks that were never wired up — the functions read `process.stdout.isTTY` directly and ignored the passed-in streams.
