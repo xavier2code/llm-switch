@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { select, input, password, confirm } from '@inquirer/prompts';
 import { getSettingsPath, getBackupPath, profilePath, validateAlias } from '../config.js';
 import { switchTo } from '../switcher.js';
-import { PROVIDERS, getProvider, type ProviderId } from '../providers.js';
+import { PROVIDERS, getProvider, isProviderId } from '../providers.js';
 import { validateAnthropic } from '../validator.js';
 import { isCancel } from '../ui.js';
 import { UserCancelledError } from '../errors.js';
@@ -56,7 +56,10 @@ export async function run(io: CreateIO): Promise<void> {
     choices: PROVIDERS.map((p) => ({ name: p.displayName, value: p.id })),
   });
   ensure(!isCancel(providerChoice), 'Cancelled.');
-  const provider = getProvider(providerChoice as ProviderId);
+  if (!isProviderId(providerChoice)) {
+    throw new UserCancelledError(`Unexpected provider value: ${String(providerChoice)}`);
+  }
+  const provider = getProvider(providerChoice);
 
   // 2. Alias
   const aliasInput = await iFn({
