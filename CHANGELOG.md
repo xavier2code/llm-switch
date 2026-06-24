@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `save` now supports a `--force` / `-f` flag. By default, `save` prompts for confirmation before overwriting an existing profile (mirroring the `create` wizard). `--force` skips the prompt. In non-TTY contexts with an existing profile and no `--force`, `save` exits 0 with a clear error instead of silently overwriting — preventing accidental loss of API keys.
+
+## [0.4.3] - 2026-06-24
+
+### Added
 - CI now runs `pnpm audit --prod --audit-level=high` on every PR + push to main. Fails the build on `high` or `critical` vulnerabilities in production dependencies. Also added a `.github/dependabot.yml` that opens weekly PRs for `minor` and `patch` dependency updates (major bumps are ignored — they need manual review).
 - `list` now sorts the active profile to the top of the output. The previously-alphabetical order is preserved for the inactive profiles; only the active one is hoisted. Easier to spot the current profile at a glance, especially with many aliases.
 - `CONTRIBUTING.md` with dev setup, command reference, commit conventions, PR process, code layout, testing approach, and code of conduct.
@@ -16,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `list` now hashes profile files in parallel using `Promise.all` instead of serially awaiting each one. With N profiles, the read+hash phase goes from O(N × t_per_file) to roughly O(t_slowest). The result order is unchanged (still alphabetical after the active-first sort applied in `list`).
 
 ### Changed
-- Bumped the `claude-code-plugin` package version from `0.1.0` (frozen since initial release) to `0.4.2` to match the CLI. Going forward, the plugin version always tracks the CLI version per the release checklist in `CLAUDE.md`. Issue #14.
+- Bumped the `claude-code-plugin` package version from `0.1.0` (frozen since initial release) to track the CLI per the release checklist in `CLAUDE.md`. This release moves it to `0.4.3`. Issue #14.
 - Added `isProviderId()` type guard in `providers.ts`. `create.ts` now uses it to validate the return value of `@inquirer/prompts select()` before passing it to `getProvider()`, replacing an unsafe `as ProviderId` cast. If a non-string or non-ProviderId value ever slips through, the wizard now aborts with a clear error instead of crashing deep inside `getProvider()`.
 
 ## [0.4.2] - 2026-06-24

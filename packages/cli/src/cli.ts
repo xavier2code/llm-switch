@@ -117,6 +117,7 @@ Exit codes: 1 if no settings.json.bak exists, 0 otherwise.
 program
   .command('save [alias]')
   .description('Save the current settings.json as a named profile')
+  .option('-f, --force', 'overwrite an existing profile without confirmation')
   .addHelpText(
     'after',
     `
@@ -124,19 +125,29 @@ Arguments:
   [alias]   Profile name to save under. Must match ^[a-z0-9][a-z0-9._-]{0,63}$.
             If omitted, an interactive picker is shown (requires a TTY).
 
-If the target settings.json.<alias> already exists it is overwritten silently
-(\`create\` prompts for confirmation; \`save\` does not).
+Options:
+  -f, --force   Overwrite an existing profile without prompting. By default,
+                \`save\` asks for confirmation before overwriting (mirrors the
+                \`create\` wizard). \`--force\` is for scripts and non-TTY
+                contexts where you already know you want to overwrite.
+
+If the target settings.json.<alias> already exists and \`--force\` is not
+passed, \`save\` prompts \`Overwrite? [y/N]\` (requires a TTY). In non-TTY
+contexts it exits 0 with a clear error instead of silently overwriting.
 
 Examples:
   $ llm-switch save glm           # save settings.json as 'glm'
+  $ llm-switch save -f glm        # overwrite existing 'glm' without prompt
   $ llm-switch save               # interactive picker
 
-Exit codes: 1 if no settings.json exists, 0 otherwise.
+Exit codes: 1 if no settings.json exists, 0 otherwise. Cancellation
+(via prompt decline or Ctrl-C) exits 0.
 `,
   )
-  .action(async (alias?: string) => {
+  .action(async (alias?: string, opts?: { force?: boolean }) => {
     await saveCmd.run({
       alias,
+      force: opts?.force,
       stdin: process.stdin,
       stdout: process.stdout,
       stderr: process.stderr,

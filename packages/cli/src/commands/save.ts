@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import type { Readable, Writable } from 'node:stream';
+import { confirm as inquirerConfirm } from '@inquirer/prompts';
 import { getConfigDir, getSettingsPath, profilePath, assertAlias } from '../config.js';
 import { listProfiles } from '../scanner.js';
 import { promptAlias } from '../ui.js';
@@ -8,10 +9,12 @@ import { NoCurrentSettingsError, UserCancelledError } from '../errors.js';
 
 export interface SaveIO {
   alias?: string;
+  force?: boolean;
   stdin: Readable;
   stdout: Writable;
   stderr: Writable;
   isTTY: boolean;
+  confirmFn?: typeof inquirerConfirm;
 }
 
 export async function run(io: SaveIO): Promise<void> {
@@ -45,6 +48,21 @@ export async function run(io: SaveIO): Promise<void> {
 
   const target = profilePath(alias);
   const existed = await exists(target);
+
+  if (existed && !io.force) {
+    if (!io.isTTY) {
+      throw new UserCancelledError(
+        `Profile '${alias}' already exists. Pass --force to overwrite, or run in a TTY.`,
+      );
+    }
+    const confirmFn = io.confirmFn ?? inquirerConfirm;
+    const overwrite = await confirmFn({
+      message: `Profile '${alias}' exists. Overwrite?`,
+      default: false,
+    });
+    if (!overwrite) throw new UserCancelledError('Cancelled.');
+  }
+
   await fs.copyFile(settingsPath, target);
   await fs.chmod(target, 0o600);
 
