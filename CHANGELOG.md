@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-06-24
+
+### Fixed
+- npm package `bin` entry: use `bin/llm-switch.js` instead of `./bin/llm-switch.js` so the `llm-switch` command is correctly linked after install.
+
 ## [0.5.1] - 2026-06-24
 
 ### Removed
