@@ -2,8 +2,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ConfigDirNotFoundError } from './errors.js';
 import type { ConfigDir } from './config.js';
+import { parseProfileAliases } from './config.js';
 import { sha256 } from './fs-utils.js';
-import { parseProfileAliases } from './scanner.js';
 
 export interface CurrentSummary {
   source: string;
@@ -56,9 +56,15 @@ export async function summarize(configDir: ConfigDir): Promise<CurrentSummary> {
   const entries = await fs.readdir(configDir);
   const aliases = parseProfileAliases(entries);
 
-  for (const alias of aliases) {
-    const profileFile = path.join(configDir, `settings.json.${alias}`);
-    if ((await sha256(profileFile)) === settingsHash) {
+  const profiles = await Promise.all(
+    aliases.map(async (alias) => {
+      const profileFile = path.join(configDir, `settings.json.${alias}`);
+      return { alias, profileFile, hash: await sha256(profileFile) };
+    }),
+  );
+
+  for (const { alias, profileFile, hash } of profiles) {
+    if (hash === settingsHash) {
       return {
         source: alias,
         sourcePath: profileFile,

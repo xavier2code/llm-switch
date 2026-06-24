@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import type { Readable, Writable } from 'node:stream';
+import type { Writable } from 'node:stream';
 import { confirm as inquirerConfirm } from '@inquirer/prompts';
 import { getConfigDir, getSettingsPath, profilePath, assertAlias } from '../config.js';
 import { listProfiles } from '../scanner.js';
@@ -11,7 +11,6 @@ import { interactiveTtyRequiredHint } from '../messages.js';
 export interface SaveIO {
   alias?: string;
   force?: boolean;
-  stdin: Readable;
   stdout: Writable;
   stderr: Writable;
   isTTY: boolean;

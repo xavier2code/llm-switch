@@ -1,4 +1,4 @@
-import type { Readable, Writable } from 'node:stream';
+import type { Writable } from 'node:stream';
 import {
   getConfigDir,
   getSettingsPath,
@@ -14,7 +14,6 @@ import { RESTART_HINT, interactiveTtyRequiredHint } from '../messages.js';
 
 export interface SwitchIO {
   alias?: string;
-  stdin: Readable;
   stdout: Writable;
   stderr: Writable;
   isTTY: boolean;
