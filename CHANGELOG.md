@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Test coverage reporting via `@vitest/coverage-v8`. Coverage runs in CI on every PR + push to main with thresholds (80% lines/functions/statements, 75% branches). The HTML + lcov report is uploaded as an artifact from the Node 22 matrix run. Currently 96.35% lines, 92.54% functions, 100% branches across `src/`. New `pnpm -F llm-switch test:coverage` script for local runs.
+- The internal planning documents under `docs/superpowers/` have been renamed to `docs/internal/` and now have a top-level `README.md` explaining their purpose (AI-assistant TDD plans and design specs, kept for archaeology, **not** user-facing). The previous name "superpowers" was an internal codename that meant nothing to public readers.
 
 ## [0.4.3] - 2026-06-24
 
