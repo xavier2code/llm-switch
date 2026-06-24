@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Bumped the `claude-code-plugin` package version from `0.1.0` (frozen since initial release) to `0.4.2` to match the CLI. Going forward, the plugin version always tracks the CLI version per the release checklist in `CLAUDE.md`. Issue #14.
+
 ## [0.4.2] - 2026-06-24
 
 ### Security
