@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { ConfigDirNotFoundError } from './errors.js';
 import type { ConfigDir } from './config.js';
+import { sha256 } from './fs-utils.js';
 
 export interface CurrentSummary {
   source: string;
@@ -10,16 +10,6 @@ export interface CurrentSummary {
   baseUrl?: string;
   model?: string;
   hasMcp: boolean;
-}
-
-async function sha256(filePath: string): Promise<string | null> {
-  try {
-    const buf = await fs.readFile(filePath);
-    return crypto.createHash('sha256').update(buf).digest('hex');
-  } catch (err: unknown) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
-    throw err;
-  }
 }
 
 async function dirExists(dir: string): Promise<boolean> {

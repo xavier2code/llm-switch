@@ -10,6 +10,7 @@ import {
 import { switchTo } from '../switcher.js';
 import { PROVIDERS, getProvider, type ProviderId } from '../providers.js';
 import { validateAnthropic } from '../validator.js';
+import { isCancel } from '../ui.js';
 import { UserCancelledError } from '../errors.js';
 
 export interface CreateIO {
@@ -22,10 +23,6 @@ export interface CreateIO {
   passwordFn?: typeof password;
   confirmFn?: typeof confirm;
   validateFn?: typeof validateAnthropic;
-}
-
-function isCancel(value: unknown): boolean {
-  return typeof value === 'symbol';
 }
 
 function ensure(condition: unknown, message: string): asserts condition {

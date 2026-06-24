@@ -2,22 +2,12 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ConfigDirNotFoundError } from './errors.js';
 import type { ConfigDir } from './config.js';
+import { sha256 } from './fs-utils.js';
 
 export interface Profile {
   alias: string;
   path: string;
   active: boolean;
-}
-
-async function sha256(filePath: string): Promise<string | null> {
-  try {
-    const buf = await fs.readFile(filePath);
-    const { createHash } = await import('node:crypto');
-    return createHash('sha256').update(buf).digest('hex');
-  } catch (err: unknown) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
-    throw err;
-  }
 }
 
 export async function listProfiles(configDir: ConfigDir): Promise<Profile[]> {
