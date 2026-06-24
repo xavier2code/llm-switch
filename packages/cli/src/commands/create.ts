@@ -1,4 +1,4 @@
-import type { Readable, Writable } from 'node:stream';
+import type { Writable } from 'node:stream';
 import fs from 'node:fs/promises';
 import { select, input, password, confirm } from '@inquirer/prompts';
 import { getSettingsPath, getBackupPath, profilePath, validateAlias } from '../config.js';
@@ -11,7 +11,6 @@ import { exists } from '../fs-utils.js';
 import { INTERACTIVE_TTY_REQUIRED, RESTART_HINT } from '../messages.js';
 
 export interface CreateIO {
-  stdin: Readable;
   stdout: Writable;
   stderr: Writable;
   isTTY: boolean;

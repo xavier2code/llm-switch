@@ -14,10 +14,8 @@ export const INTERACTIVE_TTY_REQUIRED = 'Interactive mode requires a TTY.';
 
 /**
  * TTY-required hint that also suggests the non-interactive form. Pass the
- * subcommand (e.g. `'switch'`) for `llm-switch switch <alias>`; omit it for
- * the bare `llm-switch <alias>` form.
+ * subcommand (e.g. `'switch'`) for `llm-switch switch <alias>`.
  */
-export function interactiveTtyRequiredHint(command?: string): string {
-  const usage = command ? `llm-switch ${command} <alias>` : 'llm-switch <alias>';
-  return `${INTERACTIVE_TTY_REQUIRED} Use: ${usage}`;
+export function interactiveTtyRequiredHint(command: string): string {
+  return `${INTERACTIVE_TTY_REQUIRED} Use: llm-switch ${command} <alias>`;
 }

@@ -2,26 +2,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { ConfigDirNotFoundError } from './errors.js';
 import type { ConfigDir } from './config.js';
+import { parseProfileAliases } from './config.js';
 import { sha256 } from './fs-utils.js';
-
-const PROFILE_PREFIX = 'settings.json.';
-const BAK_SUFFIX = '.bak';
 
 export interface Profile {
   alias: string;
   path: string;
   active: boolean;
-}
-
-/**
- * Extract profile aliases from config-dir entries. Keeps names matching
- * `settings.json.<alias>` and drops the `settings.json.bak` backup.
- */
-export function parseProfileAliases(entries: string[]): string[] {
-  return entries
-    .filter((name) => name.startsWith(PROFILE_PREFIX))
-    .filter((name) => !name.endsWith(BAK_SUFFIX))
-    .map((name) => name.slice(PROFILE_PREFIX.length));
 }
 
 export async function listProfiles(configDir: ConfigDir): Promise<Profile[]> {

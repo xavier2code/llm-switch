@@ -6,6 +6,9 @@ export type ConfigDir = string & { readonly __brand: 'ConfigDir' };
 
 export const ALIAS_RE = /^[a-z0-9][a-z0-9._-]{0,63}$/;
 
+const PROFILE_PREFIX = 'settings.json.';
+const BAK_SUFFIX = '.bak';
+
 function homeDir(): string {
   return process.env.HOME ?? os.homedir();
 }
@@ -40,9 +43,22 @@ export function profilePath(alias: string): string {
   return path.join(getConfigDir(), `settings.json.${alias}`);
 }
 
+/**
+ * Extract profile aliases from config-dir entries. Keeps names matching
+ * `settings.json.<alias>` and drops the `settings.json.bak` backup.
+ */
+export function parseProfileAliases(entries: string[]): string[] {
+  return entries
+    .filter((name) => name.startsWith(PROFILE_PREFIX) && !name.endsWith(BAK_SUFFIX))
+    .map((name) => name.slice(PROFILE_PREFIX.length));
+}
+
 export function validateAlias(alias: string): string | null {
   if (!ALIAS_RE.test(alias)) {
     return `Invalid alias '${alias}'. Must match ${ALIAS_RE} (lowercase, digits, . _ -, start with letter/digit, 1-64 chars).`;
+  }
+  if (alias.endsWith(BAK_SUFFIX)) {
+    return `Invalid alias '${alias}'. Alias must not end with '${BAK_SUFFIX}' because it conflicts with the backup file.`;
   }
   return null;
 }

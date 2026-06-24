@@ -68,7 +68,7 @@ program
     'after',
     `
 Arguments:
-  [alias]   Profile name to switch to. Must match ^[a-z0-9][a-z0-9._-]{0,63}$.
+  [alias]   Profile name to switch to. Must match ^[a-z0-9][a-z0-9._-]{0,63}$ and not end in '.bak'.
             If omitted, an interactive picker is shown (requires a TTY).
 
 The previous settings.json is moved to settings.json.bak before the swap, so
@@ -85,7 +85,6 @@ if cancelled via Ctrl-C.
   .action(async (alias?: string) => {
     await switchCmd.run({
       alias,
-      stdin: process.stdin,
       stdout: process.stdout,
       stderr: process.stderr,
       isTTY: Boolean(process.stdout.isTTY),
@@ -122,7 +121,7 @@ program
     'after',
     `
 Arguments:
-  [alias]   Profile name to save under. Must match ^[a-z0-9][a-z0-9._-]{0,63}$.
+  [alias]   Profile name to save under. Must match ^[a-z0-9][a-z0-9._-]{0,63}$ and not end in '.bak'.
             If omitted, an interactive picker is shown (requires a TTY).
 
 Options:
@@ -148,7 +147,6 @@ Exit codes: 1 if no settings.json exists, 0 otherwise. Cancellation
     await saveCmd.run({
       alias,
       force: opts?.force,
-      stdin: process.stdin,
       stdout: process.stdout,
       stderr: process.stderr,
       isTTY: Boolean(process.stdout.isTTY),
@@ -181,7 +179,6 @@ failure that isn't recovered via the failure submenu.
   )
   .action(async () => {
     await createCmd.run({
-      stdin: process.stdin,
       stdout: process.stdout,
       stderr: process.stderr,
       isTTY: Boolean(process.stdout.isTTY),
