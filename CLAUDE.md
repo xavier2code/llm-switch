@@ -64,6 +64,11 @@ When the team decides the criteria are met:
 4. `git push origin main` and `git push origin vX.Y.Z`
 5. `gh release create vX.Y.Z` with notes summarizing the changes
 6. `npm publish` (requires an Automation token; never commit the token)
+7. **Plugin sync**: `packages/claude-code-plugin/package.json` and
+   `packages/claude-code-plugin/.claude-plugin/plugin.json` — bump to the
+   same `X.Y.Z` as the CLI. The plugin follows the CLI version verbatim
+   (Option A in issue #14); if the plugin ever grows independent
+   features, switch to Option B and document a compatibility matrix.
 
 ### Deciding the bump type from commit history
 
