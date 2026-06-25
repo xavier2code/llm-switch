@@ -54,7 +54,7 @@ const providerRows = [
 
 const program = new Command();
 program
-  .name('llm-switch')
+  .name('sw')
   .description('Switch LLM profiles for Claude Code, OpenCode, and other CLI tools')
   .version(pkg.version)
   .option(`-t, --target <${targetNames}>`, 'Target CLI tool (claude or opencode)', 'claude')
