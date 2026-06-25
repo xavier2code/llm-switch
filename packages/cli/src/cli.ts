@@ -283,6 +283,7 @@ creates the llm-switch/ directory layout (profiles + backups) for each.
 Also runs automatically once per target on first run in a TTY.
 
 Requires a TTY. In non-interactive contexts it exits 0 with no effect.
+The --target flag has no effect here; \`init\` manages all detected targets.
 
 Examples:
   $ llm-switch init
