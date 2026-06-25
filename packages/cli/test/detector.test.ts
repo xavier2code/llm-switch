@@ -27,20 +27,23 @@ describe('isToolBinaryInstalled', () => {
     expect(isToolBinaryInstalled(mockOpencodeTarget())).toBe(false);
   });
 
-  it('queries the target binary name', () => {
+  it('on unix, invokes sh -c with the target binary name', () => {
     mockExec.mockReturnValue(Buffer.from(''));
     isToolBinaryInstalled(mockOpencodeTarget());
-    const callArgs = mockExec.mock.calls[0]?.[1];
-    expect(callArgs).toContain('opencode');
+    const [cmd, args] = mockExec.mock.calls[0] ?? [];
+    expect(cmd).toBe('sh');
+    expect(args).toEqual(['-c', 'command -v opencode']);
   });
 
-  it('uses `where` and no shell on Windows', () => {
+  it('on Windows, invokes where with the target binary name', () => {
     const original = process.platform;
     Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
     try {
       mockExec.mockReturnValue(Buffer.from(''));
       isToolBinaryInstalled(mockClaudeTarget());
-      expect(mockExec.mock.calls[0]?.[0]).toBe('where');
+      const [cmd, args] = mockExec.mock.calls[0] ?? [];
+      expect(cmd).toBe('where');
+      expect(args).toEqual(['claude']);
     } finally {
       Object.defineProperty(process, 'platform', { value: original, configurable: true });
     }
@@ -54,7 +57,7 @@ describe('detectInstalledTargets', () => {
 
   it('reports per-target presence across the registry', () => {
     mockExec.mockImplementation((_cmd, args) => {
-      if ((args as string[]).includes('opencode')) return Buffer.from('');
+      if ((args as string[]).some((a) => a.includes('opencode'))) return Buffer.from('');
       throw new Error('not found');
     });
     const result = detectInstalledTargets();
