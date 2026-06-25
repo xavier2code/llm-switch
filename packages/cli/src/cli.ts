@@ -20,6 +20,7 @@ import * as restoreCmd from './commands/restore.js';
 import * as saveCmd from './commands/save.js';
 import * as createCmd from './commands/create.js';
 import * as currentCmd from './commands/current.js';
+import * as initCmd from './commands/init.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8')) as {
@@ -94,6 +95,7 @@ Output columns: ●/○ marker, alias, full path. Active profile is always liste
   )
   .action(async () => {
     const target = resolveTarget(program.opts().target as string | undefined);
+    await initCmd.maybeRunInitWizard(target);
     await ensureMigrated(target);
     await listCmd.run({ target, stdout: process.stdout });
   });
@@ -122,6 +124,7 @@ if cancelled via Ctrl-C.
   )
   .action(async (alias?: string) => {
     const target = resolveTarget(program.opts().target as string | undefined);
+    await initCmd.maybeRunInitWizard(target);
     await ensureMigrated(target);
     await switchCmd.run({
       target,
@@ -154,6 +157,7 @@ Exit codes: 1 if no backup exists, 0 otherwise.
   )
   .action(async () => {
     const target = resolveTarget(program.opts().target as string | undefined);
+    await initCmd.maybeRunInitWizard(target);
     await ensureMigrated(target);
     await restoreCmd.run({ target, stdout: process.stdout });
   });
@@ -191,6 +195,7 @@ Exit codes: 1 if no active config exists, 0 otherwise. Cancellation
   )
   .action(async (alias?: string, opts?: { force?: boolean }) => {
     const target = resolveTarget(program.opts().target as string | undefined);
+    await initCmd.maybeRunInitWizard(target);
     await ensureMigrated(target);
     await saveCmd.run({
       target,
@@ -229,6 +234,7 @@ failure that isn't recovered via the failure submenu.
   )
   .action(async () => {
     const target = resolveTarget(program.opts().target as string | undefined);
+    await initCmd.maybeRunInitWizard(target);
     await ensureMigrated(target);
     await createCmd.run({
       target,
@@ -257,8 +263,39 @@ Exit codes: 0 on success, 1 if the config directory is not found.
   )
   .action(async () => {
     const target = resolveTarget(program.opts().target as string | undefined);
+    await initCmd.maybeRunInitWizard(target);
     await ensureMigrated(target);
     await currentCmd.run({ target, stdout: process.stdout });
+  });
+
+program
+  .command('init')
+  .description(
+    'Detect installed CLI tools and initialize the llm-switch directory layout (interactive)',
+  )
+  .addHelpText(
+    'after',
+    `
+Interactive wizard: detects Claude Code / OpenCode on PATH, lets you multi-select
+which tools llm-switch should manage, warns about missing active configs, and
+creates the llm-switch/ directory layout (profiles + backups) for each.
+
+Also runs automatically once per target on first run in a TTY.
+
+Requires a TTY. In non-interactive contexts it exits 0 with no effect.
+
+Examples:
+  $ llm-switch init
+
+Exit codes: 0 on success or clean cancellation.
+`,
+  )
+  .action(async () => {
+    await initCmd.runInitWizard({
+      stdout: process.stdout,
+      stderr: process.stderr,
+      isTTY: Boolean(process.stdout.isTTY),
+    });
   });
 
 async function main(): Promise<void> {

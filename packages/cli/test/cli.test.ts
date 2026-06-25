@@ -178,6 +178,17 @@ describe('cli e2e', () => {
     expect(r.code).toBe(0);
   });
 
+  it('init --help mentions init', async () => {
+    const r = await run(['init', '--help']);
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('init');
+  });
+
+  it('init exits 0 when no TTY (user cancel)', async () => {
+    const r = await run(['init'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
+    expect(r.code).toBe(0);
+  });
+
   it('--target opencode uses opencode paths', async () => {
     await fs.writeFile(path.join(tmpDir, 'opencode.json'), '{"a":1}');
     await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
@@ -240,7 +251,7 @@ describe('cli help output', () => {
     expect(out).toMatch(/claude|opencode/);
   });
 
-  for (const cmd of ['list', 'switch', 'restore', 'save', 'create', 'current']) {
+  for (const cmd of ['list', 'switch', 'restore', 'save', 'create', 'current', 'init']) {
     it(`${cmd} --help contains an "Examples:" section`, async () => {
       const out = await helpFor([cmd, '--help']);
       expect(out).toMatch(/Examples:/i);
