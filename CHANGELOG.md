@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `sw` short CLI bin alias. `npm i -g llm-switch` now installs both
+  `llm-switch` and `sw`; `sw` is the recommended command name in
+  documentation going forward.
+
+### Deprecated
+- The `llm-switch` bin now prints a one-line stderr warning pointing to
+  `sw`. It will be removed in a future minor release.
+
 ## [0.7.0] - 2026-06-25
 
 ### Added
