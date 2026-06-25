@@ -4,14 +4,17 @@ import path from 'node:path';
 import os from 'node:os';
 import { run } from '../../src/commands/current.js';
 import { ConfigDirNotFoundError } from '../../src/errors.js';
+import { mockClaudeTarget } from '../helpers.js';
 
 let tmpDir: string;
 let savedEnv: string | undefined;
+const target = mockClaudeTarget();
 
 beforeEach(async () => {
   tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'llm-switch-test-'));
   savedEnv = process.env.CLAUDE_CONFIG_DIR;
   process.env.CLAUDE_CONFIG_DIR = tmpDir;
+  await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
 });
 
 afterEach(async () => {
@@ -23,8 +26,8 @@ afterEach(async () => {
 describe('current command', () => {
   it('throws ConfigDirNotFoundError when missing', async () => {
     process.env.CLAUDE_CONFIG_DIR = '/nonexistent/path/12345';
-    const io = { stdout: { write: () => {} } };
-    await expect(run(io as never)).rejects.toBeInstanceOf(ConfigDirNotFoundError);
+    const io = { target, stdout: { write: () => {} } };
+    await expect(run(io)).rejects.toBeInstanceOf(ConfigDirNotFoundError);
   });
 
   it('prints summary', async () => {
@@ -36,9 +39,9 @@ describe('current command', () => {
       }),
     );
     const writes: string[] = [];
-    const io = { stdout: { write: (s: string) => writes.push(s) } };
+    const io = { target, stdout: { write: (s: string) => writes.push(s) } };
 
-    await run(io as never);
+    await run(io);
 
     const out = writes.join('');
     expect(out).toContain('Source: default');
@@ -50,9 +53,9 @@ describe('current command', () => {
   it('omits missing fields', async () => {
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{}');
     const writes: string[] = [];
-    const io = { stdout: { write: (s: string) => writes.push(s) } };
+    const io = { target, stdout: { write: (s: string) => writes.push(s) } };
 
-    await run(io as never);
+    await run(io);
 
     const out = writes.join('');
     expect(out).toContain('Source: default');

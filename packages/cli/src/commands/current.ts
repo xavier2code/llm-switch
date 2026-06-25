@@ -1,12 +1,13 @@
-import { getConfigDir } from '../config.js';
+import type { TargetConfig } from '../config.js';
 import { summarize } from '../display.js';
 
 export interface CurrentIO {
+  target: TargetConfig;
   stdout: { write(s: string): unknown };
 }
 
 export async function run(io: CurrentIO): Promise<void> {
-  const s = await summarize(getConfigDir());
+  const s = await summarize(io.target);
   const lines: string[] = [];
   lines.push(`Source: ${s.source} (${s.sourcePath})`);
   if (s.baseUrl) lines.push(`Base URL: ${s.baseUrl}`);

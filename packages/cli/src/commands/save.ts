@@ -1,7 +1,8 @@
 import fs from 'node:fs/promises';
 import type { Writable } from 'node:stream';
 import { confirm as inquirerConfirm } from '@inquirer/prompts';
-import { getConfigDir, getSettingsPath, profilePath, assertAlias } from '../config.js';
+import type { TargetConfig } from '../config.js';
+import { getActiveConfigPath, profilePath, assertAlias } from '../config.js';
 import { listProfiles } from '../scanner.js';
 import { promptAlias } from '../ui.js';
 import { exists } from '../fs-utils.js';
@@ -9,6 +10,7 @@ import { NoCurrentSettingsError, UserCancelledError } from '../errors.js';
 import { interactiveTtyRequiredHint } from '../messages.js';
 
 export interface SaveIO {
+  target: TargetConfig;
   alias?: string;
   force?: boolean;
   stdout: Writable;
@@ -18,12 +20,11 @@ export interface SaveIO {
 }
 
 export async function run(io: SaveIO): Promise<void> {
-  const configDir = getConfigDir();
-  const settingsPath = getSettingsPath();
+  const settingsPath = getActiveConfigPath(io.target);
 
   if (!(await exists(settingsPath))) {
     throw new NoCurrentSettingsError(
-      `No current settings.json at ${settingsPath}. Nothing to save.`,
+      `No current ${io.target.activeConfigFileName} at ${settingsPath}. Nothing to save.`,
     );
   }
 
@@ -32,7 +33,7 @@ export async function run(io: SaveIO): Promise<void> {
     if (!io.isTTY) {
       throw new UserCancelledError(interactiveTtyRequiredHint('save'));
     }
-    const profiles = await listProfiles(configDir);
+    const profiles = await listProfiles(io.target);
     const result = await promptAlias(profiles.map((p) => p.alias));
     if (!result) throw new UserCancelledError('Cancelled.');
     alias = result;
@@ -40,8 +41,8 @@ export async function run(io: SaveIO): Promise<void> {
     assertAlias(alias);
   }
 
-  const target = profilePath(alias);
-  const existed = await exists(target);
+  const targetPath = profilePath(alias, io.target);
+  const existed = await exists(targetPath);
 
   if (existed && !io.force) {
     if (!io.isTTY) {
@@ -57,8 +58,8 @@ export async function run(io: SaveIO): Promise<void> {
     if (!overwrite) throw new UserCancelledError('Cancelled.');
   }
 
-  await fs.copyFile(settingsPath, target);
-  await fs.chmod(target, 0o600);
+  await fs.copyFile(settingsPath, targetPath);
+  await fs.chmod(targetPath, 0o600);
 
   if (existed) {
     io.stderr.write(`Overwrote existing profile '${alias}'.\n`);

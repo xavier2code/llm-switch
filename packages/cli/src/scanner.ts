@@ -1,8 +1,7 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import { ConfigDirNotFoundError } from './errors.js';
-import type { ConfigDir } from './config.js';
-import { parseProfileAliases } from './config.js';
+import type { TargetConfig } from './config.js';
+import { getActiveConfigPath, getProfilesDir, parseProfileAliases, profilePath } from './config.js';
 import { sha256 } from './fs-utils.js';
 
 export interface Profile {
@@ -11,23 +10,24 @@ export interface Profile {
   active: boolean;
 }
 
-export async function listProfiles(configDir: ConfigDir): Promise<Profile[]> {
+export async function listProfiles(target: TargetConfig): Promise<Profile[]> {
+  const profilesDir = getProfilesDir(target);
   let entries: string[];
   try {
-    entries = await fs.readdir(configDir);
+    entries = await fs.readdir(profilesDir);
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-      throw new ConfigDirNotFoundError(`Config directory not found: ${configDir}`);
+      throw new ConfigDirNotFoundError(`Profiles directory not found: ${profilesDir}`);
     }
     throw err;
   }
 
-  const settingsHash = await sha256(path.join(configDir, 'settings.json'));
+  const settingsHash = await sha256(getActiveConfigPath(target));
   const matches = parseProfileAliases(entries);
 
   const profiles: Profile[] = await Promise.all(
     matches.map(async (alias) => {
-      const profileFile = path.join(configDir, `settings.json.${alias}`);
+      const profileFile = profilePath(alias, target);
       const hash = await sha256(profileFile);
       return {
         alias,

@@ -1,16 +1,18 @@
 import type { Writable } from 'node:stream';
 import fs from 'node:fs/promises';
 import { select, input, password, confirm } from '@inquirer/prompts';
-import { getSettingsPath, getBackupPath, profilePath, validateAlias } from '../config.js';
+import type { TargetConfig } from '../config.js';
+import { getActiveConfigPath, getBackupPath, profilePath, validateAlias } from '../config.js';
 import { switchTo } from '../switcher.js';
 import { PROVIDERS, getProvider, isProviderId } from '../providers.js';
 import { validateAnthropic } from '../validator.js';
 import { isCancel } from '../ui.js';
 import { UserCancelledError } from '../errors.js';
 import { exists } from '../fs-utils.js';
-import { INTERACTIVE_TTY_REQUIRED, RESTART_HINT } from '../messages.js';
+import { INTERACTIVE_TTY_REQUIRED, restartHint } from '../messages.js';
 
 export interface CreateIO {
+  target: TargetConfig;
   stdout: Writable;
   stderr: Writable;
   isTTY: boolean;
@@ -158,7 +160,7 @@ export async function run(io: CreateIO): Promise<void> {
   }
 
   // 7. Overwrite confirm
-  const profileFile = profilePath(alias);
+  const profileFile = profilePath(alias, io.target);
   if (await exists(profileFile)) {
     const overwrite = await cFn({
       message: `Profile '${alias}' exists. Overwrite?`,
@@ -184,10 +186,10 @@ export async function run(io: CreateIO): Promise<void> {
   await fs.chmod(profileFile, 0o600);
 
   // 9. Activate (atomic switch + backup)
-  const settingsPath = getSettingsPath();
-  const backupPath = getBackupPath();
+  const settingsPath = getActiveConfigPath(io.target);
+  const backupPath = getBackupPath(io.target);
   await switchTo(profileFile, settingsPath, backupPath);
 
   // 10. Output
-  io.stdout.write(`Created and activated '${alias}'. ${RESTART_HINT}\n`);
+  io.stdout.write(`Created and activated '${alias}'. ${restartHint(io.target)}\n`);
 }

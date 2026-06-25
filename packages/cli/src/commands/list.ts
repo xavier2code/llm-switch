@@ -1,15 +1,14 @@
-import type { ConfigDir } from '../config.js';
-import { getConfigDir } from '../config.js';
+import type { TargetConfig } from '../config.js';
 import { listProfiles } from '../scanner.js';
 import { NoProfilesError } from '../errors.js';
 
 export interface CommandIO {
+  target: TargetConfig;
   stdout: { write(s: string): unknown };
 }
 
 export async function run(io: CommandIO): Promise<void> {
-  const configDir: ConfigDir = getConfigDir();
-  const profiles = await listProfiles(configDir);
+  const profiles = await listProfiles(io.target);
 
   if (profiles.length === 0) {
     throw new NoProfilesError('No profiles found. Create one with: llm-switch save <alias>');

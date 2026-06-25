@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-06-25
+
+### Added
+- Multi-target support. `llm-switch` now manages profiles for multiple CLI tools,
+  not just Claude Code. The built-in targets are `claude` (default) and `opencode`.
+  Select one with the global `--target` / `-t` flag or the `LLM_SWITCH_TARGET`
+  environment variable. OpenCode uses `~/.config/opencode/opencode.json` by
+  default, overridable via `OPENCODE_CONFIG_DIR`.
+- New `Target` abstraction in `config.ts` (`TargetId`, `TargetConfig`, `TARGETS`,
+  `getTarget`, `isTargetId`, `getDefaultTarget`) that centralizes per-tool config
+  directory, active config file name, and restart hint.
+- `ensureMigrated()` in `config.ts`: automatic one-way migration from the
+  pre-0.6.0 flat layout to the new `llm-switch/` subdirectory layout, run on every
+  command. Rolls back already-moved files if a rename fails midway.
+
+### Changed
+- **Breaking**: profiles and backups now live under each tool's `llm-switch/`
+  subdirectory instead of scattered in the config directory root. For Claude Code:
+  `llm-switch/profiles/<alias>.json` and `llm-switch/backups/settings.json.bak`.
+  The profile file naming changed from `settings.json.<alias>` to
+  `profiles/<alias>.json`. Existing files are migrated automatically on first run.
+- **Breaking**: `scanner.ts` `listProfiles()` and `display.ts` `summarize()` now
+  take a `TargetConfig` instead of a `ConfigDir`. All command `run()` functions
+  accept a `target` field in their IO object.
+- `config.ts` `getConfigDir()` is now target-aware; `getSettingsPath()` is
+  replaced by `getActiveConfigPath(target)`. New `getLlmswitchDir`,
+  `getProfilesDir`, `getBackupsDir` helpers.
+- `messages.ts` `RESTART_HINT` is now `restartHint(target)` so the restart prompt
+  names the correct tool (Claude Code vs OpenCode).
+- `backup.ts` `backupCurrent()` now ensures the backup directory exists before
+  writing, so a switch can never silently lose a backup if the directory is absent.
+- Updated top-level and per-command help text to document both targets, the new
+  env vars (`OPENCODE_CONFIG_DIR`, `LLM_SWITCH_TARGET`), and the new file layout.
+- Bumped `claude-code-plugin` to track the CLI at 0.6.0.
+
 ## [0.5.2] - 2026-06-24
 
 ### Fixed

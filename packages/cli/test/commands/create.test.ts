@@ -16,6 +16,7 @@ vi.mock('@inquirer/prompts', () => ({
 import { select, input, password, confirm } from '@inquirer/prompts';
 import { run } from '../../src/commands/create.js';
 import { UserCancelledError, ValidationError } from '../../src/errors.js';
+import { mockClaudeTarget } from '../helpers.js';
 
 const mockSelect = vi.mocked(select);
 const mockInput = vi.mocked(input);
@@ -24,11 +25,14 @@ const mockConfirm = vi.mocked(confirm);
 
 let tmpDir: string;
 let savedEnv: string | undefined;
+const target = mockClaudeTarget();
 
 beforeEach(async () => {
   tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'llm-switch-test-'));
   savedEnv = process.env.CLAUDE_CONFIG_DIR;
   process.env.CLAUDE_CONFIG_DIR = tmpDir;
+  await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
+  await fs.mkdir(path.join(tmpDir, 'llm-switch', 'backups'), { recursive: true });
 });
 
 afterEach(async () => {
@@ -37,6 +41,10 @@ afterEach(async () => {
   await fs.rm(tmpDir, { recursive: true, force: true });
   vi.clearAllMocks();
 });
+
+async function profilesDir(): Promise<string> {
+  return path.join(tmpDir, 'llm-switch', 'profiles');
+}
 
 function mockIO() {
   const writes: string[] = [];
@@ -51,21 +59,21 @@ function mockIO() {
 describe('create command', () => {
   it('throws UserCancelledError when not TTY', async () => {
     const io = { ...mockIO(), isTTY: false };
-    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+    await expect(run({ target, ...io })).rejects.toBeInstanceOf(UserCancelledError);
     expect(mockSelect).not.toHaveBeenCalled();
   });
 
   it('throws UserCancelledError when provider select cancelled', async () => {
     mockSelect.mockResolvedValueOnce(CANCEL as never);
     const io = { ...mockIO(), isTTY: true };
-    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+    await expect(run({ target, ...io })).rejects.toBeInstanceOf(UserCancelledError);
   });
 
   it('throws UserCancelledError when alias input cancelled', async () => {
     mockSelect.mockResolvedValueOnce('glm');
     mockInput.mockResolvedValueOnce(CANCEL as never);
     const io = { ...mockIO(), isTTY: true };
-    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+    await expect(run({ target, ...io })).rejects.toBeInstanceOf(UserCancelledError);
   });
 
   it('alias input uses provider id as default', async () => {
@@ -75,7 +83,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const call = mockInput.mock.calls[0]?.[0] as { default?: string };
     expect(call.default).toBe('glm');
@@ -88,7 +96,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const call = mockInput.mock.calls[0]?.[0] as { validate?: (v: string) => boolean | string };
     expect(call.validate!('')).toBe('Required');
@@ -102,7 +110,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const call = mockInput.mock.calls[0]?.[0] as { validate?: (v: string) => boolean | string };
     expect(call.validate!('BAD!')).toMatch(/Invalid alias/);
@@ -116,7 +124,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const call = mockInput.mock.calls[0]?.[0] as { validate?: (v: string) => boolean | string };
     expect(call.validate!('glm')).toBe(true);
@@ -130,7 +138,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const call = mockSelect.mock.calls[0]?.[0] as {
       choices?: Array<{ name: string; value: string }>;
@@ -148,7 +156,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const call = mockConfirm.mock.calls[0]?.[0] as { message?: string; default?: boolean };
     expect(call.message).toMatch(/Use default/);
@@ -165,7 +173,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     expect(mockInput).toHaveBeenCalledTimes(3);
     const urlCall = mockInput.mock.calls[1]?.[0] as { message?: string };
@@ -190,7 +198,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const urlCall = mockInput.mock.calls[1]?.[0] as { validate?: (v: string) => boolean | string };
     expect(urlCall.validate!('')).toBe('Required');
@@ -207,7 +215,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     expect(validateFn).toHaveBeenCalledWith(
       'https://open.bigmodel.cn/api/anthropic',
@@ -223,7 +231,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const call = mockPassword.mock.calls[0]?.[0] as {
       mask?: string;
@@ -240,14 +248,16 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('sk-test-123');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     expect(validateFn).toHaveBeenCalledWith(
       'https://open.bigmodel.cn/api/anthropic',
       'glm-4.5',
       'sk-test-123',
     );
-    const profile = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'));
+    const profile = JSON.parse(
+      await fs.readFile(path.join(await profilesDir(), 'glm.json'), 'utf8'),
+    );
     expect(profile.env.ANTHROPIC_AUTH_TOKEN).toBe('sk-test-123');
   });
 
@@ -264,7 +274,7 @@ describe('create command', () => {
       .mockResolvedValueOnce(undefined);
 
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     expect(validateFn).toHaveBeenCalledTimes(2);
     expect(validateFn.mock.calls[0]?.[2]).toBe('bad-key');
@@ -279,7 +289,7 @@ describe('create command', () => {
     const validateFn = vi.fn().mockRejectedValueOnce(new ValidationError('boom'));
 
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+    await expect(run({ target, ...io })).rejects.toBeInstanceOf(UserCancelledError);
     expect(validateFn).toHaveBeenCalledOnce();
   });
 
@@ -297,7 +307,7 @@ describe('create command', () => {
       .mockResolvedValueOnce(undefined);
 
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     expect(validateFn).toHaveBeenCalledTimes(2);
     expect(validateFn.mock.calls[1]?.[0]).toBe('https://my-proxy.example.com/anthropic');
@@ -316,7 +326,7 @@ describe('create command', () => {
       .mockResolvedValueOnce(undefined);
 
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     expect(validateFn).toHaveBeenCalledTimes(2);
     expect(validateFn.mock.calls[0]).toEqual(validateFn.mock.calls[1]);
@@ -330,12 +340,13 @@ describe('create command', () => {
     const validateFn = vi.fn().mockRejectedValueOnce(new ValidationError('boom: bad key'));
 
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+    await expect(run({ target, ...io })).rejects.toBeInstanceOf(UserCancelledError);
     expect(io.writes.join('')).toContain('boom: bad key');
   });
 
   it('when profile exists, prompts Overwrite? with default false', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), JSON.stringify({ OLD: 'yes' }));
+    await fs.mkdir(await profilesDir(), { recursive: true });
+    await fs.writeFile(path.join(await profilesDir(), 'glm.json'), JSON.stringify({ OLD: 'yes' }));
 
     mockSelect.mockResolvedValueOnce('glm');
     mockInput.mockResolvedValueOnce('glm');
@@ -346,18 +357,21 @@ describe('create command', () => {
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
 
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const overwriteCall = mockConfirm.mock.calls[1]?.[0] as { message?: string; default?: boolean };
     expect(overwriteCall.message).toMatch(/exists.*Overwrite/);
     expect(overwriteCall.default).toBe(false);
 
-    const profile = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8'));
+    const profile = JSON.parse(
+      await fs.readFile(path.join(await profilesDir(), 'glm.json'), 'utf8'),
+    );
     expect(profile.env.ANTHROPIC_AUTH_TOKEN).toBe('new-key');
   });
 
   it('when profile exists and user declines overwrite → UserCancelledError, file unchanged', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), JSON.stringify({ OLD: 'yes' }));
+    await fs.mkdir(await profilesDir(), { recursive: true });
+    await fs.writeFile(path.join(await profilesDir(), 'glm.json'), JSON.stringify({ OLD: 'yes' }));
 
     mockSelect.mockResolvedValueOnce('glm');
     mockInput.mockResolvedValueOnce('glm');
@@ -366,9 +380,9 @@ describe('create command', () => {
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
 
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await expect(run(io as never)).rejects.toBeInstanceOf(UserCancelledError);
+    await expect(run({ target, ...io })).rejects.toBeInstanceOf(UserCancelledError);
 
-    const profile = await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8');
+    const profile = await fs.readFile(path.join(await profilesDir(), 'glm.json'), 'utf8');
     expect(JSON.parse(profile)).toEqual({ OLD: 'yes' });
   });
 
@@ -379,9 +393,9 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('sk-xyz');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
-    const profile = await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8');
+    const profile = await fs.readFile(path.join(await profilesDir(), 'glm.json'), 'utf8');
     const parsed = JSON.parse(profile);
     expect(parsed).toEqual({
       env: {
@@ -404,11 +418,13 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     const settings = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8'));
     expect(settings.env.ANTHROPIC_AUTH_TOKEN).toBe('key');
-    const bak = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.bak'), 'utf8'));
+    const bak = JSON.parse(
+      await fs.readFile(path.join(tmpDir, 'llm-switch', 'backups', 'settings.json.bak'), 'utf8'),
+    );
     expect(bak.env.PREV).toBe('yes');
   });
 
@@ -419,9 +435,9 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('sk-secret-123');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
-    const stat = await fs.stat(path.join(tmpDir, 'settings.json.glm'));
+    const stat = await fs.stat(path.join(await profilesDir(), 'glm.json'));
     expect(stat.mode & 0o777).toBe(0o600);
   });
 
@@ -432,7 +448,7 @@ describe('create command', () => {
     mockPassword.mockResolvedValueOnce('key');
     const validateFn = vi.fn().mockResolvedValueOnce(undefined);
     const io = { ...mockIO(), isTTY: true, validateFn };
-    await run(io as never);
+    await run({ target, ...io });
 
     expect(io.writes.join('')).toContain("Created and activated 'glm'");
     expect(io.writes.join('')).toMatch(/Restart Claude Code/);
