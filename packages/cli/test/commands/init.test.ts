@@ -25,6 +25,7 @@ afterEach(async () => {
   else process.env.CLAUDE_CONFIG_DIR = savedClaude;
   if (savedOpencode === undefined) delete process.env.OPENCODE_CONFIG_DIR;
   else process.env.OPENCODE_CONFIG_DIR = savedOpencode;
+  await fs.rm(tmpDir, { recursive: true, force: true });
   vi.restoreAllMocks();
 });
 
@@ -69,6 +70,22 @@ describe('runInitWizard', () => {
     const stat = await fs.stat(path.join(tmpDir, 'llm-switch', 'profiles'));
     expect(stat.isDirectory()).toBe(true);
     expect((await fs.stat(path.join(tmpDir, 'llm-switch', 'backups'))).isDirectory()).toBe(true);
+  });
+
+  it('initializes directories for every selected tool (multi-select)', async () => {
+    const detectFn = () => ({ claude: true, opencode: true }) as Record<TargetId, boolean>;
+    const checkboxFn = vi.fn().mockResolvedValue(['claude', 'opencode'] as TargetId[]);
+    const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
+    await runInitWizard(io);
+
+    // Both targets point at the same tmpDir in this test, so both share one
+    // llm-switch/ tree; assert the dirs exist and the summary lists both tools.
+    expect((await fs.stat(path.join(tmpDir, 'llm-switch', 'profiles'))).isDirectory()).toBe(true);
+    expect((await fs.stat(path.join(tmpDir, 'llm-switch', 'backups'))).isDirectory()).toBe(true);
+    const out = io.writes.join('');
+    expect(out).toContain('Claude Code');
+    expect(out).toContain('OpenCode');
+    expect(out).toMatch(/Initialized llm-switch/);
   });
 
   it('warns when an active config is missing but still initializes', async () => {
