@@ -229,6 +229,20 @@ describe('cli e2e', () => {
     expect(r.code).toBe(0);
     expect(r.stdout).toContain('Usage: sw');
   });
+
+  it('llm-switch bin prints deprecation warning to stderr', async () => {
+    const r = await run(LLMSW_BIN, ['--help']);
+    expect(r.code).toBe(0);
+    expect(r.stderr).toContain('[llm-switch]');
+    expect(r.stderr).toContain(`'sw'`);
+  });
+
+  it('sw bin does NOT print the deprecation warning', async () => {
+    const r = await run(SW_BIN, ['--help']);
+    expect(r.code).toBe(0);
+    expect(r.stderr).not.toContain('[llm-switch]');
+    expect(r.stderr).not.toContain('deprecated');
+  });
 });
 
 describe('cli help output', () => {
