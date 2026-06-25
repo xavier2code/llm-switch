@@ -71,6 +71,7 @@ llm-switch save -f glm                # overwrite an existing profile (skip conf
 llm-switch restore                    # restore previous backup
 llm-switch current                    # show active profile
 llm-switch create                     # interactive wizard to create a new profile
+llm-switch init                       # interactive wizard: detect tools and initialize directories
 
 llm-switch --target opencode list     # operate on OpenCode instead of Claude Code
 llm-switch -t opencode switch glm
@@ -88,6 +89,15 @@ If you are upgrading from 0.5.x or earlier, your profiles and backups live as
 flat files (`settings.json.<alias>`, `settings.json.bak`) directly in
 `~/.claude/`. On first run, `llm-switch` automatically moves them into the new
 `llm-switch/` subdirectory layout. No manual intervention is required.
+
+### First-run setup
+
+The first time you run any `llm-switch` command in a terminal, an interactive
+wizard detects which CLI tools (Claude Code, OpenCode) are installed, lets you
+choose which ones to manage, and creates the `llm-switch/` directory layout for
+each. You can also run it any time with `llm-switch init`. The wizard only ever
+creates `llm-switch/` directories — it never creates or edits a tool's own
+config file.
 
 ### `save` overwrite behavior
 

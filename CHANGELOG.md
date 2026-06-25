@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-06-25
+
+### Added
+- `init` subcommand: an interactive wizard that detects Claude Code and OpenCode
+  on PATH, lets you multi-select which tools `llm-switch` should manage, warns
+  about missing active configs, and creates the `llm-switch/` directory layout
+  (profiles + backups) for each. Not-installed tools remain selectable with a
+  warning.
+- First-run auto-trigger: on first use of any command in a TTY, the wizard runs
+  once per target (when that target's `llm-switch/` directory does not yet
+  exist), then stays silent. Non-TTY / CI contexts are unaffected.
+- `src/detector.ts` with `isToolBinaryInstalled` / `detectInstalledTargets`
+  (PATH lookup via `command -v` / `where`).
+- `TargetConfig.binaryName` field (`claude`, `opencode`).
+
+### Changed
+- The wizard never creates or modifies a tool's own active config
+  (`settings.json` / `opencode.json`) — only the `llm-switch/` subdirectory.
+- Bumped `claude-code-plugin` to track the CLI at 0.7.0.
+
 ## [0.6.0] - 2026-06-25
 
 ### Added
