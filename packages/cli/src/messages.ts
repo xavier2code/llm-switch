@@ -1,9 +1,12 @@
+import type { TargetConfig } from './config.js';
+
 /**
- * Shared user-facing strings. Centralized so wording stays consistent across
+ * Target-specific restart hint. Centralized so wording stays consistent across
  * commands and can be reworded in one place.
  */
-
-export const RESTART_HINT = 'Restart Claude Code to apply.';
+export function restartHint(target: TargetConfig): string {
+  return target.restartHint;
+}
 
 /**
  * Plain TTY-required statement with no usage suggestion. Used by callers that

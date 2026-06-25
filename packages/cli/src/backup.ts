@@ -1,8 +1,12 @@
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import { NoBackupError } from './errors.js';
 
 export async function backupCurrent(settingsPath: string, backupPath: string): Promise<void> {
   try {
+    // Ensure the backup directory exists (defensive: migration normally creates
+    // it, but don't silently lose a backup if it's missing).
+    await fs.mkdir(path.dirname(backupPath), { recursive: true });
     await fs.copyFile(settingsPath, backupPath);
     await fs.chmod(backupPath, 0o600);
   } catch (err: unknown) {

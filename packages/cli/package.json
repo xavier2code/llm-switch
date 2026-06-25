@@ -1,7 +1,7 @@
 {
   "name": "llm-switch",
-  "version": "0.5.2",
-  "description": "Switch Claude Code settings.json profiles from the command line",
+  "version": "0.6.0",
+  "description": "Switch LLM profiles for Claude Code, OpenCode, and other CLI tools",
   "type": "module",
   "bin": {
     "llm-switch": "bin/llm-switch.js"

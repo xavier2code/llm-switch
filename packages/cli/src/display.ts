@@ -1,8 +1,13 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import { ConfigDirNotFoundError } from './errors.js';
-import type { ConfigDir } from './config.js';
-import { parseProfileAliases } from './config.js';
+import type { TargetConfig } from './config.js';
+import {
+  getActiveConfigPath,
+  getConfigDir,
+  getProfilesDir,
+  parseProfileAliases,
+  profilePath,
+} from './config.js';
 import { sha256 } from './fs-utils.js';
 
 export interface CurrentSummary {
@@ -38,12 +43,13 @@ function safeParse(json: string): SettingsData | null {
   }
 }
 
-export async function summarize(configDir: ConfigDir): Promise<CurrentSummary> {
+export async function summarize(target: TargetConfig): Promise<CurrentSummary> {
+  const configDir = getConfigDir(target);
   if (!(await dirExists(configDir))) {
     throw new ConfigDirNotFoundError(`Config directory not found: ${configDir}`);
   }
 
-  const settingsPath = path.join(configDir, 'settings.json');
+  const settingsPath = getActiveConfigPath(target);
   const settingsHash = await sha256(settingsPath);
 
   if (!settingsHash) {
@@ -53,12 +59,12 @@ export async function summarize(configDir: ConfigDir): Promise<CurrentSummary> {
   const content = await fs.readFile(settingsPath, 'utf8');
   const data = safeParse(content);
 
-  const entries = await fs.readdir(configDir);
+  const entries = await fs.readdir(getProfilesDir(target));
   const aliases = parseProfileAliases(entries);
 
   const profiles = await Promise.all(
     aliases.map(async (alias) => {
-      const profileFile = path.join(configDir, `settings.json.${alias}`);
+      const profileFile = profilePath(alias, target);
       return { alias, profileFile, hash: await sha256(profileFile) };
     }),
   );

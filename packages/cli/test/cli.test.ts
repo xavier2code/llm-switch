@@ -75,9 +75,10 @@ describe('cli e2e', () => {
     expect(r.stderr).toContain('No profiles found');
   });
 
-  it('list prints profiles', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{}');
-    await fs.writeFile(path.join(tmpDir, 'settings.json.kimi'), '{}');
+  it('list prints profiles from new layout', async () => {
+    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), '{}');
+    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'kimi.json'), '{}');
 
     const r = await run(['list'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
     expect(r.code).toBe(0);
@@ -85,9 +86,24 @@ describe('cli e2e', () => {
     expect(r.stdout).toContain('kimi');
   });
 
+  it('migrates old flat layout on first run and lists profiles', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{}');
+    await fs.writeFile(path.join(tmpDir, 'settings.json.kimi'), '{}');
+
+    const r = await run(['list'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('glm');
+    expect(r.stdout).toContain('kimi');
+
+    const root = await fs.readdir(tmpDir);
+    expect(root).not.toContain('settings.json.glm');
+    expect(root).toContain('llm-switch');
+  });
+
   it('switch <alias> succeeds', async () => {
+    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"a":1}');
-    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{"a":2}');
+    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), '{"a":2}');
 
     const r = await run(['switch', 'glm'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
     expect(r.code).toBe(0);
@@ -96,7 +112,10 @@ describe('cli e2e', () => {
     const after = await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8');
     expect(JSON.parse(after)).toEqual({ a: 2 });
 
-    const bak = await fs.readFile(path.join(tmpDir, 'settings.json.bak'), 'utf8');
+    const bak = await fs.readFile(
+      path.join(tmpDir, 'llm-switch', 'backups', 'settings.json.bak'),
+      'utf8',
+    );
     expect(JSON.parse(bak)).toEqual({ a: 1 });
   });
 
@@ -109,7 +128,8 @@ describe('cli e2e', () => {
   });
 
   it('switch exits 0 with no TTY (user cancel)', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{}');
+    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), '{}');
 
     const r = await run(['switch'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
     // No TTY => UserCancelledError => exit 0
@@ -122,13 +142,16 @@ describe('cli e2e', () => {
     expect(r.stderr).toContain('No backup');
   });
 
-  it('save <alias> succeeds', async () => {
+  it('save <alias> succeeds in new layout', async () => {
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"a":1}');
 
     const r = await run(['save', 'glm'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
     expect(r.code).toBe(0);
 
-    const profile = await fs.readFile(path.join(tmpDir, 'settings.json.glm'), 'utf8');
+    const profile = await fs.readFile(
+      path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'),
+      'utf8',
+    );
     expect(JSON.parse(profile)).toEqual({ a: 1 });
   });
 
@@ -154,6 +177,39 @@ describe('cli e2e', () => {
     const r = await run(['create'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
     expect(r.code).toBe(0);
   });
+
+  it('--target opencode uses opencode paths', async () => {
+    await fs.writeFile(path.join(tmpDir, 'opencode.json'), '{"a":1}');
+    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), '{"a":2}');
+
+    const r = await run(['--target', 'opencode', 'switch', 'glm'], {
+      env: { OPENCODE_CONFIG_DIR: tmpDir },
+    });
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('Switched to glm');
+
+    const after = await fs.readFile(path.join(tmpDir, 'opencode.json'), 'utf8');
+    expect(JSON.parse(after)).toEqual({ a: 2 });
+
+    const bak = await fs.readFile(
+      path.join(tmpDir, 'llm-switch', 'backups', 'opencode.json.bak'),
+      'utf8',
+    );
+    expect(JSON.parse(bak)).toEqual({ a: 1 });
+  });
+
+  it('LLM_SWITCH_TARGET env var selects opencode', async () => {
+    await fs.writeFile(path.join(tmpDir, 'opencode.json'), '{"a":1}');
+    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), '{"a":2}');
+
+    const r = await run(['switch', 'glm'], {
+      env: { OPENCODE_CONFIG_DIR: tmpDir, LLM_SWITCH_TARGET: 'opencode' },
+    });
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('Switched to glm');
+  });
 });
 
 describe('cli help output', () => {
@@ -163,9 +219,11 @@ describe('cli help output', () => {
     return r.stdout;
   }
 
-  it('top-level --help mentions CLAUDE_CONFIG_DIR', async () => {
+  it('top-level --help mentions config env vars', async () => {
     const out = await helpFor(['--help']);
     expect(out).toContain('CLAUDE_CONFIG_DIR');
+    expect(out).toContain('OPENCODE_CONFIG_DIR');
+    expect(out).toContain('LLM_SWITCH_TARGET');
   });
 
   it('top-level --help mentions the 5 built-in providers', async () => {
@@ -174,6 +232,12 @@ describe('cli help output', () => {
     expect(out).toMatch(/DeepSeek/i);
     expect(out).toMatch(/Kimi/i);
     expect(out).toMatch(/Qwen/i);
+  });
+
+  it('top-level --help documents --target option', async () => {
+    const out = await helpFor(['--help']);
+    expect(out).toMatch(/-t, --target/);
+    expect(out).toMatch(/claude|opencode/);
   });
 
   for (const cmd of ['list', 'switch', 'restore', 'save', 'create', 'current']) {
@@ -186,7 +250,6 @@ describe('cli help output', () => {
   it('switch --help documents the alias format', async () => {
     const out = await helpFor(['switch', '--help']);
     expect(out).toMatch(/alias/i);
-    // Should reference either the regex or describe what makes a valid alias
     expect(out.length).toBeGreaterThan(200);
   });
 
