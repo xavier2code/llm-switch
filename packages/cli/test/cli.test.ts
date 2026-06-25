@@ -56,7 +56,8 @@ describe('cli e2e', () => {
   it('prints help with --help', async () => {
     const r = await run(LLMSW_BIN, ['--help']);
     expect(r.code).toBe(0);
-    expect(r.stdout).toContain('llm-switch');
+    expect(r.stdout).toContain('Usage: sw');
+    expect(r.stdout).toContain('llm-switch/profiles');
     expect(r.stdout).toContain('switch');
     expect(r.stdout).toContain('list');
   });
@@ -300,5 +301,17 @@ describe('cli help output', () => {
   it('restore --help mentions backup (.bak)', async () => {
     const out = await helpFor(['restore', '--help']);
     expect(out).toMatch(/\.bak/);
+  });
+
+  it('list --help shows $ sw examples (not $ llm-switch)', async () => {
+    const out = await helpFor(['list', '--help']);
+    expect(out).toContain('$ sw list');
+    expect(out).not.toContain('$ llm-switch list');
+  });
+
+  it('switch --help shows $ sw examples (not $ llm-switch)', async () => {
+    const out = await helpFor(['switch', '--help']);
+    expect(out).toContain('$ sw switch');
+    expect(out).not.toContain('$ llm-switch switch');
   });
 });

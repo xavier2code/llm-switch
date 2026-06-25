@@ -86,9 +86,9 @@ program
     'after',
     `
 Examples:
-  $ llm-switch list
-  $ llm-switch --target opencode list
-  $ CLAUDE_CONFIG_DIR=/tmp/llm-switch-test llm-switch list
+  $ sw list
+  $ sw --target opencode list
+  $ CLAUDE_CONFIG_DIR=/tmp/sw-test sw list
 
 Output columns: ●/○ marker, alias, full path. Active profile is always listed first.
 `,
@@ -110,13 +110,13 @@ Arguments:
   [alias]   Profile name to switch to. Must match ^[a-z0-9][a-z0-9._-]{0,63}$ and not end in '.bak'.
             If omitted, an interactive picker is shown (requires a TTY).
 
-The previous active config is backed up before the swap, so \`llm-switch restore\`
+The previous active config is backed up before the swap, so \`sw restore\`
 can undo the change.
 
 Examples:
-  $ llm-switch switch            # interactive picker
-  $ llm-switch switch glm        # switch directly to the 'glm' profile
-  $ llm-switch --target opencode switch glm
+  $ sw switch            # interactive picker
+  $ sw switch glm        # switch directly to the 'glm' profile
+  $ sw --target opencode switch glm
 
 Exit codes: 0 on success, 2 if the named profile does not exist, 0 (no error)
 if cancelled via Ctrl-C.
@@ -149,8 +149,8 @@ If the current active config and the backup are byte-identical, the command
 prints 'Already at backup state' and exits 0 without touching anything.
 
 Examples:
-  $ llm-switch restore
-  $ llm-switch --target opencode restore
+  $ sw restore
+  $ sw --target opencode restore
 
 Exit codes: 1 if no backup exists, 0 otherwise.
 `,
@@ -184,10 +184,10 @@ prompts \`Overwrite? [y/N]\` (requires a TTY). In non-TTY contexts it exits 0
 with a clear error instead of silently overwriting.
 
 Examples:
-  $ llm-switch save glm           # save active config as 'glm'
-  $ llm-switch save -f glm        # overwrite existing 'glm' without prompt
-  $ llm-switch save               # interactive picker
-  $ llm-switch --target opencode save glm
+  $ sw save glm           # save active config as 'glm'
+  $ sw save -f glm        # overwrite existing 'glm' without prompt
+  $ sw save               # interactive picker
+  $ sw --target opencode save glm
 
 Exit codes: 1 if no active config exists, 0 otherwise. Cancellation
 (via prompt decline or Ctrl-C) exits 0.
@@ -225,8 +225,8 @@ The validator rejects non-HTTPS BASE_URLs; http:// is allowed only for
 localhost/127.0.0.1/::1 (so local proxies like LiteLLM still work).
 
 Examples:
-  $ llm-switch create             # run the wizard
-  $ llm-switch --target opencode create
+  $ sw create             # run the wizard
+  $ sw --target opencode create
 
 Exit codes: 0 if created (or cleanly cancelled), non-zero on validation
 failure that isn't recovered via the failure submenu.
@@ -255,8 +255,8 @@ contents), or 'default' if no profile file matches. Also prints the BASE_URL,
 model, and whether any MCP servers are configured.
 
 Examples:
-  $ llm-switch current
-  $ llm-switch --target opencode current
+  $ sw current
+  $ sw --target opencode current
 
 Exit codes: 0 on success, 1 if the config directory is not found.
 `,
@@ -286,7 +286,7 @@ Requires a TTY. In non-interactive contexts it exits 0 with no effect.
 The --target flag has no effect here; \`init\` manages all detected targets.
 
 Examples:
-  $ llm-switch init
+  $ sw init
 
 Exit codes: 0 on success or clean cancellation.
 `,
