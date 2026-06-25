@@ -2,9 +2,9 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { runInitWizard } from '../../src/commands/init.js';
+import { runInitWizard, maybeRunInitWizard } from '../../src/commands/init.js';
 import { UserCancelledError } from '../../src/errors.js';
-import { getActiveConfigPath, type TargetId } from '../../src/config.js';
+import { getActiveConfigPath, getLlmswitchDir, type TargetId } from '../../src/config.js';
 import { mockClaudeTarget } from '../helpers.js';
 
 let tmpDir: string;
@@ -134,5 +134,24 @@ describe('runInitWizard', () => {
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
     await runInitWizard(io);
     expect(io.writes.join('')).toMatch(/Initialized llm-switch/);
+  });
+});
+
+describe('maybeRunInitWizard', () => {
+  it('is a no-op in a non-TTY (test) environment', async () => {
+    // process.stdout.isTTY is undefined under vitest -> early return.
+    await expect(maybeRunInitWizard(mockClaudeTarget())).resolves.toBeUndefined();
+  });
+
+  it('is a no-op when the target is already initialized', async () => {
+    await fs.mkdir(getLlmswitchDir(mockClaudeTarget()), { recursive: true });
+    const original = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+    try {
+      // Would hang on the real checkbox if it ran; the existing dir must short-circuit.
+      await expect(maybeRunInitWizard(mockClaudeTarget())).resolves.toBeUndefined();
+    } finally {
+      Object.defineProperty(process.stdout, 'isTTY', { value: original, configurable: true });
+    }
   });
 });

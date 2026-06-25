@@ -6,12 +6,14 @@ import {
   getActiveConfigPath,
   getLlmswitchDir,
   getTarget,
+  type TargetConfig,
   type TargetId,
 } from '../config.js';
 import { detectInstalledTargets } from '../detector.js';
 import { exists } from '../fs-utils.js';
 import { UserCancelledError } from '../errors.js';
 import { INTERACTIVE_TTY_REQUIRED } from '../messages.js';
+import { isInquirerCancelError } from '../ui.js';
 
 export interface InitIO {
   stdout: Writable;
@@ -80,5 +82,27 @@ export async function runInitWizard(io: InitIO): Promise<void> {
     io.stdout.write(
       `  ${target.displayName}: ${getLlmswitchDir(target)} (active config ${found ? 'found' : 'missing'})\n`,
     );
+  }
+}
+
+/**
+ * Auto-trigger gate. Runs the wizard once per target on first TTY use, then
+ * stays silent (the wizard / subsequent ensureMigrated creates the dir). Never
+ * runs outside a TTY, so CI/scripts are unaffected. Cancellation is swallowed
+ * so the originating command proceeds.
+ */
+export async function maybeRunInitWizard(target: TargetConfig): Promise<void> {
+  if (!process.stdout.isTTY) return;
+  if (await exists(getLlmswitchDir(target))) return;
+  try {
+    await runInitWizard({
+      stdout: process.stdout,
+      stderr: process.stderr,
+      isTTY: true,
+    });
+  } catch (err) {
+    if (err instanceof UserCancelledError) return;
+    if (isInquirerCancelError(err)) return;
+    throw err;
   }
 }
