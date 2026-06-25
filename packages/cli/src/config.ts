@@ -12,6 +12,7 @@ export interface TargetConfig {
   readonly envConfigDir: string;
   readonly defaultConfigDir: string;
   readonly activeConfigFileName: string;
+  readonly binaryName: string;
   readonly restartHint: string;
 }
 
@@ -22,6 +23,7 @@ export const TARGETS: readonly TargetConfig[] = [
     envConfigDir: 'CLAUDE_CONFIG_DIR',
     defaultConfigDir: '.claude',
     activeConfigFileName: 'settings.json',
+    binaryName: 'claude',
     restartHint: 'Restart Claude Code to apply.',
   },
   {
@@ -30,6 +32,7 @@ export const TARGETS: readonly TargetConfig[] = [
     envConfigDir: 'OPENCODE_CONFIG_DIR',
     defaultConfigDir: '.config/opencode',
     activeConfigFileName: 'opencode.json',
+    binaryName: 'opencode',
     restartHint: 'Restart OpenCode to apply.',
   },
 ];
