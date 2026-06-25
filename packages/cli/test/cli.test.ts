@@ -76,6 +76,7 @@ describe('cli e2e', () => {
     const r = await run(LLMSW_BIN, ['list'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
     expect(r.code).toBe(1);
     expect(r.stderr).toContain('No profiles found');
+    expect(r.stderr).toContain('sw save');
   });
 
   it('list prints profiles from new layout', async () => {

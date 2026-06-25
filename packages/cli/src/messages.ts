@@ -20,5 +20,5 @@ export const INTERACTIVE_TTY_REQUIRED = 'Interactive mode requires a TTY.';
  * subcommand (e.g. `'switch'`) for `llm-switch switch <alias>`.
  */
 export function interactiveTtyRequiredHint(command: string): string {
-  return `${INTERACTIVE_TTY_REQUIRED} Use: llm-switch ${command} <alias>`;
+  return `${INTERACTIVE_TTY_REQUIRED} Use: sw ${command} <alias>`;
 }

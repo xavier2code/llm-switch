@@ -11,7 +11,7 @@ export async function run(io: CommandIO): Promise<void> {
   const profiles = await listProfiles(io.target);
 
   if (profiles.length === 0) {
-    throw new NoProfilesError('No profiles found. Create one with: llm-switch save <alias>');
+    throw new NoProfilesError('No profiles found. Create one with: sw save <alias>');
   }
 
   const maxAliasLen = Math.max(...profiles.map((p) => p.alias.length));
@@ -30,6 +30,6 @@ export async function run(io: CommandIO): Promise<void> {
     lines.push(`  ${marker} ${padded}${tag}  ${p.path}`);
   });
   lines.push('');
-  lines.push('Use `llm-switch switch` to change active profile.');
+  lines.push('Use `sw switch` to change active profile.');
   io.stdout.write(lines.join('\n') + '\n');
 }

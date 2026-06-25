@@ -38,6 +38,19 @@ describe('list command', () => {
     );
   });
 
+  it('NoProfilesError message suggests sw save', async () => {
+    await setupProfilesDir();
+    try {
+      await run({ target, stdout: { write: () => {} } });
+      expect.fail('Expected NoProfilesError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(NoProfilesError);
+      const msg = (err as Error).message;
+      expect(msg).toContain('sw save');
+      expect(msg).not.toContain('llm-switch save');
+    }
+  });
+
   it('lists profiles via injected writer', async () => {
     await setupProfilesDir();
     await fs.writeFile(path.join(await profilesDir(), 'glm.json'), '{}');
