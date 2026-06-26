@@ -162,7 +162,42 @@ describe('validateOpenAi', () => {
       ValidationError,
     );
     await expect(validateOpenAi('https://api.openai.com/v1', 'gpt-4.1', 'sk-bad')).rejects.toThrow(
-      /OpenAI API error 401/,
+      /Invalid API key/,
     );
+  });
+
+  it('rejects on a non-401/403 error response', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 500,
+      text: async () => 'Internal Server Error',
+    });
+    await expect(validateOpenAi('https://api.openai.com/v1', 'gpt-4.1', 'sk-bad')).rejects.toThrow(
+      /Provider rejected request \(500\)/,
+    );
+  });
+
+  it('rejects non-HTTPS base URLs', async () => {
+    await expect(validateOpenAi('http://example.com/v1', 'gpt-4.1', 'sk-bad')).rejects.toThrow(
+      /BASE_URL must use HTTPS/,
+    );
+  });
+
+  it('wraps network errors in ValidationError', async () => {
+    mockFetch.mockRejectedValue(new Error('ECONNREFUSED'));
+    await expect(validateOpenAi('https://api.openai.com/v1', 'gpt-4.1', 'sk-bad')).rejects.toThrow(
+      /Network error/,
+    );
+  });
+
+  it('wraps timeout errors in ValidationError', async () => {
+    mockFetch.mockImplementation(() => {
+      const err = new Error('timeout');
+      (err as { name: string }).name = 'AbortError';
+      return Promise.reject(err);
+    });
+    await expect(
+      validateOpenAi('https://api.openai.com/v1', 'gpt-4.1', 'sk-bad', { timeoutMs: 1 }),
+    ).rejects.toThrow(/Validation timed out/);
   });
 });

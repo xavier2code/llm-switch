@@ -1,7 +1,9 @@
 import path from 'node:path';
 import os from 'node:os';
+import fs from 'node:fs/promises';
 import { createAdapter } from '../adapters/index.js';
 import type { TargetConfig } from '../config.js';
+import { ProfileNotFoundError } from '../errors.js';
 import { sha256String } from '../fs-utils.js';
 import type { Profile, ProfileContent } from '../adapters/types.js';
 
@@ -10,6 +12,8 @@ export class ProfileStore {
 
   constructor(baseDir: string = defaultBaseDir()) {
     this.baseDir = baseDir;
+    // Ensure the central store is private to the current user.
+    fs.mkdir(this.baseDir, { recursive: true, mode: 0o700 }).catch(() => undefined);
   }
 
   profileDir(target: TargetConfig): string {
@@ -35,7 +39,8 @@ export class ProfileStore {
   async activateProfile(target: TargetConfig, alias: string): Promise<void> {
     const adapter = this.adapter(target);
     const content = await adapter.readProfile(alias);
-    if (!content) throw new Error(`Profile '${alias}' not found for ${target.displayName}`);
+    if (!content)
+      throw new ProfileNotFoundError(`Profile '${alias}' not found for ${target.displayName}`);
     await adapter.writeActive(content);
   }
 

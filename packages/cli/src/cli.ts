@@ -183,7 +183,7 @@ prints 'already at backup state' and exits 0 without touching anything.
 
 Examples:
   $ sw restore
-  $ sw--target opencode restore
+  $ sw --target opencode restore
 
 Exit codes: 1 if no backup exists, 0 otherwise.
 `,
@@ -218,7 +218,7 @@ Examples:
   $ sw save glm           # save active config as 'glm'
   $ sw save -f glm        # overwrite existing 'glm' without prompt
   $ sw save               # interactive picker
-  $ sw--target opencode save glm
+  $ sw --target opencode save glm
 
 Exit codes: 1 if no active config exists, 0 otherwise. Cancellation
 (via prompt decline or Ctrl-C) exits 0.
@@ -240,6 +240,12 @@ Exit codes: 1 if no active config exists, 0 otherwise. Cancellation
 program
   .command('create')
   .description('Create a new profile from a built-in provider (interactive wizard)')
+  .option('--provider <id>', 'provider id (glm, deepseek, kimi, minimax, qwen, openai)')
+  .option('--alias <name>', 'profile alias')
+  .option('--base-url <url>', 'override provider BASE_URL')
+  .option('--model <model>', 'override provider model')
+  .option('--api-key <key>', 'API key (use LLM_SWITCH_API_KEY env var to avoid shell history)')
+  .option('--skip-validation', 'skip the live API validation (useful in CI/scripts)')
   .addHelpText(
     'after',
     `
@@ -248,35 +254,53 @@ default BASE_URL and model → enter an API key (masked) → real API validation
 against the chosen provider's endpoint → write the profile → atomically activate
 it as the current config.
 
+All prompts can be skipped by passing the corresponding flags. When every
+required value is provided via flags, the command runs without a TTY and is
+suitable for CI/scripts. If any required value is missing and stdin is not a
+TTY, the command exits 0 with no effect.
+
 Provider and validation are routed per target family: Anthropic-family targets
 (Claude Code, OpenCode) use Anthropic-compatible endpoints; Codex uses the
 OpenAI Chat Completions endpoint and a TOML config. A single run creates and
 activates the profile on every selected target.
-
-Requires a TTY. In non-interactive contexts (CI, piped input) the command
-exits 0 with no effect.
 
 The validator rejects non-HTTPS BASE_URLs; http:// is allowed only for
 localhost/127.0.0.1/::1 (so local proxies like LiteLLM still work).
 
 Examples:
   $ sw create             # run the wizard
-  $ sw--target codex create
+  $ sw --target codex create
+  $ sw create --provider glm --alias glm --api-key $API_KEY
 
 Exit codes: 0 if created (or cleanly cancelled), non-zero on validation
 failure that isn't recovered via the failure submenu.
 `,
   )
-  .action(async () => {
-    const { targets, store } = await resolveTargets();
-    await createCmd.run({
-      targets,
-      stdout: process.stdout,
-      stderr: process.stderr,
-      isTTY: Boolean(process.stdout.isTTY),
-      store,
-    });
-  });
+  .action(
+    async (opts?: {
+      provider?: string;
+      alias?: string;
+      baseUrl?: string;
+      model?: string;
+      apiKey?: string;
+      skipValidation?: boolean;
+    }) => {
+      const { targets, store } = await resolveTargets();
+      await createCmd.run({
+        targets,
+        stdout: process.stdout,
+        stderr: process.stderr,
+        isTTY: Boolean(process.stdout.isTTY),
+        store,
+        providerId: opts?.provider,
+        alias: opts?.alias,
+        baseUrl: opts?.baseUrl,
+        model: opts?.model,
+        apiKey: opts?.apiKey ?? process.env.LLM_SWITCH_API_KEY,
+        skipValidation: opts?.skipValidation,
+      });
+    },
+  );
 
 program
   .command('current')
@@ -290,7 +314,7 @@ prints the BASE_URL, model, and whether any MCP servers are configured.
 
 Examples:
   $ sw current
-  $ sw--target opencode current
+  $ sw --target opencode current
 
 Exit codes: 0 on success, 1 if the config directory is not found.
 `,
@@ -305,6 +329,7 @@ program
   .description(
     'Detect installed CLI tools and initialize the llm-switch directory layout (interactive)',
   )
+  .option('--yes', 'skip prompts and select all detected tools (non-interactive)')
   .addHelpText(
     'after',
     `
@@ -316,20 +341,24 @@ Other commands also create the layout on demand, so \`init\` is optional — run
 once after installing a new CLI tool if you want the detection report and the
 warnings about missing active configs.
 
-Requires a TTY. In non-interactive contexts it exits 0 with no effect.
+Use \`--yes\` to skip the prompt and select every tool detected on PATH. This is
+useful for automated setup; tools that are not detected are still skipped.
+
 The --target flag has no effect here; \`init\` manages all detected targets.
 
 Examples:
   $ sw init
+  $ sw init --yes
 
 Exit codes: 0 on success or clean cancellation.
 `,
   )
-  .action(async () => {
+  .action(async (opts?: { yes?: boolean }) => {
     await initCmd.runInitWizard({
       stdout: process.stdout,
       stderr: process.stderr,
       isTTY: Boolean(process.stdout.isTTY),
+      selectAllDetected: opts?.yes,
     });
   });
 

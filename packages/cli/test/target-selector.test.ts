@@ -69,7 +69,8 @@ describe('selectTargets', () => {
       isTTY: true,
       stateManager,
       checkboxFn,
-      detectFn: () => ({ claude: true, opencode: false, codex: true }) as Record<TargetId, boolean>,
+      detectFn: async () =>
+        ({ claude: true, opencode: false, codex: true }) as Record<TargetId, boolean>,
     });
     expect(result.targets.map((t) => t.id)).toEqual(['claude', 'codex']);
     expect(result.source).toBe('interactive');
@@ -82,7 +83,8 @@ describe('selectTargets', () => {
       isTTY: true,
       stateManager,
       checkboxFn,
-      detectFn: () => ({ claude: true, opencode: false, codex: true }) as Record<TargetId, boolean>,
+      detectFn: async () =>
+        ({ claude: true, opencode: false, codex: true }) as Record<TargetId, boolean>,
     });
     const state = await stateManager.read();
     expect(state.lastSelectedTargets).toEqual(['codex']);
@@ -96,9 +98,36 @@ describe('selectTargets', () => {
         isTTY: true,
         stateManager,
         checkboxFn,
-        detectFn: () =>
+        detectFn: async () =>
           ({ claude: true, opencode: false, codex: true }) as Record<TargetId, boolean>,
       }),
     ).rejects.toThrow(/No targets selected/);
+  });
+
+  it('throws when interactive selection is cancelled', async () => {
+    const checkboxFn = vi.fn().mockResolvedValue(Symbol('cancel'));
+    await expect(
+      selectTargets({
+        flag: undefined,
+        isTTY: true,
+        stateManager,
+        checkboxFn,
+        detectFn: async () =>
+          ({ claude: true, opencode: false, codex: true }) as Record<TargetId, boolean>,
+      }),
+    ).rejects.toThrow(/Cancelled/);
+  });
+
+  it('filters invalid values from checkbox result', async () => {
+    const checkboxFn = vi.fn().mockResolvedValue(['claude', 'not-a-target', 'codex']);
+    const result = await selectTargets({
+      flag: undefined,
+      isTTY: true,
+      stateManager,
+      checkboxFn,
+      detectFn: async () =>
+        ({ claude: true, opencode: false, codex: true }) as Record<TargetId, boolean>,
+    });
+    expect(result.targets.map((t) => t.id)).toEqual(['claude', 'codex']);
   });
 });
