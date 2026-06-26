@@ -25,7 +25,7 @@ export async function run(io: SwitchIO): Promise<void> {
     const profiles = await listProfiles(io.target);
     if (!profiles.find((p) => p.alias === io.alias)) {
       throw new ProfileNotFoundError(
-        `Profile '${io.alias}' not found. Run 'llm-switch list' to see available profiles.`,
+        `Profile '${io.alias}' not found. Run 'sw list' to see available profiles.`,
       );
     }
     await switchTo(source, settingsPath, backupPath);

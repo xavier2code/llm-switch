@@ -4,7 +4,8 @@
   "description": "Switch LLM profiles for Claude Code, OpenCode, and other CLI tools",
   "type": "module",
   "bin": {
-    "llm-switch": "bin/llm-switch.js"
+    "llm-switch": "bin/llm-switch.js",
+    "sw": "bin/sw.js"
   },
   "files": [
     "bin",

@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { runInitWizard, maybeRunInitWizard } from '../../src/commands/init.js';
 import { UserCancelledError } from '../../src/errors.js';
-import { getActiveConfigPath, getLlmswitchDir, type TargetId } from '../../src/config.js';
+import { getActiveConfigPath, getLswitchDir, type TargetId } from '../../src/config.js';
 import { mockClaudeTarget } from '../helpers.js';
 
 let tmpDir: string;
@@ -144,7 +144,7 @@ describe('maybeRunInitWizard', () => {
   });
 
   it('is a no-op when the target is already initialized', async () => {
-    await fs.mkdir(getLlmswitchDir(mockClaudeTarget()), { recursive: true });
+    await fs.mkdir(getLswitchDir(mockClaudeTarget()), { recursive: true });
     const original = process.stdout.isTTY;
     Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
     try {

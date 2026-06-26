@@ -1,14 +1,14 @@
-# `lmsw` Short Bin Alias Implementation Plan
+# `sw` Short Bin Alias Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a `lmsw` short CLI bin alias alongside the existing `llm-switch` bin, with the old bin emitting a stderr deprecation warning, so daily CLI invocation becomes 4 characters instead of 10.
+**Goal:** Add a `sw` short CLI bin alias alongside the existing `llm-switch` bin, with the old bin emitting a stderr deprecation warning, so daily CLI invocation becomes 4 characters instead of 10.
 
-**Architecture:** Add a second Node shim file (`bin/lmsw.js`) that imports the same compiled entry as `bin/llm-switch.js`. Update commander `.name()` and all user-facing command-invocation strings to `lmsw`. The on-disk `llm-switch/` profile directory and project name stay unchanged.
+**Architecture:** Add a second Node shim file (`bin/sw.js`) that imports the same compiled entry as `bin/llm-switch.js`. Update commander `.name()` and all user-facing command-invocation strings to `sw`. The on-disk `llm-switch/` profile directory and project name stay unchanged.
 
 **Tech Stack:** Node 20+, TypeScript, commander 12, tsup, vitest.
 
-**Reference spec:** `docs/superpowers/specs/2026-06-25-lmsw-short-bin-design.md`
+**Reference spec:** `docs/superpowers/specs/2026-06-25-sw-short-bin-design.md`
 
 ---
 
@@ -16,20 +16,20 @@
 
 | File | Action | Why |
 |------|--------|-----|
-| `packages/cli/bin/lmsw.js` | Create | New short bin shim |
+| `packages/cli/bin/sw.js` | Create | New short bin shim |
 | `packages/cli/bin/llm-switch.js` | Modify | Print stderr deprecation before import |
-| `packages/cli/package.json` | Modify | Add `lmsw` to `bin` map |
-| `packages/cli/src/cli.ts` | Modify | `.name('lmsw')`; help text `$ llm-switch ...` → `$ lmsw ...` |
-| `packages/cli/src/messages.ts` | Modify | Command-suggestion strings → `lmsw` |
-| `packages/cli/src/commands/list.ts` | Modify | 2 command-suggestion strings → `lmsw` |
-| `packages/cli/src/commands/switch.ts` | Modify | 1 command-suggestion string → `lmsw` |
+| `packages/cli/package.json` | Modify | Add `sw` to `bin` map |
+| `packages/cli/src/cli.ts` | Modify | `.name('sw')`; help text `$ llm-switch ...` → `$ sw ...` |
+| `packages/cli/src/messages.ts` | Modify | Command-suggestion strings → `sw` |
+| `packages/cli/src/commands/list.ts` | Modify | 2 command-suggestion strings → `sw` |
+| `packages/cli/src/commands/switch.ts` | Modify | 1 command-suggestion string → `sw` |
 | `packages/cli/src/commands/init.ts` | **Do NOT modify** | See spec deviation below |
 | `packages/cli/src/config.ts` | **Do NOT modify** | On-disk `llm-switch/` path is data |
 | `packages/cli/src/ui.ts` | **Do NOT modify** | Internal `Symbol.for('llm-switch:create-new')` marker |
-| `packages/cli/test/cli.test.ts` | Modify | Parameterize `run()` to accept binPath; add `lmsw` tests |
-| `packages/cli/test/commands/list.test.ts` | Modify | Assert error message suggests `lmsw` |
-| `packages/cli/test/commands/switch.test.ts` | Modify | Assert error message suggests `lmsw` |
-| `README.md` | Modify | Lead with `lmsw`; add migration note |
+| `packages/cli/test/cli.test.ts` | Modify | Parameterize `run()` to accept binPath; add `sw` tests |
+| `packages/cli/test/commands/list.test.ts` | Modify | Assert error message suggests `sw` |
+| `packages/cli/test/commands/switch.test.ts` | Modify | Assert error message suggests `sw` |
+| `README.md` | Modify | Lead with `sw`; add migration note |
 | `CHANGELOG.md` | Modify | `[Unreleased]` Added + Deprecated entries |
 
 ### Spec deviation note
@@ -37,23 +37,23 @@
 The spec listed `packages/cli/src/commands/init.ts` lines 54 (`'Which tools should llm-switch manage?'`) and 79 (`'Initialized llm-switch for:'`) as user-facing strings to change. After analysis during planning, **these stay as `llm-switch`** because they reference the project / on-disk layout, not the command name. Concretely:
 
 - `"Initialized llm-switch for: claude, opencode"` reads naturally — it tells the user that the `llm-switch/` profile layout was initialized for those targets.
-- `"Initialized lmsw for: claude, opencode"` reads awkwardly — `lmsw` is a verb-like command name, not a noun describing what was set up.
+- `"Initialized sw for: claude, opencode"` reads awkwardly — `sw` is a verb-like command name, not a noun describing what was set up.
 
 If the maintainer disagrees, the change is a 2-line edit in `init.ts` plus updating the two assertions in `test/commands/init.test.ts` lines 88 and 136.
 
 ---
 
-## Task 1: Wire up the `lmsw` bin (TDD)
+## Task 1: Wire up the `sw` bin (TDD)
 
 **Files:**
 - Modify: `packages/cli/test/cli.test.ts:7-31` (parameterize `run()`)
-- Create: `packages/cli/bin/lmsw.js`
+- Create: `packages/cli/bin/sw.js`
 - Modify: `packages/cli/package.json:6-8`
 - Modify: `packages/cli/src/cli.ts:57` (commander `.name()`)
 
 - [ ] **Step 1: Parameterize the `run()` helper in `test/cli.test.ts`**
 
-Replace the top of `test/cli.test.ts` so `run()` takes an explicit `binPath` and a `LMSW_BIN` constant is exported. The existing callers (inside `describe('cli e2e', ...)` and `describe('cli help output', ...)`) must be updated to pass `LLMSW_BIN` as the first argument.
+Replace the top of `test/cli.test.ts` so `run()` takes an explicit `binPath` and a `SW_BIN` constant is exported. The existing callers (inside `describe('cli e2e', ...)` and `describe('cli help output', ...)`) must be updated to pass `LLMSW_BIN` as the first argument.
 
 New top of file:
 
@@ -65,7 +65,7 @@ import path from 'node:path';
 import os from 'node:os';
 
 const LLMSW_BIN = path.resolve(__dirname, '../bin/llm-switch.js');
-const LMSW_BIN = path.resolve(__dirname, '../bin/lmsw.js');
+const SW_BIN = path.resolve(__dirname, '../bin/sw.js');
 
 interface RunResult {
   stdout: string;
@@ -95,15 +95,15 @@ function run(
 
 Update every existing call from `run([...])` to `run(LLMSW_BIN, [...])`. There are 17 such call sites in the file; each becomes `run(LLMSW_BIN, [...], {...})` (preserving the existing third-argument options object where present).
 
-- [ ] **Step 2: Add a failing test for the `lmsw` bin**
+- [ ] **Step 2: Add a failing test for the `sw` bin**
 
 Inside the existing `describe('cli e2e', ...)` block (after the `'LLM_SWITCH_TARGET env var selects opencode'` test), add:
 
 ```ts
-  it('lmsw bin shows "Usage: lmsw" in --help', async () => {
-    const r = await run(LMSW_BIN, ['--help']);
+  it('sw bin shows "Usage: sw" in --help', async () => {
+    const r = await run(SW_BIN, ['--help']);
     expect(r.code).toBe(0);
-    expect(r.stdout).toContain('Usage: lmsw');
+    expect(r.stdout).toContain('Usage: sw');
   });
 ```
 
@@ -113,23 +113,23 @@ Inside the existing `describe('cli e2e', ...)` block (after the `'LLM_SWITCH_TAR
 pnpm --filter llm-switch test -- cli.test.ts
 ```
 
-Expected: FAIL — `bin/lmsw.js` does not exist yet, so spawn ENOENTs and `r.code` is non-null but not 0 (or the test times out). Look for a line like `FAIL packages/cli/test/cli.test.ts > cli e2e > lmsw bin shows "Usage: lmsw" in --help`.
+Expected: FAIL — `bin/sw.js` does not exist yet, so spawn ENOENTs and `r.code` is non-null but not 0 (or the test times out). Look for a line like `FAIL packages/cli/test/cli.test.ts > cli e2e > sw bin shows "Usage: sw" in --help`.
 
-- [ ] **Step 4: Create `packages/cli/bin/lmsw.js`**
+- [ ] **Step 4: Create `packages/cli/bin/sw.js`**
 
 ```js
 #!/usr/bin/env node
 import('../dist/cli.js');
 ```
 
-- [ ] **Step 5: Register `lmsw` in `packages/cli/package.json`**
+- [ ] **Step 5: Register `sw` in `packages/cli/package.json`**
 
 Replace the existing `bin` object:
 
 ```json
   "bin": {
     "llm-switch": "bin/llm-switch.js",
-    "lmsw": "bin/lmsw.js"
+    "sw": "bin/sw.js"
   },
 ```
 
@@ -139,7 +139,7 @@ In the file at line 57, change:
 
 ```diff
 -  .name('llm-switch')
-+  .name('lmsw')
++  .name('sw')
 ```
 
 - [ ] **Step 7: Rebuild and re-run the test, expect PASS**
@@ -154,8 +154,8 @@ Expected: the new test passes. All pre-existing tests in `cli.test.ts` should st
 - [ ] **Step 8: Commit**
 
 ```bash
-git add packages/cli/bin/lmsw.js packages/cli/package.json packages/cli/src/cli.ts packages/cli/test/cli.test.ts
-git commit -m "feat(cli): add lmsw short bin alias"
+git add packages/cli/bin/sw.js packages/cli/package.json packages/cli/src/cli.ts packages/cli/test/cli.test.ts
+git commit -m "feat(cli): add sw short bin alias"
 ```
 
 ---
@@ -175,11 +175,11 @@ In `test/cli.test.ts`, inside the `describe('cli e2e', ...)` block (right after 
     const r = await run(LLMSW_BIN, ['--help']);
     expect(r.code).toBe(0);
     expect(r.stderr).toContain("[llm-switch]");
-    expect(r.stderr).toContain("'lmsw'");
+    expect(r.stderr).toContain("'sw'");
   });
 
-  it('lmsw bin does NOT print the deprecation warning', async () => {
-    const r = await run(LMSW_BIN, ['--help']);
+  it('sw bin does NOT print the deprecation warning', async () => {
+    const r = await run(SW_BIN, ['--help']);
     expect(r.code).toBe(0);
     expect(r.stderr).not.toContain("[llm-switch]");
     expect(r.stderr).not.toContain("deprecated");
@@ -192,7 +192,7 @@ In `test/cli.test.ts`, inside the `describe('cli e2e', ...)` block (right after 
 pnpm --filter llm-switch test -- cli.test.ts
 ```
 
-Expected: the `llm-switch bin prints deprecation warning` test FAILS because `bin/llm-switch.js` does not yet write to stderr. The `lmsw bin does NOT print` test passes (nothing currently prints).
+Expected: the `llm-switch bin prints deprecation warning` test FAILS because `bin/llm-switch.js` does not yet write to stderr. The `sw bin does NOT print` test passes (nothing currently prints).
 
 - [ ] **Step 3: Update `packages/cli/bin/llm-switch.js`**
 
@@ -201,7 +201,7 @@ Replace the file contents with:
 ```js
 #!/usr/bin/env node
 process.stderr.write(
-  "[llm-switch] The 'llm-switch' command is deprecated and will be removed in a future release. Use 'lmsw' instead.\n",
+  "[llm-switch] The 'llm-switch' command is deprecated and will be removed in a future release. Use 'sw' instead.\n",
 );
 import('../dist/cli.js');
 ```
@@ -223,51 +223,51 @@ git commit -m "feat(cli): deprecate llm-switch bin with stderr warning"
 
 ---
 
-## Task 3: Update help text examples (`$ llm-switch ...` → `$ lmsw ...`)
+## Task 3: Update help text examples (`$ llm-switch ...` → `$ sw ...`)
 
 **Files:**
 - Modify: `packages/cli/src/cli.ts` (multiple addHelpText blocks)
 - Modify: `packages/cli/test/cli.test.ts` (tighten help-text assertion)
 
-The following `$ llm-switch ...` lines in `src/cli.ts` need to become `$ lmsw ...`. Each is inside a backtick-quoted addHelpText block, so the prefix character is `$` (space) and the change is mechanical.
+The following `$ llm-switch ...` lines in `src/cli.ts` need to become `$ sw ...`. Each is inside a backtick-quoted addHelpText block, so the prefix character is `$` (space) and the change is mechanical.
 
-- Line 89: `$ llm-switch list` → `$ lmsw list`
-- Line 90: `$ llm-switch --target opencode list` → `$ lmsw --target opencode list`
-- Line 91: `$ CLAUDE_CONFIG_DIR=/tmp/llm-switch-test llm-switch list` → `$ CLAUDE_CONFIG_DIR=/tmp/llmsw-test llmsw list` (note: `llm-switch-test` here is an arbitrary directory name in an example, not the tool — renaming keeps the example consistent with the new command)
-- Line 113: `` `llm-switch restore` `` → `` `lmsw restore` ``
-- Line 117: `$ llm-switch switch` → `$ lmsw switch`
-- Line 118: `$ llm-switch switch glm` → `$ lmsw switch glm`
-- Line 119: `$ llm-switch --target opencode switch glm` → `$ lmsw --target opencode switch glm`
+- Line 89: `$ llm-switch list` → `$ sw list`
+- Line 90: `$ llm-switch --target opencode list` → `$ sw --target opencode list`
+- Line 91: `$ CLAUDE_CONFIG_DIR=/tmp/llm-switch-test llm-switch list` → `$ CLAUDE_CONFIG_DIR=/tmp/lsw-test lsw list` (note: `llm-switch-test` here is an arbitrary directory name in an example, not the tool — renaming keeps the example consistent with the new command)
+- Line 113: `` `llm-switch restore` `` → `` `sw restore` ``
+- Line 117: `$ llm-switch switch` → `$ sw switch`
+- Line 118: `$ llm-switch switch glm` → `$ sw switch glm`
+- Line 119: `$ llm-switch --target opencode switch glm` → `$ sw --target opencode switch glm`
 - Line 144: `` `llm-switch/backups/<active>.bak` `` → **DO NOT CHANGE** (this is the on-disk directory; data path stays `llm-switch/`)
-- Line 152: `$ llm-switch restore` → `$ lmsw restore`
-- Line 153: `$ llm-switch --target opencode restore` → `$ lmsw --target opencode restore`
-- Line 187: `$ llm-switch save glm` → `$ lmsw save glm`
-- Line 188: `$ llm-switch save -f glm` → `$ lmsw save -f glm`
-- Line 189: `$ llm-switch save` → `$ lmsw save`
-- Line 190: `$ llm-switch --target opencode save glm` → `$ lmsw --target opencode save glm`
-- Line 228: `$ llm-switch create` → `$ lmsw create`
-- Line 229: `$ llm-switch --target opencode create` → `$ lmsw --target opencode create`
-- Line 258: `$ llm-switch current` → `$ lmsw current`
-- Line 259: `$ llm-switch --target opencode current` → `$ lmsw --target opencode current`
+- Line 152: `$ llm-switch restore` → `$ sw restore`
+- Line 153: `$ llm-switch --target opencode restore` → `$ sw --target opencode restore`
+- Line 187: `$ llm-switch save glm` → `$ sw save glm`
+- Line 188: `$ llm-switch save -f glm` → `$ sw save -f glm`
+- Line 189: `$ llm-switch save` → `$ sw save`
+- Line 190: `$ llm-switch --target opencode save glm` → `$ sw --target opencode save glm`
+- Line 228: `$ llm-switch create` → `$ sw create`
+- Line 229: `$ llm-switch --target opencode create` → `$ sw --target opencode create`
+- Line 258: `$ llm-switch current` → `$ sw current`
+- Line 259: `$ llm-switch --target opencode current` → `$ sw --target opencode current`
 - Line 274 (description text): `'Detect installed CLI tools and initialize the llm-switch directory layout (interactive)'` → **DO NOT CHANGE** (refers to on-disk layout)
 - Line 280 (help text): `which tools llm-switch should manage` → **DO NOT CHANGE** (conceptual project reference)
 - Line 281: `creates the llm-switch/ directory layout` → **DO NOT CHANGE** (on-disk directory)
-- Line 289: `$ llm-switch init` → `$ lmsw init`
+- Line 289: `$ llm-switch init` → `$ sw init`
 
 - [ ] **Step 1: Add a failing test that asserts the new examples are present**
 
 In `test/cli.test.ts`, inside `describe('cli help output', ...)`, add:
 
 ```ts
-  it('list --help shows $ lmsw examples (not $ llm-switch)', async () => {
+  it('list --help shows $ sw examples (not $ llm-switch)', async () => {
     const out = await helpFor(['list', '--help']);
-    expect(out).toContain('$ lmsw list');
+    expect(out).toContain('$ sw list');
     expect(out).not.toContain('$ llm-switch list');
   });
 
-  it('switch --help shows $ lmsw examples (not $ llm-switch)', async () => {
+  it('switch --help shows $ sw examples (not $ llm-switch)', async () => {
     const out = await helpFor(['switch', '--help']);
-    expect(out).toContain('$ lmsw switch');
+    expect(out).toContain('$ sw switch');
     expect(out).not.toContain('$ llm-switch switch');
   });
 ```
@@ -304,7 +304,7 @@ Replace `expect(r.stdout).toContain('llm-switch');` with two assertions: one for
   it('prints help with --help', async () => {
     const r = await run(LLMSW_BIN, ['--help']);
     expect(r.code).toBe(0);
-    expect(r.stdout).toContain('Usage: lmsw');
+    expect(r.stdout).toContain('Usage: sw');
     expect(r.stdout).toContain('llm-switch/profiles');
     expect(r.stdout).toContain('switch');
     expect(r.stdout).toContain('list');
@@ -324,7 +324,7 @@ Expected: all tests in `cli.test.ts` pass.
 
 ```bash
 git add packages/cli/src/cli.ts packages/cli/test/cli.test.ts
-git commit -m "docs(cli): switch help-text examples to lmsw"
+git commit -m "docs(cli): switch help-text examples to sw"
 ```
 
 ---
@@ -337,14 +337,14 @@ git commit -m "docs(cli): switch help-text examples to lmsw"
 - Modify: `packages/cli/src/commands/switch.ts:28`
 - Modify: `packages/cli/test/commands/list.test.ts` (assert new error message)
 - Modify: `packages/cli/test/commands/switch.test.ts` (assert new error message)
-- Modify: `packages/cli/test/cli.test.ts` (assert `lmsw save` in `list` exit-1 stderr)
+- Modify: `packages/cli/test/cli.test.ts` (assert `sw save` in `list` exit-1 stderr)
 
 - [ ] **Step 1: Add failing tests for the new error-message strings**
 
 In `test/commands/list.test.ts`, inside `describe('list command', ...)`, add:
 
 ```ts
-  it('NoProfilesError message suggests lmsw save', async () => {
+  it('NoProfilesError message suggests sw save', async () => {
     await setupProfilesDir();
     try {
       await run({ target, stdout: { write: () => {} } });
@@ -352,7 +352,7 @@ In `test/commands/list.test.ts`, inside `describe('list command', ...)`, add:
     } catch (err) {
       expect(err).toBeInstanceOf(NoProfilesError);
       const msg = (err as Error).message;
-      expect(msg).toContain('lmsw save');
+      expect(msg).toContain('sw save');
       expect(msg).not.toContain('llm-switch save');
     }
   });
@@ -361,7 +361,7 @@ In `test/commands/list.test.ts`, inside `describe('list command', ...)`, add:
 In `test/commands/switch.test.ts`, inside `describe('switch command', ...)`, add:
 
 ```ts
-  it('ProfileNotFoundError message suggests lmsw list', async () => {
+  it('ProfileNotFoundError message suggests sw list', async () => {
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{}');
     const io = mockIO();
     try {
@@ -370,7 +370,7 @@ In `test/commands/switch.test.ts`, inside `describe('switch command', ...)`, add
     } catch (err) {
       expect(err).toBeInstanceOf(ProfileNotFoundError);
       const msg = (err as Error).message;
-      expect(msg).toContain('lmsw list');
+      expect(msg).toContain('sw list');
       expect(msg).not.toContain('llm-switch list');
     }
   });
@@ -383,7 +383,7 @@ In `test/cli.test.ts`, find the existing test `'list exits 1 when no profiles'` 
     const r = await run(LLMSW_BIN, ['list'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
     expect(r.code).toBe(1);
     expect(r.stderr).toContain('No profiles found');
-    expect(r.stderr).toContain('lmsw save');
+    expect(r.stderr).toContain('sw save');
   });
 ```
 
@@ -400,10 +400,10 @@ Expected: the three new assertions FAIL because the source still says `llm-switc
 In the file, the relevant line is inside `interactiveTTYRequired(command)`:
 
 ```ts
-  return `${INTERACTIVE_TTY_REQUIRED} Use: lmsw ${command} <alias>`;
+  return `${INTERACTIVE_TTY_REQUIRED} Use: sw ${command} <alias>`;
 ```
 
-If the line currently says `llm-switch ${command}`, replace `llm-switch` with `lmsw`.
+If the line currently says `llm-switch ${command}`, replace `llm-switch` with `sw`.
 
 - [ ] **Step 4: Update `packages/cli/src/commands/list.ts`**
 
@@ -411,14 +411,14 @@ Line 14:
 
 ```diff
 -    throw new NoProfilesError('No profiles found. Create one with: llm-switch save <alias>');
-+    throw new NoProfilesError('No profiles found. Create one with: lmsw save <alias>');
++    throw new NoProfilesError('No profiles found. Create one with: sw save <alias>');
 ```
 
 Line 33:
 
 ```diff
 -    lines.push('Use `llm-switch switch` to change active profile.');
-+    lines.push('Use `lmsw switch` to change active profile.');
++    lines.push('Use `sw switch` to change active profile.');
 ```
 
 - [ ] **Step 5: Update `packages/cli/src/commands/switch.ts`**
@@ -427,7 +427,7 @@ Line 28:
 
 ```diff
 -        `Profile '${io.alias}' not found. Run 'llm-switch list' to see available profiles.`,
-+        `Profile '${io.alias}' not found. Run 'lmsw list' to see available profiles.`,
++        `Profile '${io.alias}' not found. Run 'sw list' to see available profiles.`,
 ```
 
 - [ ] **Step 6: Re-run, expect PASS**
@@ -442,7 +442,7 @@ Expected: the new tests pass; no existing tests regress.
 
 ```bash
 git add packages/cli/src/messages.ts packages/cli/src/commands/list.ts packages/cli/src/commands/switch.ts packages/cli/test/commands/list.test.ts packages/cli/test/commands/switch.test.ts packages/cli/test/cli.test.ts
-git commit -m "refactor(cli): point error-message suggestions at lmsw"
+git commit -m "refactor(cli): point error-message suggestions at sw"
 ```
 
 ---
@@ -478,9 +478,9 @@ Nothing to commit in this task. If `git status` is not clean after this step, in
 **Files:**
 - Modify: `README.md` (Usage section + new migration note)
 
-- [ ] **Step 1: Replace `llm-switch` with `lmsw` in the Usage examples**
+- [ ] **Step 1: Replace `llm-switch` with `sw` in the Usage examples**
 
-In `README.md`, every example of the form `` `llm-switch <subcommand> ...` `` in the Usage section (starting around line 65) becomes `` `lmsw <subcommand> ...` ``. Read the file first, then apply mechanical replacements. Do **not** touch:
+In `README.md`, every example of the form `` `llm-switch <subcommand> ...` `` in the Usage section (starting around line 65) becomes `` `sw <subcommand> ...` ``. Read the file first, then apply mechanical replacements. Do **not** touch:
 
 - The `# llm-switch` heading on line 1 (project title)
 - The package install line `npm i -g llm-switch` on line 60 (npm package name, not command)
@@ -494,12 +494,12 @@ Immediately after the Usage section (before the "Security note" section), add a 
 ```markdown
 ### Migrating from `llm-switch`
 
-Both `llm-switch` and `lmsw` work today. `lmsw` is the preferred
+Both `llm-switch` and `sw` work today. `sw` is the preferred
 invocation going forward. The `llm-switch` command still runs but prints
 a deprecation warning to stderr; it will be removed in a future release.
 
 No action is required — your existing scripts keep working. To migrate
-manually, replace `llm-switch` with `lmsw` in any aliases, shell history,
+manually, replace `llm-switch` with `sw` in any aliases, shell history,
 or scripts.
 ```
 
@@ -507,7 +507,7 @@ or scripts.
 
 ```bash
 git add README.md
-git commit -m "docs(readme): lead with lmsw, add migration note"
+git commit -m "docs(readme): lead with sw, add migration note"
 ```
 
 ---
@@ -525,20 +525,20 @@ Find the `## [Unreleased]` section (currently empty per the spec, line 8 of `CHA
 ## [Unreleased]
 
 ### Added
-- `lmsw` short CLI bin alias. `npm i -g llm-switch` now installs both
-  `llm-switch` and `lmsw`; `lmsw` is the recommended command name in
+- `sw` short CLI bin alias. `npm i -g llm-switch` now installs both
+  `llm-switch` and `sw`; `sw` is the recommended command name in
   documentation going forward.
 
 ### Deprecated
 - The `llm-switch` bin now prints a one-line stderr warning pointing to
-  `lmsw`. It will be removed in a future minor release.
+  `sw`. It will be removed in a future minor release.
 ```
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add CHANGELOG.md
-git commit -m "docs(changelog): note lmsw alias and llm-switch deprecation"
+git commit -m "docs(changelog): note sw alias and llm-switch deprecation"
 ```
 
 ---
@@ -572,13 +572,13 @@ Expected: no errors.
 - [ ] **Step 4: Manual smoke test**
 
 ```bash
-node packages/cli/bin/lmsw.js --help | head -5
+node packages/cli/bin/sw.js --help | head -5
 node packages/cli/bin/llm-switch.js --help 2>&1 | head -5
 ```
 
 Expected:
-- `lmsw --help` prints `Usage: lmsw ...` and no deprecation warning.
-- `llm-switch --help` prints `Usage: lmsw ...` AND a stderr line starting with `[llm-switch]`.
+- `sw --help` prints `Usage: sw ...` and no deprecation warning.
+- `llm-switch --help` prints `Usage: sw ...` AND a stderr line starting with `[llm-switch]`.
 
 - [ ] **Step 5: Inspect git log**
 
@@ -588,12 +588,12 @@ git log --oneline HEAD~7..HEAD
 
 Expected: 7 commits, in order:
 
-1. `feat(cli): add lmsw short bin alias`
+1. `feat(cli): add sw short bin alias`
 2. `feat(cli): deprecate llm-switch bin with stderr warning`
-3. `docs(cli): switch help-text examples to lmsw`
-4. `refactor(cli): point error-message suggestions at lmsw`
-5. `docs(readme): lead with lmsw, add migration note`
-6. `docs(changelog): note lmsw alias and llm-switch deprecation`
+3. `docs(cli): switch help-text examples to sw`
+4. `refactor(cli): point error-message suggestions at sw`
+5. `docs(readme): lead with sw, add migration note`
+6. `docs(changelog): note sw alias and llm-switch deprecation`
 
 (Task 5 produces no commit; total is 6 commits plus the spec commit.)
 
@@ -616,20 +616,20 @@ This change adds a new user-facing CLI alias. Per `CLAUDE.md`, this is a **minor
 
 | Spec requirement | Task |
 |------------------|------|
-| New `bin/lmsw.js` shim | Task 1 |
+| New `bin/sw.js` shim | Task 1 |
 | Old `bin/llm-switch.js` prints stderr deprecation warning | Task 2 |
 | `package.json` registers both bins | Task 1 |
-| `commander .name('lmsw')` | Task 1 |
-| `$ llm-switch ...` examples in help text → `$ lmsw ...` | Task 3 |
-| `messages.ts` command suggestion → `lmsw` | Task 4 |
-| `commands/list.ts` 2 strings → `lmsw` | Task 4 |
-| `commands/switch.ts` 1 string → `lmsw` | Task 4 |
+| `commander .name('sw')` | Task 1 |
+| `$ llm-switch ...` examples in help text → `$ sw ...` | Task 3 |
+| `messages.ts` command suggestion → `sw` | Task 4 |
+| `commands/list.ts` 2 strings → `sw` | Task 4 |
+| `commands/switch.ts` 1 string → `sw` | Task 4 |
 | `commands/init.ts` lines 54, 79 (spec says change; deviation keeps `llm-switch`) | Task 5 (verifies deviation holds) |
-| README leads with `lmsw` + migration note | Task 6 |
+| README leads with `sw` + migration note | Task 6 |
 | CHANGELOG `[Unreleased]` Added + Deprecated blocks | Task 7 |
-| E2E test that `lmsw --help` shows `Usage: lmsw` | Task 1 |
+| E2E test that `sw --help` shows `Usage: sw` | Task 1 |
 | E2E test that `llm-switch` prints deprecation | Task 2 |
-| E2E test that `lmsw` does NOT print deprecation | Task 2 |
+| E2E test that `sw` does NOT print deprecation | Task 2 |
 | Help-text example assertions | Task 3 |
 | Error-message assertions | Task 4 |
 | Final lint + typecheck + test pass | Task 8 |
@@ -643,6 +643,6 @@ This change adds a new user-facing CLI alias. Per `CLAUDE.md`, this is a **minor
 
 ### Type / name consistency
 
-- Bin path constants: `LLMSW_BIN` (existing path, deprecated bin) and `LMSW_BIN` (new path) — introduced in Task 1 Step 1 and used consistently throughout.
+- Bin path constants: `LLMSW_BIN` (existing path, deprecated bin) and `SW_BIN` (new path) — introduced in Task 1 Step 1 and used consistently throughout.
 - Deprecation warning string: shown verbatim in Task 2 Step 3, referenced in tests in Task 2 Step 1.
 - All `it(...)` test descriptions match across steps.

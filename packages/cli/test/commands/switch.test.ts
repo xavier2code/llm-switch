@@ -53,6 +53,20 @@ describe('switch command', () => {
     );
   });
 
+  it('ProfileNotFoundError message suggests sw list', async () => {
+    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{}');
+    const io = mockIO();
+    try {
+      await run({ target, alias: 'nope', ...io, isTTY: true });
+      expect.fail('Expected ProfileNotFoundError');
+    } catch (err) {
+      expect(err).toBeInstanceOf(ProfileNotFoundError);
+      const msg = (err as Error).message;
+      expect(msg).toContain('sw list');
+      expect(msg).not.toContain('llm-switch list');
+    }
+  });
+
   it('throws InvalidAliasError for bad alias', async () => {
     const io = mockIO();
     await expect(run({ target, alias: 'BAD!', ...io, isTTY: true })).rejects.toBeInstanceOf(

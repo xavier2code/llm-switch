@@ -2,9 +2,11 @@
 
 Switch LLM profiles for Claude Code, OpenCode, and other CLI tools from the command line.
 
+Invoke it as `sw`. The `llm-switch` command also still works but is deprecated.
+
 ## What it does
 
-`llm-switch` manages multiple named profiles for the AI CLI tools you use and
+`sw` manages multiple named profiles for the AI CLI tools you use and
 swaps the active config with one atomic command. Each target tool keeps its
 profiles and backups under its own `llm-switch/` subdirectory, so your tool's
 config folder stays tidy:
@@ -17,7 +19,7 @@ config folder stays tidy:
     backups/settings.json.bak         ← previous active config
 ```
 
-Backups are automatic, so every switch can be undone with `llm-switch restore`.
+Backups are automatic, so every switch can be undone with `sw restore`.
 
 ## Supported targets
 
@@ -31,7 +33,7 @@ Select a target with the global `--target` / `-t` flag, or set the
 
 ## Built-in providers
 
-`llm-switch create` ships with built-in defaults for five Anthropic-compatible
+`sw create` ships with built-in defaults for five Anthropic-compatible
 providers:
 
 | Provider      | Default BASE URL                                           | Default model       |
@@ -63,21 +65,21 @@ npm i -g llm-switch
 ## Usage
 
 ```bash
-llm-switch list                       # show available profiles (active first)
-llm-switch switch                     # interactive menu
-llm-switch switch glm                 # switch directly
-llm-switch save glm-v2                # save current config as a new profile
-llm-switch save -f glm                # overwrite an existing profile (skip confirm)
-llm-switch restore                    # restore previous backup
-llm-switch current                    # show active profile
-llm-switch create                     # interactive wizard to create a new profile
-llm-switch init                       # interactive wizard: detect tools and initialize directories
+sw list                             # show available profiles (active first)
+sw switch                           # interactive menu
+sw switch glm                       # switch directly
+sw save glm-v2                      # save current config as a new profile
+sw save -f glm                      # overwrite an existing profile (skip confirm)
+sw restore                          # restore previous backup
+sw current                          # show active profile
+sw create                           # interactive wizard to create a new profile
+sw init                             # interactive wizard: detect tools and initialize directories
 
-llm-switch --target opencode list     # operate on OpenCode instead of Claude Code
-llm-switch -t opencode switch glm
+sw --target opencode list           # operate on OpenCode instead of Claude Code
+sw -t opencode switch glm
 
-llm-switch --help                     # full help, including env vars
-llm-switch <cmd> --help               # per-command help with examples + exit codes
+sw --help                           # full help, including env vars
+sw <cmd> --help                     # per-command help with examples + exit codes
 ```
 
 Set the config-dir env var to override a target's default location
@@ -90,12 +92,22 @@ flat files (`settings.json.<alias>`, `settings.json.bak`) directly in
 `~/.claude/`. On first run, `llm-switch` automatically moves them into the new
 `llm-switch/` subdirectory layout. No manual intervention is required.
 
+### Migrating from `llm-switch`
+
+Both `llm-switch` and `sw` work today. `sw` is the preferred
+invocation going forward. The `llm-switch` command still runs but prints
+a deprecation warning to stderr; it will be removed in a future release.
+
+No action is required — your existing scripts keep working. To migrate
+manually, replace `llm-switch` with `sw` in any aliases, shell history,
+or scripts.
+
 ### First-run setup
 
-The first time you run any `llm-switch` command in a terminal, an interactive
+The first time you run any `sw` command in a terminal, an interactive
 wizard detects which CLI tools (Claude Code, OpenCode) are installed, lets you
 choose which ones to manage, and creates the `llm-switch/` directory layout for
-each. You can also run it any time with `llm-switch init`. The wizard only ever
+each. You can also run it any time with `sw init`. The wizard only ever
 creates `llm-switch/` directories — it never creates or edits a tool's own
 config file.
 

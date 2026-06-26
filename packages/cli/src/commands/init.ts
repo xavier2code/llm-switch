@@ -4,7 +4,7 @@ import {
   TARGETS,
   ensureMigrated,
   getActiveConfigPath,
-  getLlmswitchDir,
+  getLswitchDir,
   getTarget,
   type TargetConfig,
   type TargetId,
@@ -80,7 +80,7 @@ export async function runInitWizard(io: InitIO): Promise<void> {
   for (const target of selected) {
     const found = await exists(getActiveConfigPath(target));
     io.stdout.write(
-      `  ${target.displayName}: ${getLlmswitchDir(target)} (active config ${found ? 'found' : 'missing'})\n`,
+      `  ${target.displayName}: ${getLswitchDir(target)} (active config ${found ? 'found' : 'missing'})\n`,
     );
   }
 }
@@ -93,7 +93,7 @@ export async function runInitWizard(io: InitIO): Promise<void> {
  */
 export async function maybeRunInitWizard(target: TargetConfig): Promise<void> {
   if (!process.stdout.isTTY) return;
-  if (await exists(getLlmswitchDir(target))) return;
+  if (await exists(getLswitchDir(target))) return;
   try {
     await runInitWizard({
       stdout: process.stdout,

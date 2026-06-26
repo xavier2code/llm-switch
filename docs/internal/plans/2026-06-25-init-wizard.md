@@ -255,7 +255,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { runInitWizard } from '../../src/commands/init.js';
 import { UserCancelledError } from '../../src/errors.js';
-import { getActiveConfigPath, getLlmswitchDir, type TargetId } from '../../src/config.js';
+import { getActiveConfigPath, getLswitchDir, type TargetId } from '../../src/config.js';
 import { mockClaudeTarget } from '../helpers.js';
 
 let tmpDir: string;
@@ -388,7 +388,7 @@ import {
   TARGETS,
   ensureMigrated,
   getActiveConfigPath,
-  getLlmswitchDir,
+  getLswitchDir,
   getTarget,
   type TargetId,
 } from '../config.js';
@@ -462,7 +462,7 @@ export async function runInitWizard(io: InitIO): Promise<void> {
   for (const target of selected) {
     const found = await exists(getActiveConfigPath(target));
     io.stdout.write(
-      `  ${target.displayName}: ${getLlmswitchDir(target)} (active config ${found ? 'found' : 'missing'})\n`,
+      `  ${target.displayName}: ${getLswitchDir(target)} (active config ${found ? 'found' : 'missing'})\n`,
     );
   }
 }
@@ -508,7 +508,7 @@ describe('maybeRunInitWizard', () => {
   });
 
   it('is a no-op when the target is already initialized', async () => {
-    await fs.mkdir(getLlmswitchDir(mockClaudeTarget()), { recursive: true });
+    await fs.mkdir(getLswitchDir(mockClaudeTarget()), { recursive: true });
     const original = process.stdout.isTTY;
     Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
     try {
@@ -547,7 +547,7 @@ Append at the end of the file:
  */
 export async function maybeRunInitWizard(target: TargetConfig): Promise<void> {
   if (!process.stdout.isTTY) return;
-  if (await exists(getLlmswitchDir(target))) return;
+  if (await exists(getLswitchDir(target))) return;
   try {
     await runInitWizard({
       stdout: process.stdout,
@@ -569,7 +569,7 @@ import {
   TARGETS,
   ensureMigrated,
   getActiveConfigPath,
-  getLlmswitchDir,
+  getLswitchDir,
   getTarget,
   type TargetId,
 } from '../config.js';
@@ -582,7 +582,7 @@ import {
   TARGETS,
   ensureMigrated,
   getActiveConfigPath,
-  getLlmswitchDir,
+  getLswitchDir,
   getTarget,
   type TargetConfig,
   type TargetId,

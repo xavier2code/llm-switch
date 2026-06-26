@@ -1,4 +1,4 @@
-# Spec: Add `lmsw` Short CLI Bin Alias
+# Spec: Add `sw` Short CLI Bin Alias
 
 **Date:** 2026-06-25
 **Status:** Draft, awaiting review
@@ -26,8 +26,8 @@ Renaming the project (npm package, GitHub repo) is not viable:
 ## Solution
 
 Keep the package name `llm-switch` and the on-disk `llm-switch/` directory
-unchanged. Add a second `bin` entry `lmsw` alongside the existing `llm-switch`
-bin. The new `lmsw` bin becomes the primary documented command; the old
+unchanged. Add a second `bin` entry `sw` alongside the existing `llm-switch`
+bin. The new `sw` bin becomes the primary documented command; the old
 `llm-switch` bin keeps working but prints a one-line deprecation warning to
 stderr.
 
@@ -41,7 +41,7 @@ entry (`../dist/cli.js`); only the deprecated shim prints a warning first.
 ```
 packages/cli/bin/
   llm-switch.js    # existing shim, plus stderr deprecation warning
-  lmsw.js          # NEW shim, just imports dist/cli.js
+  sw.js          # NEW shim, just imports dist/cli.js
 ```
 
 `packages/cli/package.json`:
@@ -49,11 +49,11 @@ packages/cli/bin/
 ```json
 "bin": {
   "llm-switch": "bin/llm-switch.js",
-  "lmsw": "bin/lmsw.js"
+  "sw": "bin/sw.js"
 }
 ```
 
-The new `lmsw.js` shim:
+The new `sw.js` shim:
 
 ```js
 #!/usr/bin/env node
@@ -65,7 +65,7 @@ The updated `llm-switch.js` shim:
 ```js
 #!/usr/bin/env node
 process.stderr.write(
-  "[llm-switch] The 'llm-switch' command is deprecated and will be removed in a future release. Use 'lmsw' instead.\n"
+  "[llm-switch] The 'llm-switch' command is deprecated and will be removed in a future release. Use 'sw' instead.\n"
 );
 import('../dist/cli.js');
 ```
@@ -76,7 +76,7 @@ import('../dist/cli.js');
 
 ```diff
 -  .name('llm-switch')
-+  .name('lmsw')
++  .name('sw')
 ```
 
 This affects:
@@ -84,12 +84,12 @@ This affects:
 - The command name used in commander's own error messages.
 
 All `$ llm-switch ...` examples in `addHelpText(...)` blocks (lines 89–91,
-117–119, 152–153, 187–190, 228–229, 258–259, 289) change to `$ lmsw ...`.
+117–119, 152–153, 187–190, 228–229, 258–259, 289) change to `$ sw ...`.
 
 ### User-facing error messages
 
 The following strings reference the command name in suggestions and prompts.
-They change from `llm-switch` to `lmsw`:
+They change from `llm-switch` to `sw`:
 
 - `packages/cli/src/messages.ts` line 23: `Use: llm-switch ${command} <alias>`
 - `packages/cli/src/commands/list.ts` line 14: `Create one with: llm-switch save <alias>`
@@ -124,11 +124,11 @@ They change from `llm-switch` to `lmsw`:
   before commander parses argv.
 - Suppressible via `NO_COLOR`-style env vars? **No** — keep simple. Users who
   hate it can grep/sed it out; the warning is short and rare.
-- The warning is NOT printed when invoked via `lmsw` (only via `llm-switch`).
+- The warning is NOT printed when invoked via `sw` (only via `llm-switch`).
 
 ### Removal timeline
 
-- **0.8.0** (next minor): introduce `lmsw`; `llm-switch` prints deprecation
+- **0.8.0** (next minor): introduce `sw`; `llm-switch` prints deprecation
   warning. Documented in CHANGELOG under `### Deprecated`.
 - **A future minor (TBD, likely 0.10.0 or 0.11.0)**: remove the `llm-switch`
   bin entirely. The exact version is a maintainer decision at the time;
@@ -139,42 +139,42 @@ They change from `llm-switch` to `lmsw`:
 | Path | Change |
 |------|--------|
 | `packages/cli/bin/llm-switch.js` | Add stderr deprecation line |
-| `packages/cli/bin/lmsw.js` | **New file**, 2-line shim |
-| `packages/cli/package.json` | Add `lmsw` to `bin` map |
-| `packages/cli/src/cli.ts` | `.name('lmsw')`; update `$ llm-switch ...` → `$ lmsw ...` in help text |
-| `packages/cli/src/messages.ts` | `Use: llm-switch ...` → `Use: lmsw ...` |
+| `packages/cli/bin/sw.js` | **New file**, 2-line shim |
+| `packages/cli/package.json` | Add `sw` to `bin` map |
+| `packages/cli/src/cli.ts` | `.name('sw')`; update `$ llm-switch ...` → `$ sw ...` in help text |
+| `packages/cli/src/messages.ts` | `Use: llm-switch ...` → `Use: sw ...` |
 | `packages/cli/src/commands/list.ts` | 2 user-facing strings |
 | `packages/cli/src/commands/switch.ts` | 1 user-facing string |
 | `packages/cli/src/commands/init.ts` | 2 user-facing strings |
-| `README.md` | Lead with `lmsw` in usage section; add migration note |
-| `CHANGELOG.md` | `[Unreleased]` → `### Added` (`lmsw` bin) and `### Deprecated` (`llm-switch` bin) |
-| `test/cli.test.ts` | Add `lmsw` E2E + deprecation-warning assertions |
+| `README.md` | Lead with `sw` in usage section; add migration note |
+| `CHANGELOG.md` | `[Unreleased]` → `### Added` (`sw` bin) and `### Deprecated` (`llm-switch` bin) |
+| `test/cli.test.ts` | Add `sw` E2E + deprecation-warning assertions |
 
 ## Test plan
 
 ### New tests in `test/cli.test.ts`
 
-1. **E2E via `lmsw`**: invoke `node bin/lmsw.js list` (with a temp profile
+1. **E2E via `sw`**: invoke `node bin/sw.js list` (with a temp profile
    directory). Assert exit code 0, stdout contains expected list output,
    stderr does **not** contain the deprecation string.
 2. **E2E via `llm-switch`**: invoke `node bin/llm-switch.js list` under the
    same conditions. Assert exit code 0, command runs successfully, stderr
    contains the exact deprecation string.
-3. **Help text**: invoke `node bin/lmsw.js --help`. Assert stdout contains
-   `Usage: lmsw` and does **not** start a usage line with `llm-switch`.
+3. **Help text**: invoke `node bin/sw.js --help`. Assert stdout contains
+   `Usage: sw` and does **not** start a usage line with `llm-switch`.
 
 ### Unit tests for renamed strings
 
 Update existing assertions in `test/commands/list.test.ts`,
 `test/commands/switch.test.ts`, `test/commands/init.test.ts` that check for
-the old `llm-switch` strings — they should now assert `lmsw`.
+the old `llm-switch` strings — they should now assert `sw`.
 
 ### Manual smoke
 
 - `pnpm install`, `pnpm build`.
-- `node packages/cli/bin/lmsw.js --help` → shows `Usage: lmsw ...`.
-- `node packages/cli/bin/llm-switch.js --help` → shows `Usage: lmsw ...`
-  (commander name is `lmsw` regardless of bin) AND stderr prints the
+- `node packages/cli/bin/sw.js --help` → shows `Usage: sw ...`.
+- `node packages/cli/bin/llm-switch.js --help` → shows `Usage: sw ...`
+  (commander name is `sw` regardless of bin) AND stderr prints the
   deprecation warning.
 - `pnpm test`, `pnpm typecheck`, `pnpm lint` all green.
 
@@ -186,21 +186,21 @@ the old `llm-switch` strings — they should now assert `lmsw`.
 ## [Unreleased]
 
 ### Added
-- `lmsw` short CLI bin alias. `npm i -g llm-switch` now installs both
-  `llm-switch` and `lmsw`; `lmsw` is the recommended command name in
+- `sw` short CLI bin alias. `npm i -g llm-switch` now installs both
+  `llm-switch` and `sw`; `sw` is the recommended command name in
   documentation going forward.
 
 ### Deprecated
 - The `llm-switch` bin now prints a one-line stderr warning pointing to
-  `lmsw`. It will be removed in a future minor release.
+  `sw`. It will be removed in a future minor release.
 ```
 
 ### README
 
-- The "Usage" section at the top of README.md uses `lmsw` in all examples.
+- The "Usage" section at the top of README.md uses `sw` in all examples.
 - A new short subsection "Migration from `llm-switch`" notes:
   - Both commands work today.
-  - `lmsw` is preferred; `llm-switch` will be removed.
+  - `sw` is preferred; `llm-switch` will be removed.
   - No action needed for existing scripts; replace at your leisure.
 
 ## Risk assessment
@@ -208,9 +208,9 @@ the old `llm-switch` strings — they should now assert `lmsw`.
 | Risk | Likelihood | Mitigation |
 |------|------------|------------|
 | Existing scripts using `llm-switch` break on upgrade | None in 0.8.0 | Old bin kept; warning is non-fatal |
-| `lmsw` collides with another user's tool in `PATH` | Low | `lmsw` is available on npm as a name; only conflicts at install if another package registers the same bin (none known) |
+| `sw` collides with another user's tool in `PATH` | Low | `sw` is available on npm as a name; only conflicts at install if another package registers the same bin (none known) |
 | On-disk `llm-switch/` directory confused with command name in docs | Medium | Explicitly listed under "Things that DO NOT change" in this spec and in code comments where the literal appears in help text |
-| Commander `.name('lmsw')` causes commander error messages to look like a different tool | Low | Desired — `lmsw` IS the tool |
+| Commander `.name('sw')` causes commander error messages to look like a different tool | Low | Desired — `sw` IS the tool |
 
 ## Out of scope
 

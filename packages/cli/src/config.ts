@@ -87,16 +87,16 @@ export function getActiveConfigPath(target: TargetConfig = getDefaultTarget()): 
   return path.join(getConfigDir(target), target.activeConfigFileName);
 }
 
-export function getLlmswitchDir(target: TargetConfig = getDefaultTarget()): string {
+export function getLswitchDir(target: TargetConfig = getDefaultTarget()): string {
   return path.join(getConfigDir(target), 'llm-switch');
 }
 
 export function getProfilesDir(target: TargetConfig = getDefaultTarget()): string {
-  return path.join(getLlmswitchDir(target), 'profiles');
+  return path.join(getLswitchDir(target), 'profiles');
 }
 
 export function getBackupsDir(target: TargetConfig = getDefaultTarget()): string {
-  return path.join(getLlmswitchDir(target), 'backups');
+  return path.join(getLswitchDir(target), 'backups');
 }
 
 export function getBackupPath(target: TargetConfig = getDefaultTarget()): string {
@@ -146,8 +146,8 @@ export function assertAlias(alias: string): void {
  * llm-switch/backups/<activeFile>.bak under the same config directory.
  */
 export async function ensureMigrated(target: TargetConfig = getDefaultTarget()): Promise<void> {
-  const llmswitchDir = getLlmswitchDir(target);
-  if (await exists(llmswitchDir)) return;
+  const lswitchDir = getLswitchDir(target);
+  if (await exists(lswitchDir)) return;
 
   const configDir = getConfigDir(target);
   const activeFile = target.activeConfigFileName;
@@ -205,7 +205,7 @@ export async function ensureMigrated(target: TargetConfig = getDefaultTarget()):
         // Best-effort rollback; ignore failures so we still throw the original error.
       });
     }
-    await fs.rm(llmswitchDir, { recursive: true, force: true });
+    await fs.rm(lswitchDir, { recursive: true, force: true });
     throw err;
   }
 }
