@@ -49,7 +49,7 @@ await cmd.run(...);
 `maybeRunInitWizard(target)`:
 - Returns immediately when `!process.stdout.isTTY` (CI/scripts unaffected —
   `ensureMigrated` then silently creates the dir, exactly as today).
-- Returns immediately when `exists(getLswitchDir(target))` (already
+- Returns immediately when `exists(getLlmswitchDir(target))` (already
   initialized for this target).
 - Otherwise runs the wizard. Whether the user completes or cancels, the
   subsequent `ensureMigrated(target)` creates the resolved target's dir, so the
@@ -93,7 +93,7 @@ will fire the wizard once more for Claude — acceptable and semantically correc
 
 ### Reused (no change)
 
-- `config.ts`: `ensureMigrated`, `getActiveConfigPath`, `getLswitchDir`,
+- `config.ts`: `ensureMigrated`, `getActiveConfigPath`, `getLlmswitchDir`,
   `exists`, `TARGETS`.
 - `ui.ts`: `isCancel`, `isInquirerCancelError`.
 - `messages.ts`: `INTERACTIVE_TTY_REQUIRED`.
