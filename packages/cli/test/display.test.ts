@@ -3,50 +3,53 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { summarize } from '../src/display.js';
+import { ProfileStore } from '../src/store/profile-store.js';
+import { ConfigDirNotFoundError } from '../src/errors.js';
 import { mockClaudeTarget } from './helpers.js';
 
 let tmpDir: string;
+let savedEnv: string | undefined;
+let store: ProfileStore;
 const target = mockClaudeTarget();
 
 beforeEach(async () => {
-  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'llm-switch-test-'));
+  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'llm-switch-display-'));
+  savedEnv = process.env.CLAUDE_CONFIG_DIR;
   process.env.CLAUDE_CONFIG_DIR = tmpDir;
-  await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
+  store = new ProfileStore(path.join(tmpDir, 'llm-switch'));
 });
 
 afterEach(async () => {
+  if (savedEnv === undefined) delete process.env.CLAUDE_CONFIG_DIR;
+  else process.env.CLAUDE_CONFIG_DIR = savedEnv;
   await fs.rm(tmpDir, { recursive: true, force: true });
 });
 
-async function profilesDir(): Promise<string> {
-  return path.join(tmpDir, 'llm-switch', 'profiles');
-}
-
-async function setupProfilesDir(): Promise<void> {
-  await fs.mkdir(await profilesDir(), { recursive: true });
-}
-
 describe('summarize', () => {
-  it('returns source=default when no match', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"env":{}}');
-
-    const s = await summarize(target);
+  it('returns source=default when no active config exists', async () => {
+    const s = await summarize(target, store);
     expect(s.source).toBe('default');
     expect(s.hasMcp).toBe(false);
+    expect(s.baseUrl).toBeUndefined();
+    expect(s.model).toBeUndefined();
   });
 
-  it('detects alias match by content', async () => {
-    await setupProfilesDir();
-    const cfg = { env: { ANTHROPIC_BASE_URL: 'https://x' } };
-    await fs.writeFile(path.join(tmpDir, 'settings.json'), JSON.stringify(cfg));
-    await fs.writeFile(path.join(await profilesDir(), 'glm.json'), JSON.stringify(cfg));
+  it('detects the matching profile by content', async () => {
+    await store.writeProfile(target, 'glm', {
+      baseUrl: 'https://x',
+      model: 'glm-4.5',
+      apiKey: 'k',
+      extra: {},
+    });
+    await store.activateProfile(target, 'glm');
 
-    const s = await summarize(target);
+    const s = await summarize(target, store);
     expect(s.source).toBe('glm');
     expect(s.baseUrl).toBe('https://x');
+    expect(s.model).toBe('glm-4.5');
   });
 
-  it('extracts baseUrl, model, hasMcp', async () => {
+  it('returns default when active config matches no profile', async () => {
     await fs.writeFile(
       path.join(tmpDir, 'settings.json'),
       JSON.stringify({
@@ -58,17 +61,15 @@ describe('summarize', () => {
       }),
     );
 
-    const s = await summarize(target);
+    const s = await summarize(target, store);
+    expect(s.source).toBe('default');
     expect(s.baseUrl).toBe('https://api.example.com');
     expect(s.model).toBe('claude-sonnet-4');
     expect(s.hasMcp).toBe(true);
   });
 
-  it('returns empty summary when settings.json missing', async () => {
-    const s = await summarize(target);
-    expect(s.source).toBe('default');
-    expect(s.baseUrl).toBeUndefined();
-    expect(s.model).toBeUndefined();
-    expect(s.hasMcp).toBe(false);
+  it('throws ConfigDirNotFoundError when the config dir is missing', async () => {
+    process.env.CLAUDE_CONFIG_DIR = '/nonexistent/path/12345';
+    await expect(summarize(target, store)).rejects.toBeInstanceOf(ConfigDirNotFoundError);
   });
 });

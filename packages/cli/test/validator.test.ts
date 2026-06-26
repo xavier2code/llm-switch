@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { validateAnthropic } from '../src/validator.js';
+import { validateAnthropic, validateOpenAi } from '../src/validator.js';
 import { ValidationError } from '../src/errors.js';
 
 type FetchResp = {
@@ -148,5 +148,21 @@ describe('validateAnthropic', () => {
       mockFetch.mockResolvedValueOnce(makeResponse({ status: 200 }));
       await expect(validateAnthropic('https://localhost:11434', 'm', 'k')).resolves.toBeUndefined();
     });
+  });
+});
+
+describe('validateOpenAi', () => {
+  it('rejects (throws) on a 401 response', async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: async () => 'Unauthorized',
+    });
+    await expect(validateOpenAi('https://api.openai.com/v1', 'gpt-4.1', 'sk-bad')).rejects.toThrow(
+      ValidationError,
+    );
+    await expect(validateOpenAi('https://api.openai.com/v1', 'gpt-4.1', 'sk-bad')).rejects.toThrow(
+      /OpenAI API error 401/,
+    );
   });
 });

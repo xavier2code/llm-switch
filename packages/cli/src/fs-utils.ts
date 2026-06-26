@@ -19,3 +19,7 @@ export async function exists(p: string): Promise<boolean> {
     return false;
   }
 }
+
+export function sha256String(input: string): string {
+  return crypto.createHash('sha256').update(input).digest('hex');
+}

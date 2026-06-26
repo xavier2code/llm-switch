@@ -1,39 +1,59 @@
 # llm-switch
 
-Switch LLM profiles for Claude Code, OpenCode, and other CLI tools from the command line.
-
-Invoke it as `sw`. The `llm-switch` command also still works but is deprecated.
+Switch LLM profiles for Claude Code, OpenCode, Codex, and other AI CLI tools from
+the command line. The recommended command name is `sw`; `llm-switch` is still
+installed but deprecated and will be removed in a future release.
 
 ## What it does
 
-`sw` manages multiple named profiles for the AI CLI tools you use and
-swaps the active config with one atomic command. Each target tool keeps its
-profiles and backups under its own `llm-switch/` subdirectory, so your tool's
-config folder stays tidy:
+`llm-switch` manages multiple named profiles for the AI CLI tools you use and
+swaps each tool's active config with one atomic command. Profiles live in a
+single centralized store, shared across tools, while each tool's own config
+folder stays tidy:
 
 ```
+~/.config/llm-switch/
+  profiles/<target-id>/<alias>.[json|toml]   ← saved profiles (central store)
+  state.json                                 ← your last-selected targets
 ~/.claude/
-  settings.json                       ← active config (read by Claude Code)
-  llm-switch/
-    profiles/<alias>.json             ← each saved profile
-    backups/settings.json.bak         ← previous active config
+  settings.json                              ← active config (read by Claude Code)
+  llm-switch/backups/settings.json.bak       ← previous active config
 ```
 
 Backups are automatic, so every switch can be undone with `sw restore`.
 
+## Selecting targets
+
+In a terminal, every command first asks which tools to act on (Claude Code,
+OpenCode, Codex) and remembers your choice for next time:
+
+```
+? Select targets:  (press <space> to select, <a> to toggle all, <i> to invert)
+❯◉ Claude Code
+ ◉ OpenCode
+ ◯ Codex (not installed)
+```
+
+Skip the prompt with the global `--target` / `-t` flag (acts on exactly one tool),
+or set `LLM_SWITCH_TARGET` for the default in scripts and CI. In non-interactive
+contexts the remembered set is reused, falling back to `--target`, then
+`LLM_SWITCH_TARGET`, then `claude`.
+
 ## Supported targets
 
-| Target    | Active config                                   | Config dir env var     |
-| --------- | ----------------------------------------------- | ---------------------- |
-| `claude`  | `~/.claude/settings.json`                       | `CLAUDE_CONFIG_DIR`    |
-| `opencode`| `~/.config/opencode/opencode.json`              | `OPENCODE_CONFIG_DIR`  |
+| Target     | Active config                      | Config dir env var     | Format |
+| ---------- | ---------------------------------- | ---------------------- | ------ |
+| `claude`   | `~/.claude/settings.json`          | `CLAUDE_CONFIG_DIR`    | JSON   |
+| `opencode` | `~/.config/opencode/opencode.json` | `OPENCODE_CONFIG_DIR`  | JSON   |
+| `codex`    | `~/.codex/config.toml`             | `CODEX_HOME`           | TOML   |
 
-Select a target with the global `--target` / `-t` flag, or set the
-`LLM_SWITCH_TARGET` environment variable. The default is `claude`.
+Claude Code and OpenCode use Anthropic-compatible env vars
+(`ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL`, `ANTHROPIC_AUTH_TOKEN`); Codex uses a
+TOML config (`model`, `base_url`, `api_key`).
 
 ## Built-in providers
 
-`sw create` ships with built-in defaults for five Anthropic-compatible
+`llm-switch create` ships with built-in defaults for five Anthropic-compatible
 providers:
 
 | Provider      | Default BASE URL                                           | Default model       |
@@ -45,9 +65,11 @@ providers:
 | Qwen (DashScope)| `https://dashscope.aliyuncs.com/compatible-mode/anthropic`| `qwen-plus`       |
 
 You can override the BASE URL and model during the wizard. The default alias for
-each provider is its short id (e.g., `glm`, `kimi`). Profiles use
-Anthropic-compatible env vars (`ANTHROPIC_BASE_URL`, `ANTHROPIC_MODEL`,
-`ANTHROPIC_AUTH_TOKEN`), which work for both Claude Code and OpenCode.
+each provider is its short id (e.g., `glm`, `kimi`). When you select an
+Anthropic-family target (Claude Code, OpenCode) the wizard validates against the
+provider's Anthropic-compatible endpoint; when you select Codex it uses the
+OpenAI Chat Completions endpoint and writes a TOML config. A single `create` run
+builds and activates the profile on every selected target.
 
 ## Security note
 
@@ -65,51 +87,45 @@ npm i -g llm-switch
 ## Usage
 
 ```bash
-sw list                             # show available profiles (active first)
-sw switch                           # interactive menu
-sw switch glm                       # switch directly
-sw save glm-v2                      # save current config as a new profile
-sw save -f glm                      # overwrite an existing profile (skip confirm)
-sw restore                          # restore previous backup
-sw current                          # show active profile
-sw create                           # interactive wizard to create a new profile
-sw init                             # interactive wizard: detect tools and initialize directories
+sw list                       # show profiles for the selected targets
+sw switch                     # interactive menu (targets, then profile)
+sw switch glm                 # switch directly (prompts for targets)
+sw save glm-v2                # save current config as a new profile
+sw save -f glm                # overwrite an existing profile (skip confirm)
+sw restore                    # restore previous backup
+sw current                    # show active profile per target
+sw create                     # interactive wizard to create a new profile
+sw init                       # interactive wizard: detect tools and initialize
 
-sw --target opencode list           # operate on OpenCode instead of Claude Code
-sw -t opencode switch glm
+sw --target opencode list     # operate on OpenCode only (skip target prompt)
+sw -t codex create            # create a Codex TOML profile
+LLM_SWITCH_TARGET=opencode sw current   # default target in scripts
 
-sw --help                           # full help, including env vars
-sw <cmd> --help                     # per-command help with examples + exit codes
+sw --help                     # full help, including env vars
+sw <cmd> --help               # per-command help with examples + exit codes
 ```
 
 Set the config-dir env var to override a target's default location
-(`CLAUDE_CONFIG_DIR` or `OPENCODE_CONFIG_DIR`).
+(`CLAUDE_CONFIG_DIR`, `OPENCODE_CONFIG_DIR`, or `CODEX_HOME`).
 
-### Migration from 0.5.x
+### Migration from 0.7.x
 
-If you are upgrading from 0.5.x or earlier, your profiles and backups live as
-flat files (`settings.json.<alias>`, `settings.json.bak`) directly in
-`~/.claude/`. On first run, `llm-switch` automatically moves them into the new
-`llm-switch/` subdirectory layout. No manual intervention is required.
-
-### Migrating from `llm-switch`
-
-Both `llm-switch` and `sw` work today. `sw` is the preferred
-invocation going forward. The `llm-switch` command still runs but prints
-a deprecation warning to stderr; it will be removed in a future release.
-
-No action is required — your existing scripts keep working. To migrate
-manually, replace `llm-switch` with `sw` in any aliases, shell history,
-or scripts.
+In 0.9.0 profiles moved into the centralized store
+(`~/.config/llm-switch/profiles/<target-id>/...`). On first run, `sw`
+copies your existing per-tool `llm-switch/profiles/` profiles into the central
+store automatically (the originals are left in place). No manual intervention is
+required. Upgrading from 0.5.x or earlier is also handled: the older flat
+`settings.json.<alias>` files are first moved into each tool's `llm-switch/`
+subdirectory, then copied into the central store.
 
 ### First-run setup
 
-The first time you run any `sw` command in a terminal, an interactive
-wizard detects which CLI tools (Claude Code, OpenCode) are installed, lets you
-choose which ones to manage, and creates the `llm-switch/` directory layout for
-each. You can also run it any time with `sw init`. The wizard only ever
-creates `llm-switch/` directories — it never creates or edits a tool's own
-config file.
+The first time you run a `sw` command in a terminal, it asks which CLI
+tools (Claude Code, OpenCode, Codex) to manage and remembers your choice. Other
+commands create the directory layout on demand, so setup is automatic; run
+`sw init` any time if you want the detection report and warnings about
+missing active configs. The wizard only ever creates `llm-switch/` and central
+store directories — it never creates or edits a tool's own config file.
 
 ### `save` overwrite behavior
 

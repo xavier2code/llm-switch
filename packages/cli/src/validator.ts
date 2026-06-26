@@ -73,3 +73,29 @@ export async function validateAnthropic(
     clearTimeout(timer);
   }
 }
+
+export async function validateOpenAi(
+  baseUrl: string,
+  model: string,
+  apiKey: string,
+): Promise<void> {
+  assertSecureBaseUrl(baseUrl);
+  const url = new URL('/chat/completions', baseUrl);
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: 'hi' }],
+      max_tokens: 1,
+    }),
+    signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => 'unknown');
+    throw new ValidationError(`OpenAI API error ${response.status}: ${text}`);
+  }
+}

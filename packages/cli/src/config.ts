@@ -4,11 +4,15 @@ import fs from 'node:fs/promises';
 import { AppError, InvalidAliasError } from './errors.js';
 import { exists } from './fs-utils.js';
 
-export type TargetId = 'claude' | 'opencode';
+export type TargetId = 'claude' | 'opencode' | 'codex';
+export type TargetFamily = 'anthropic' | 'openai';
+export type AdapterType = 'anthropic-json' | 'openai-toml';
 
 export interface TargetConfig {
   readonly id: TargetId;
   readonly displayName: string;
+  readonly family: TargetFamily;
+  readonly adapterType: AdapterType;
   readonly envConfigDir: string;
   readonly defaultConfigDir: string;
   readonly activeConfigFileName: string;
@@ -20,6 +24,8 @@ export const TARGETS: readonly TargetConfig[] = [
   {
     id: 'claude',
     displayName: 'Claude Code',
+    family: 'anthropic',
+    adapterType: 'anthropic-json',
     envConfigDir: 'CLAUDE_CONFIG_DIR',
     defaultConfigDir: '.claude',
     activeConfigFileName: 'settings.json',
@@ -29,11 +35,24 @@ export const TARGETS: readonly TargetConfig[] = [
   {
     id: 'opencode',
     displayName: 'OpenCode',
+    family: 'anthropic',
+    adapterType: 'anthropic-json',
     envConfigDir: 'OPENCODE_CONFIG_DIR',
     defaultConfigDir: '.config/opencode',
     activeConfigFileName: 'opencode.json',
     binaryName: 'opencode',
     restartHint: 'Restart OpenCode to apply.',
+  },
+  {
+    id: 'codex',
+    displayName: 'Codex',
+    family: 'openai',
+    adapterType: 'openai-toml',
+    envConfigDir: 'CODEX_HOME',
+    defaultConfigDir: '.codex',
+    activeConfigFileName: 'config.toml',
+    binaryName: 'codex',
+    restartHint: 'Restart Codex to apply.',
   },
 ];
 

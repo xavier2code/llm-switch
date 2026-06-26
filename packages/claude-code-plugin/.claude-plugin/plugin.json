@@ -1,6 +1,6 @@
 {
   "name": "llm-switch",
-  "version": "0.8.0",
-  "description": "Switch Claude Code settings.json profiles via the llm-switch CLI",
+  "version": "0.9.0",
+  "description": "Switch LLM profiles for Claude Code, OpenCode, Codex, and other CLI tools",
   "commands": ["./commands/switch-config.md"]
 }

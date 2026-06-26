@@ -19,8 +19,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 
 describe('target registry', () => {
-  it('exposes claude and opencode targets', () => {
-    expect(TARGETS.map((t) => t.id)).toEqual(['claude', 'opencode']);
+  it('exposes claude, opencode, and codex targets', () => {
+    expect(TARGETS.map((t) => t.id)).toEqual(['claude', 'opencode', 'codex']);
   });
 
   it('getTarget returns the matching config', () => {
@@ -32,8 +32,17 @@ describe('target registry', () => {
   it('isTargetId validates known targets', () => {
     expect(isTargetId('claude')).toBe(true);
     expect(isTargetId('opencode')).toBe(true);
+    expect(isTargetId('codex')).toBe(true);
     expect(isTargetId('aider')).toBe(false);
     expect(isTargetId(123)).toBe(false);
+  });
+
+  it('codex has openai family and toml adapter', () => {
+    const codex = getTarget('codex');
+    expect(codex.family).toBe('openai');
+    expect(codex.adapterType).toBe('openai-toml');
+    expect(codex.envConfigDir).toBe('CODEX_HOME');
+    expect(codex.activeConfigFileName).toBe('config.toml');
   });
 });
 

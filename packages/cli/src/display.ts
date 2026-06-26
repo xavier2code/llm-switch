@@ -1,14 +1,8 @@
 import fs from 'node:fs/promises';
 import { ConfigDirNotFoundError } from './errors.js';
 import type { TargetConfig } from './config.js';
-import {
-  getActiveConfigPath,
-  getConfigDir,
-  getProfilesDir,
-  parseProfileAliases,
-  profilePath,
-} from './config.js';
-import { sha256 } from './fs-utils.js';
+import { getConfigDir } from './config.js';
+import { ProfileStore, defaultProfileStore } from './store/profile-store.js';
 
 export interface CurrentSummary {
   source: string;
@@ -28,64 +22,39 @@ async function dirExists(dir: string): Promise<boolean> {
   }
 }
 
-interface SettingsData {
-  env?: { ANTHROPIC_BASE_URL?: string; ANTHROPIC_MODEL?: string };
-  mcpServers?: Record<string, unknown>;
+function hasMcpServers(extra: Record<string, unknown>): boolean {
+  const mcp = extra.mcpServers;
+  return (
+    mcp !== undefined && mcp !== null && typeof mcp === 'object' && Object.keys(mcp).length > 0
+  );
 }
 
-function safeParse(json: string): SettingsData | null {
-  try {
-    const parsed: unknown = JSON.parse(json);
-    if (parsed === null || typeof parsed !== 'object') return null;
-    return parsed as SettingsData;
-  } catch {
-    return null;
-  }
-}
-
-export async function summarize(target: TargetConfig): Promise<CurrentSummary> {
+export async function summarize(
+  target: TargetConfig,
+  store: ProfileStore = defaultProfileStore(),
+): Promise<CurrentSummary> {
   const configDir = getConfigDir(target);
   if (!(await dirExists(configDir))) {
     throw new ConfigDirNotFoundError(`Config directory not found: ${configDir}`);
   }
 
-  const settingsPath = getActiveConfigPath(target);
-  const settingsHash = await sha256(settingsPath);
+  const adapter = store.adapter(target);
+  const settingsPath = adapter.activePath();
+  const active = await adapter.readActive();
 
-  if (!settingsHash) {
+  if (!active) {
     return { source: 'default', sourcePath: settingsPath, hasMcp: false };
   }
 
-  const content = await fs.readFile(settingsPath, 'utf8');
-  const data = safeParse(content);
-
-  const entries = await fs.readdir(getProfilesDir(target));
-  const aliases = parseProfileAliases(entries);
-
-  const profiles = await Promise.all(
-    aliases.map(async (alias) => {
-      const profileFile = profilePath(alias, target);
-      return { alias, profileFile, hash: await sha256(profileFile) };
-    }),
-  );
-
-  for (const { alias, profileFile, hash } of profiles) {
-    if (hash === settingsHash) {
-      return {
-        source: alias,
-        sourcePath: profileFile,
-        baseUrl: data?.env?.ANTHROPIC_BASE_URL,
-        model: data?.env?.ANTHROPIC_MODEL,
-        hasMcp: data?.mcpServers !== undefined && Object.keys(data.mcpServers).length > 0,
-      };
-    }
-  }
+  const profiles = await store.listProfiles(target);
+  const matched = profiles.find((p) => p.active);
+  const hasMcp = hasMcpServers(active.extra);
 
   return {
-    source: 'default',
-    sourcePath: settingsPath,
-    baseUrl: data?.env?.ANTHROPIC_BASE_URL,
-    model: data?.env?.ANTHROPIC_MODEL,
-    hasMcp: data?.mcpServers !== undefined && Object.keys(data.mcpServers).length > 0,
+    source: matched ? matched.alias : 'default',
+    sourcePath: matched ? matched.path : settingsPath,
+    baseUrl: active.baseUrl || undefined,
+    model: active.model || undefined,
+    hasMcp,
   };
 }

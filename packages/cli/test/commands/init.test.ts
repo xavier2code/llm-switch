@@ -4,20 +4,26 @@ import path from 'node:path';
 import os from 'node:os';
 import { runInitWizard, maybeRunInitWizard } from '../../src/commands/init.js';
 import { UserCancelledError } from '../../src/errors.js';
-import { getActiveConfigPath, getLlmswitchDir, type TargetId } from '../../src/config.js';
-import { mockClaudeTarget } from '../helpers.js';
+import { getActiveConfigPath, getTarget, type TargetId } from '../../src/config.js';
+import { StateManager } from '../../src/state/state-manager.js';
+import { defaultBaseDir } from '../../src/store/profile-store.js';
 
 let tmpDir: string;
 let savedClaude: string | undefined;
 let savedOpencode: string | undefined;
+let savedCodex: string | undefined;
+let savedHome: string | undefined;
 
 beforeEach(async () => {
   tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'llm-switch-init-'));
   savedClaude = process.env.CLAUDE_CONFIG_DIR;
   savedOpencode = process.env.OPENCODE_CONFIG_DIR;
-  // Point both targets at the same temp dir so assertions are easy.
+  savedCodex = process.env.CODEX_HOME;
+  savedHome = process.env.HOME;
   process.env.CLAUDE_CONFIG_DIR = tmpDir;
   process.env.OPENCODE_CONFIG_DIR = tmpDir;
+  process.env.CODEX_HOME = tmpDir;
+  process.env.HOME = tmpDir;
 });
 
 afterEach(async () => {
@@ -25,6 +31,10 @@ afterEach(async () => {
   else process.env.CLAUDE_CONFIG_DIR = savedClaude;
   if (savedOpencode === undefined) delete process.env.OPENCODE_CONFIG_DIR;
   else process.env.OPENCODE_CONFIG_DIR = savedOpencode;
+  if (savedCodex === undefined) delete process.env.CODEX_HOME;
+  else process.env.CODEX_HOME = savedCodex;
+  if (savedHome === undefined) delete process.env.HOME;
+  else process.env.HOME = savedHome;
   await fs.rm(tmpDir, { recursive: true, force: true });
   vi.restoreAllMocks();
 });
@@ -44,112 +54,94 @@ describe('runInitWizard', () => {
     await expect(runInitWizard(io)).rejects.toBeInstanceOf(UserCancelledError);
   });
 
-  it('prints detection status for both tools', async () => {
-    const detectFn = () => ({ claude: true, opencode: false }) as Record<TargetId, boolean>;
+  it('prints detection status for the tools', async () => {
+    const detectFn = () =>
+      ({ claude: true, opencode: false, codex: false }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
     await runInitWizard(io);
     const out = io.writes.join('');
     expect(out).toContain('Claude Code');
-    expect(out).toContain('OpenCode');
+  });
+
+  it('creates centralized profile dirs and writes state', async () => {
+    const detectFn = () =>
+      ({ claude: true, opencode: false, codex: false }) as Record<TargetId, boolean>;
+    const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
+    const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
+    await runInitWizard(io);
+
+    const baseDir = defaultBaseDir();
+    const stat = await fs.stat(path.join(baseDir, 'profiles', 'claude'));
+    expect(stat.isDirectory()).toBe(true);
+
+    const state = await new StateManager(baseDir).read();
+    expect(state.lastSelectedTargets).toEqual(['claude']);
   });
 
   it('warns when no tool is installed', async () => {
-    const detectFn = () => ({ claude: false, opencode: false }) as Record<TargetId, boolean>;
+    const detectFn = () =>
+      ({ claude: false, opencode: false, codex: false }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
     await runInitWizard(io);
     expect(io.writes.join('')).toMatch(/no supported CLI tool detected/i);
   });
 
-  it('creates llm-switch dirs for the selected target', async () => {
-    const detectFn = () => ({ claude: true, opencode: true }) as Record<TargetId, boolean>;
-    const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
+  it('throws UserCancelledError when no tool is selected', async () => {
+    const detectFn = () =>
+      ({ claude: true, opencode: true, codex: true }) as Record<TargetId, boolean>;
+    const checkboxFn = vi.fn().mockResolvedValue([] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
-    await runInitWizard(io);
-    const stat = await fs.stat(path.join(tmpDir, 'llm-switch', 'profiles'));
-    expect(stat.isDirectory()).toBe(true);
-    expect((await fs.stat(path.join(tmpDir, 'llm-switch', 'backups'))).isDirectory()).toBe(true);
-  });
-
-  it('initializes directories for every selected tool (multi-select)', async () => {
-    const detectFn = () => ({ claude: true, opencode: true }) as Record<TargetId, boolean>;
-    const checkboxFn = vi.fn().mockResolvedValue(['claude', 'opencode'] as TargetId[]);
-    const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
-    await runInitWizard(io);
-
-    // Both targets point at the same tmpDir in this test, so both share one
-    // llm-switch/ tree; assert the dirs exist and the summary lists both tools.
-    expect((await fs.stat(path.join(tmpDir, 'llm-switch', 'profiles'))).isDirectory()).toBe(true);
-    expect((await fs.stat(path.join(tmpDir, 'llm-switch', 'backups'))).isDirectory()).toBe(true);
-    const out = io.writes.join('');
-    expect(out).toContain('Claude Code');
-    expect(out).toContain('OpenCode');
-    expect(out).toMatch(/Initialized llm-switch/);
+    await expect(runInitWizard(io)).rejects.toBeInstanceOf(UserCancelledError);
   });
 
   it('warns when an active config is missing but still initializes', async () => {
-    const detectFn = () => ({ claude: true, opencode: true }) as Record<TargetId, boolean>;
+    const detectFn = () =>
+      ({ claude: true, opencode: true, codex: true }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
-    // No settings.json written -> missing.
     await runInitWizard(io);
     expect(io.writes.join('')).toMatch(/active config not found/i);
-    expect((await fs.stat(path.join(tmpDir, 'llm-switch', 'profiles'))).isDirectory()).toBe(true);
   });
 
   it('does not warn when the active config exists', async () => {
-    await fs.writeFile(getActiveConfigPath(mockClaudeTarget()), '{}');
-    const detectFn = () => ({ claude: true, opencode: true }) as Record<TargetId, boolean>;
+    await fs.writeFile(getActiveConfigPath(getTarget('claude')), '{}');
+    const detectFn = () =>
+      ({ claude: true, opencode: true, codex: true }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
     await runInitWizard(io);
     expect(io.writes.join('')).not.toMatch(/active config not found/i);
   });
 
-  it('throws UserCancelledError when no tool is selected', async () => {
-    const detectFn = () => ({ claude: true, opencode: true }) as Record<TargetId, boolean>;
-    const checkboxFn = vi.fn().mockResolvedValue([] as TargetId[]);
-    const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
-    await expect(runInitWizard(io)).rejects.toBeInstanceOf(UserCancelledError);
-  });
-
-  it('labels not-installed choices and leaves them unchecked', async () => {
-    const detectFn = () => ({ claude: false, opencode: true }) as Record<TargetId, boolean>;
-    const checkboxFn = vi.fn().mockResolvedValue(['opencode'] as TargetId[]);
+  it('initializes directories for every selected tool (multi-select)', async () => {
+    const detectFn = () =>
+      ({ claude: true, opencode: true, codex: true }) as Record<TargetId, boolean>;
+    const checkboxFn = vi.fn().mockResolvedValue(['claude', 'codex'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
     await runInitWizard(io);
-    const arg = checkboxFn.mock.calls[0]?.[0] as {
-      choices: Array<{ name: string; checked: boolean }>;
-    };
-    const claudeChoice = arg.choices.find((c) => c.name.startsWith('Claude'));
-    expect(claudeChoice?.name).toMatch(/not installed/i);
-    expect(claudeChoice?.checked).toBe(false);
-  });
-
-  it('prints a completion summary', async () => {
-    await fs.writeFile(getActiveConfigPath(mockClaudeTarget()), '{}');
-    const detectFn = () => ({ claude: true, opencode: true }) as Record<TargetId, boolean>;
-    const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
-    const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
-    await runInitWizard(io);
-    expect(io.writes.join('')).toMatch(/Initialized llm-switch/);
+    const baseDir = defaultBaseDir();
+    expect((await fs.stat(path.join(baseDir, 'profiles', 'claude'))).isDirectory()).toBe(true);
+    expect((await fs.stat(path.join(baseDir, 'profiles', 'codex'))).isDirectory()).toBe(true);
+    const state = await new StateManager(baseDir).read();
+    expect(state.lastSelectedTargets).toEqual(['claude', 'codex']);
   });
 });
 
 describe('maybeRunInitWizard', () => {
   it('is a no-op in a non-TTY (test) environment', async () => {
     // process.stdout.isTTY is undefined under vitest -> early return.
-    await expect(maybeRunInitWizard(mockClaudeTarget())).resolves.toBeUndefined();
+    await expect(maybeRunInitWizard(getTarget('claude'))).resolves.toBeUndefined();
   });
 
-  it('is a no-op when the target is already initialized', async () => {
-    await fs.mkdir(getLlmswitchDir(mockClaudeTarget()), { recursive: true });
+  it('is a no-op when the centralized store is already initialized', async () => {
+    await fs.mkdir(defaultBaseDir(), { recursive: true });
     const original = process.stdout.isTTY;
     Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
     try {
       // Would hang on the real checkbox if it ran; the existing dir must short-circuit.
-      await expect(maybeRunInitWizard(mockClaudeTarget())).resolves.toBeUndefined();
+      await expect(maybeRunInitWizard(getTarget('claude'))).resolves.toBeUndefined();
     } finally {
       Object.defineProperty(process.stdout, 'isTTY', { value: original, configurable: true });
     }

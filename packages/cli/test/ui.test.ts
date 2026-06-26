@@ -6,16 +6,25 @@ const NEW_SENTINEL = Symbol.for('llm-switch:create-new');
 vi.mock('@inquirer/prompts', () => ({
   select: vi.fn(),
   input: vi.fn(),
+  checkbox: vi.fn(),
   isCancel: (v: unknown) => v === CANCEL,
 }));
 
-import { select, input } from '@inquirer/prompts';
-import { pickProfile, promptAlias, promptNewAlias, isInquirerCancelError } from '../src/ui.js';
+import { select, input, checkbox } from '@inquirer/prompts';
+import {
+  pickProfile,
+  promptAlias,
+  promptNewAlias,
+  isInquirerCancelError,
+  pickTargets,
+} from '../src/ui.js';
 import { UserCancelledError } from '../src/errors.js';
+import { getTarget } from '../src/config.js';
 import type { Profile } from '../src/scanner.js';
 
 const mockSelect = vi.mocked(select);
 const mockInput = vi.mocked(input);
+const mockCheckbox = vi.mocked(checkbox);
 
 describe('pickProfile', () => {
   const profiles: Profile[] = [
@@ -215,5 +224,38 @@ describe('isInquirerCancelError', () => {
     expect(isInquirerCancelError(undefined)).toBe(false);
     expect(isInquirerCancelError(42)).toBe(false);
     expect(isInquirerCancelError(Symbol('x'))).toBe(false);
+  });
+});
+
+describe('pickTargets', () => {
+  const targets = [getTarget('claude'), getTarget('codex')];
+
+  let savedIsTTY: boolean | undefined;
+
+  beforeEach(() => {
+    savedIsTTY = process.stdout.isTTY;
+    Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process.stdout, 'isTTY', { value: savedIsTTY, configurable: true });
+    vi.clearAllMocks();
+  });
+
+  it('returns selected target configs', async () => {
+    mockCheckbox.mockResolvedValueOnce(['claude'] as never);
+    const result = await pickTargets(targets, ['claude']);
+    expect(result?.map((t) => t.id)).toEqual(['claude']);
+  });
+
+  it('returns null on cancel', async () => {
+    mockCheckbox.mockResolvedValueOnce(Symbol('cancel') as never);
+    const result = await pickTargets(targets, ['claude']);
+    expect(result).toBeNull();
+  });
+
+  it('throws when no TTY', async () => {
+    Object.defineProperty(process.stdout, 'isTTY', { value: false, configurable: true });
+    await expect(pickTargets(targets, [])).rejects.toBeInstanceOf(UserCancelledError);
   });
 });

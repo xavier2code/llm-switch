@@ -3,18 +3,20 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { run } from '../../src/commands/current.js';
+import { ProfileStore } from '../../src/store/profile-store.js';
 import { ConfigDirNotFoundError } from '../../src/errors.js';
 import { mockClaudeTarget } from '../helpers.js';
 
 let tmpDir: string;
 let savedEnv: string | undefined;
+let store: ProfileStore;
 const target = mockClaudeTarget();
 
 beforeEach(async () => {
-  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'llm-switch-test-'));
+  tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'llm-switch-current-'));
   savedEnv = process.env.CLAUDE_CONFIG_DIR;
   process.env.CLAUDE_CONFIG_DIR = tmpDir;
-  await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
+  store = new ProfileStore(path.join(tmpDir, 'llm-switch'));
 });
 
 afterEach(async () => {
@@ -26,41 +28,37 @@ afterEach(async () => {
 describe('current command', () => {
   it('throws ConfigDirNotFoundError when missing', async () => {
     process.env.CLAUDE_CONFIG_DIR = '/nonexistent/path/12345';
-    const io = { target, stdout: { write: () => {} } };
-    await expect(run(io)).rejects.toBeInstanceOf(ConfigDirNotFoundError);
+    await expect(
+      run({ targets: [target], stdout: { write: () => {} }, store }),
+    ).rejects.toBeInstanceOf(ConfigDirNotFoundError);
   });
 
-  it('prints summary', async () => {
+  it('shows per-target summary with matched profile', async () => {
+    await store.writeProfile(target, 'glm', {
+      baseUrl: 'https://x',
+      model: 'glm-4.5',
+      apiKey: 'k',
+      extra: {},
+    });
+    await store.activateProfile(target, 'glm');
+
+    const writes: string[] = [];
+    await run({ targets: [target], stdout: { write: (s: string) => writes.push(s) }, store });
+    const out = writes.join('');
+    expect(out).toContain('Claude Code');
+    expect(out).toContain('glm');
+    expect(out).toContain('https://x');
+  });
+
+  it('shows default source when active config matches no profile', async () => {
     await fs.writeFile(
       path.join(tmpDir, 'settings.json'),
-      JSON.stringify({
-        env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'claude-sonnet-4' },
-        mcpServers: { foo: {} },
-      }),
+      JSON.stringify({ env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'm' } }),
     );
     const writes: string[] = [];
-    const io = { target, stdout: { write: (s: string) => writes.push(s) } };
-
-    await run(io);
-
+    await run({ targets: [target], stdout: { write: (s: string) => writes.push(s) }, store });
     const out = writes.join('');
     expect(out).toContain('Source: default');
-    expect(out).toContain('Base URL: https://x');
-    expect(out).toContain('Model: claude-sonnet-4');
-    expect(out).toContain('MCP servers: yes');
-  });
-
-  it('omits missing fields', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{}');
-    const writes: string[] = [];
-    const io = { target, stdout: { write: (s: string) => writes.push(s) } };
-
-    await run(io);
-
-    const out = writes.join('');
-    expect(out).toContain('Source: default');
-    expect(out).not.toContain('Base URL');
-    expect(out).not.toContain('Model');
-    expect(out).toContain('MCP servers: no');
+    expect(out).toContain('https://x');
   });
 });

@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-06-26
+
+### Added
+- Interactive multi-target selection. In a TTY, every command now prompts you to
+  multi-select which CLI tools (Claude Code, OpenCode, Codex) to act on, remembers
+  your choice in `~/.config/llm-switch/state.json`, and reuses it next time.
+  `--target <id>` skips the prompt and acts on exactly one tool. In non-interactive
+  contexts the remembered set is reused, falling back to `--target`, then
+  `LLM_SWITCH_TARGET`, then `claude`.
+- Codex as a first-class target. Codex profiles are written as TOML
+  (`~/.codex/config.toml`, overridable via `CODEX_HOME`). `create` routes provider
+  selection and validation per target family — Anthropic-family targets use the
+  Anthropic-compatible endpoint, Codex uses the OpenAI Chat Completions endpoint.
+  A single `create` run builds and activates the profile on every selected target.
+- `TargetAdapter` abstraction (`AnthropicJsonAdapter`, `OpenAiTomlAdapter`) that
+  isolates per-format (JSON vs TOML) serialization, plus a `createAdapter` factory.
+- Centralized profile store: profiles now live in
+  `~/.config/llm-switch/profiles/<target-id>/<alias>.[json|toml]`, shared across
+  tools instead of duplicated under each config directory.
+- OpenAI provider and `validateOpenAi` validator for Codex `create`.
+- Supporting modules: `ProfileStore`, `StateManager`, `TargetSelector`
+  (`selectTargets`), and a one-time central-store migration
+  (`ensureMigratedToCentralStore`) with per-target markers.
+
+### Changed
+- **Breaking**: profiles moved to the centralized store
+  (`~/.config/llm-switch/profiles/<target-id>/...`). Existing per-tool
+  `llm-switch/profiles/` profiles are copied into the central store automatically
+  on first run (the originals are left in place); a per-target marker prevents
+  re-copying.
+- **Breaking**: all command `run()` functions now take a `targets` array (and a
+  `store`) instead of a single `target`. `list` and `current` group output by
+  target; `switch`, `save`, `restore`, and `create` loop over the selected targets.
+- `switch` auto-creates a missing profile for a target from a same-family target's
+  copy or the current active config when possible, so switching one alias across
+  several tools works even before each tool has that profile saved.
+- The first-run auto-trigger of the `init` wizard was removed — the per-command
+  target selector now handles first run, and other commands create the layout on
+  demand. `llm-switch init` remains for explicit detection + setup.
+- Updated top-level and per-command help text to document interactive target
+  selection, `CODEX_HOME`, and the centralized store path.
+- Bumped `claude-code-plugin` to track the CLI at 0.9.0.
+
 ## [0.8.0] - 2026-06-26
 
 ### Added

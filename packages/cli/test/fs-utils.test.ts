@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import { sha256, exists } from '../src/fs-utils.js';
+import { sha256, sha256String, exists } from '../src/fs-utils.js';
 
 let tmpDir: string;
 
@@ -59,5 +59,13 @@ describe('exists', () => {
 
   it('returns false for a missing file', async () => {
     expect(await exists(path.join(tmpDir, 'missing'))).toBe(false);
+  });
+});
+
+describe('sha256String', () => {
+  it('hashes a string', () => {
+    expect(sha256String('hello')).toBe(
+      '2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824',
+    );
   });
 });

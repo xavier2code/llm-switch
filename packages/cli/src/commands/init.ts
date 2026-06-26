@@ -1,10 +1,9 @@
 import type { Writable } from 'node:stream';
+import fs from 'node:fs/promises';
 import { checkbox } from '@inquirer/prompts';
 import {
   TARGETS,
-  ensureMigrated,
   getActiveConfigPath,
-  getLlmswitchDir,
   getTarget,
   type TargetConfig,
   type TargetId,
@@ -14,6 +13,9 @@ import { exists } from '../fs-utils.js';
 import { UserCancelledError } from '../errors.js';
 import { INTERACTIVE_TTY_REQUIRED } from '../messages.js';
 import { isInquirerCancelError } from '../ui.js';
+import { StateManager } from '../state/state-manager.js';
+import { ProfileStore, defaultBaseDir } from '../store/profile-store.js';
+import { ensureMigratedToCentralStore } from '../migrate.js';
 
 export interface InitIO {
   stdout: Writable;
@@ -28,10 +30,13 @@ export async function runInitWizard(io: InitIO): Promise<void> {
     throw new UserCancelledError(INTERACTIVE_TTY_REQUIRED);
   }
 
+  const baseDir = defaultBaseDir();
+  const store = new ProfileStore(baseDir);
+  const stateManager = new StateManager(baseDir);
+
   const detect = io.detectFn ?? detectInstalledTargets;
   const installed = detect();
 
-  // 1. Detection status table.
   io.stdout.write('Detected CLI tools:\n');
   for (const target of TARGETS) {
     const status = installed[target.id] ? 'installed' : 'not installed';
@@ -41,14 +46,12 @@ export async function runInitWizard(io: InitIO): Promise<void> {
   }
   io.stdout.write('\n');
 
-  // 2. Warn if nothing is installed (still continue).
   if (!TARGETS.some((t) => installed[t.id])) {
     io.stderr.write(
-      'Warning: no supported CLI tool detected on PATH. Install Claude Code or OpenCode first.\n\n',
+      'Warning: no supported CLI tool detected on PATH. Install Claude Code, OpenCode, or Codex first.\n\n',
     );
   }
 
-  // 3. Multi-select which tools to manage.
   const checkboxFn = io.checkboxFn ?? checkbox;
   const choice = (await checkboxFn({
     message: 'Which tools should llm-switch manage? (Space to toggle)',
@@ -63,37 +66,39 @@ export async function runInitWizard(io: InitIO): Promise<void> {
     throw new UserCancelledError('No tools selected.');
   }
 
-  // 4. Per selected tool: warn if active config missing, then init dirs.
+  await ensureMigratedToCentralStore(baseDir, TARGETS);
+
   const selected = choice.map((id) => getTarget(id));
   for (const target of selected) {
+    await fs.mkdir(store.profileDir(target), { recursive: true });
     const active = getActiveConfigPath(target);
     if (!(await exists(active))) {
       io.stderr.write(
         `Warning: ${target.displayName} active config not found at ${active}. Run ${target.displayName} once to create it.\n`,
       );
     }
-    await ensureMigrated(target);
   }
 
-  // 5. Completion summary.
+  await stateManager.write({ version: 1, lastSelectedTargets: choice });
+
   io.stdout.write('\nInitialized llm-switch for:\n');
   for (const target of selected) {
     const found = await exists(getActiveConfigPath(target));
     io.stdout.write(
-      `  ${target.displayName}: ${getLlmswitchDir(target)} (active config ${found ? 'found' : 'missing'})\n`,
+      `  ${target.displayName}: ${store.profileDir(target)} (active config ${found ? 'found' : 'missing'})\n`,
     );
   }
 }
 
 /**
- * Auto-trigger gate. Runs the wizard once per target on first TTY use, then
- * stays silent (the wizard / subsequent ensureMigrated creates the dir). Never
- * runs outside a TTY, so CI/scripts are unaffected. Cancellation is swallowed
- * so the originating command proceeds.
+ * Auto-trigger gate. Runs the wizard once on first TTY use when the
+ * centralized store does not yet exist, then stays silent. Never runs outside
+ * a TTY, so CI/scripts are unaffected.
  */
-export async function maybeRunInitWizard(target: TargetConfig): Promise<void> {
+export async function maybeRunInitWizard(_target: TargetConfig): Promise<void> {
   if (!process.stdout.isTTY) return;
-  if (await exists(getLlmswitchDir(target))) return;
+  const baseDir = defaultBaseDir();
+  if (await exists(baseDir)) return;
   try {
     await runInitWizard({
       stdout: process.stdout,

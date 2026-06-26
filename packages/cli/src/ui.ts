@@ -1,6 +1,7 @@
-import { select, input } from '@inquirer/prompts';
-import type { Profile } from './scanner.js';
+import { select, input, checkbox } from '@inquirer/prompts';
+import type { Profile } from './adapters/types.js';
 import { ALIAS_RE } from './config.js';
+import type { TargetConfig, TargetId } from './config.js';
 import { INTERACTIVE_TTY_REQUIRED } from './messages.js';
 import { UserCancelledError } from './errors.js';
 
@@ -88,4 +89,25 @@ export async function promptNewAlias(existing: string[]): Promise<string | null>
 
   if (isCancel(result)) return null;
   return (result ?? '').trim();
+}
+
+export async function pickTargets(
+  targets: TargetConfig[],
+  defaultIds: TargetId[],
+): Promise<TargetConfig[] | null> {
+  ensureTTY();
+  if (targets.length === 0) return [];
+
+  const result = (await checkbox({
+    message: 'Select targets:',
+    choices: targets.map((t) => ({
+      name: t.displayName,
+      value: t.id,
+      checked: defaultIds.includes(t.id),
+    })),
+  })) as TargetId[] | undefined;
+
+  if (isCancel(result)) return null;
+  const ids = result ?? [];
+  return targets.filter((t) => ids.includes(t.id));
 }
