@@ -80,7 +80,7 @@ export async function runInitWizard(io: InitIO): Promise<void> {
     const active = getActiveConfigPath(target);
     if (!(await exists(active))) {
       io.stderr.write(
-        `Warning: ${target.displayName} active config not found at ${active}. Run ${target.displayName} once to create it.\n`,
+        `Warning: ${target.displayName} active config not found at ${active}. Run ${target.displayName} once to create it. Run \`sw create\` to set one up.\n`,
       );
     }
   }
