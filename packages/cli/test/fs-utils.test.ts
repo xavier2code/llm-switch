@@ -3,7 +3,13 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import crypto from 'node:crypto';
-import { sha256, sha256String, exists, atomicWrite, atomicWriteJson } from '../src/fs-utils.js';
+import {
+  sha256,
+  sha256String,
+  exists,
+  atomicWrite,
+  atomicWriteJson,
+} from '@llm-switch/core/fs-utils.js';
 
 let tmpDir: string;
 
