@@ -10,7 +10,7 @@ import {
 import { AppError, UserCancelledError } from './errors.js';
 import { isCancel } from './ui.js';
 import type { StateManager } from './state/state-manager.js';
-import { detectInstalledTargets } from './detector.js';
+import { detectInstalledTargets } from '@llm-switch/core/detector.js';
 
 export interface TargetSelectionResult {
   targets: TargetConfig[];

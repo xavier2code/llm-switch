@@ -28,6 +28,10 @@
       "types": "./dist/validator.d.ts",
       "default": "./dist/validator.js"
     },
+    "./detector.js": {
+      "types": "./dist/detector.d.ts",
+      "default": "./dist/detector.js"
+    },
     "./adapters": {
       "types": "./dist/adapters/index.d.ts",
       "default": "./dist/adapters/index.js"

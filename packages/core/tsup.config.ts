@@ -8,6 +8,7 @@ export default defineConfig({
     'src/fs-utils.ts',
     'src/providers.ts',
     'src/validator.ts',
+    'src/detector.ts',
     'src/adapters/index.ts',
     'src/store/index.ts',
     'src/state/index.ts'

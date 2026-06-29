@@ -8,7 +8,7 @@ import {
   type TargetConfig,
   type TargetId,
 } from '@llm-switch/core/config.js';
-import { detectInstalledTargets } from '../detector.js';
+import { detectInstalledTargets } from '@llm-switch/core/detector.js';
 import { exists } from '../fs-utils.js';
 import { UserCancelledError } from '../errors.js';
 import { INTERACTIVE_TTY_REQUIRED } from '../messages.js';
