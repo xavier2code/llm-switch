@@ -1,7 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createAdapter } from '../../src/adapters/index.js';
-import { AnthropicJsonAdapter } from '@llm-switch/core/adapters/anthropic-json-adapter.js';
-import { OpenAiTomlAdapter } from '@llm-switch/core/adapters/openai-toml-adapter.js';
+import { createAdapter, AnthropicJsonAdapter, OpenAiTomlAdapter } from '../../src/adapters/index.js';
 import { getTarget } from '@llm-switch/core/config.js';
 
 describe('createAdapter', () => {
