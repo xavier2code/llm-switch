@@ -3,6 +3,7 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: [
     'src/index.ts',
+    'src/config.ts',
     'src/fs-utils.ts',
     'src/adapters/index.ts',
     'src/store/index.ts',

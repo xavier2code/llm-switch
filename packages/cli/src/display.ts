@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import { ConfigDirNotFoundError } from './errors.js';
-import type { TargetConfig } from './config.js';
-import { getConfigDir } from './config.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
+import { getConfigDir } from '@llm-switch/core/config.js';
 import { ProfileStore, defaultProfileStore } from './store/profile-store.js';
 import type { Profile, ProfileContent } from './adapters/types.js';
 

@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { ensureMigratedToCentralStore } from '../src/migrate.js';
-import { getTarget } from '../src/config.js';
+import { getTarget } from '@llm-switch/core/config.js';
 
 let tmpDir: string;
 let savedHome: string | undefined;
@@ -100,7 +100,10 @@ describe('ensureMigratedToCentralStore', () => {
   it('migrates state.json from old central store to new central store', async () => {
     const oldCentralDir = path.join(tmpDir, '.config', 'llm-switch');
     await fs.mkdir(oldCentralDir, { recursive: true });
-    await fs.writeFile(path.join(oldCentralDir, 'state.json'), '{"version":1,"lastSelectedTargets":["codex"]}');
+    await fs.writeFile(
+      path.join(oldCentralDir, 'state.json'),
+      '{"version":1,"lastSelectedTargets":["codex"]}',
+    );
 
     const centralDir = path.join(tmpDir, 'central');
     await ensureMigratedToCentralStore(centralDir, [getTarget('claude')]);
@@ -112,11 +115,17 @@ describe('ensureMigratedToCentralStore', () => {
   it('does not overwrite existing state.json in new central store', async () => {
     const oldCentralDir = path.join(tmpDir, '.config', 'llm-switch');
     await fs.mkdir(oldCentralDir, { recursive: true });
-    await fs.writeFile(path.join(oldCentralDir, 'state.json'), '{"version":1,"lastSelectedTargets":["codex"]}');
+    await fs.writeFile(
+      path.join(oldCentralDir, 'state.json'),
+      '{"version":1,"lastSelectedTargets":["codex"]}',
+    );
 
     const centralDir = path.join(tmpDir, 'central');
     await fs.mkdir(centralDir, { recursive: true });
-    await fs.writeFile(path.join(centralDir, 'state.json'), '{"version":1,"lastSelectedTargets":["claude"]}');
+    await fs.writeFile(
+      path.join(centralDir, 'state.json'),
+      '{"version":1,"lastSelectedTargets":["claude"]}',
+    );
 
     await ensureMigratedToCentralStore(centralDir, [getTarget('claude')]);
 
@@ -138,9 +147,10 @@ describe('ensureMigratedToCentralStore', () => {
     await expect(ensureMigratedToCentralStore(centralDir, [getTarget('claude')])).rejects.toThrow();
 
     // Marker should not exist after failure
-    const markerExists = await fs
-      .stat(path.join(claudeDir, '.migrated'))
-      .then(() => true, () => false);
+    const markerExists = await fs.stat(path.join(claudeDir, '.migrated')).then(
+      () => true,
+      () => false,
+    );
     expect(markerExists).toBe(false);
 
     // Restore permissions for cleanup

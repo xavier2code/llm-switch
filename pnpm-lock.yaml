@@ -18,6 +18,9 @@ importers:
       '@inquirer/prompts':
         specifier: ^7.0.0
         version: 7.10.1(@types/node@20.19.43)
+      '@llm-switch/core':
+        specifier: workspace:*
+        version: link:../core
       commander:
         specifier: ^12.0.0
         version: 12.1.0
@@ -54,6 +57,28 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.6.0
+        version: 1.6.1(@types/node@20.19.43)
+
+  packages/core:
+    dependencies:
+      '@iarna/toml':
+        specifier: ^2.2.5
+        version: 2.2.5
+      picocolors:
+        specifier: ^1.0.0
+        version: 1.1.1
+    devDependencies:
+      '@types/node':
+        specifier: ^20.0.0
+        version: 20.19.43
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(postcss@8.5.15)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+      vitest:
+        specifier: ^1.0.0
         version: 1.6.1(@types/node@20.19.43)
 
 packages:

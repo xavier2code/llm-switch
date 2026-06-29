@@ -1,5 +1,5 @@
 import * as TOML from '@iarna/toml';
-import type { TargetConfig } from '../config.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
 import { BaseAdapter } from './base-adapter.js';
 import type { ProfileContent } from './types.js';
 

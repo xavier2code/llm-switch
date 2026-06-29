@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { selectTargets } from '../src/target-selector.js';
 import { StateManager } from '../src/state/state-manager.js';
-import { type TargetId } from '../src/config.js';
+import { type TargetId } from '@llm-switch/core/config.js';
 
 let tmpDir: string;
 let stateManager: StateManager;

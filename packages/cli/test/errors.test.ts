@@ -7,7 +7,6 @@ import {
   NoBackupError,
   NoCurrentSettingsError,
   UserCancelledError,
-  InvalidAliasError,
   ValidationError,
 } from '@llm-switch/core';
 

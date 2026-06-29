@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { runInitWizard, maybeRunInitWizard } from '../../src/commands/init.js';
 import { UserCancelledError } from '../../src/errors.js';
-import { getActiveConfigPath, getTarget, type TargetId } from '../../src/config.js';
+import { getActiveConfigPath, getTarget, type TargetId } from '@llm-switch/core/config.js';
 import { StateManager } from '../../src/state/state-manager.js';
 import { defaultBaseDir } from '../../src/store/profile-store.js';
 

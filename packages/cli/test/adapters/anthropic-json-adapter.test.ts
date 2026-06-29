@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { AnthropicJsonAdapter } from '../../src/adapters/anthropic-json-adapter.js';
-import { getBackupPath, getTarget } from '../../src/config.js';
+import { getBackupPath, getTarget } from '@llm-switch/core/config.js';
 
 let tmpDir: string;
 let storeDir: string;

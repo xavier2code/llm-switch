@@ -19,7 +19,7 @@ import {
   pickTargets,
 } from '../src/ui.js';
 import { UserCancelledError } from '../src/errors.js';
-import { getTarget } from '../src/config.js';
+import { getTarget } from '@llm-switch/core/config.js';
 import type { Profile } from '../src/scanner.js';
 
 const mockSelect = vi.mocked(select);

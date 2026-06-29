@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { TargetConfig } from '../config.js';
-import { getActiveConfigPath, getBackupPath } from '../config.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
+import { getActiveConfigPath, getBackupPath } from '@llm-switch/core/config.js';
 import { atomicWrite, exists } from '../fs-utils.js';
 import type { ProfileContent, TargetAdapter } from './types.js';
 

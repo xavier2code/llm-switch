@@ -1,4 +1,4 @@
-import type { TargetConfig } from '../config.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
 import { AppError } from '../errors.js';
 import { AnthropicJsonAdapter } from './anthropic-json-adapter.js';
 import { OpenAiTomlAdapter } from './openai-toml-adapter.js';

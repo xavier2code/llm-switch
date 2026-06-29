@@ -1,4 +1,4 @@
-import type { TargetConfig } from '../config.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
 import { ProfileStore, defaultProfileStore } from '../store/profile-store.js';
 import { summarize } from '../display.js';
 

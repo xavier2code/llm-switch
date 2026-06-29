@@ -6,7 +6,7 @@ import {
   isTargetId,
   type TargetConfig,
   type TargetId,
-} from './config.js';
+} from '@llm-switch/core/config.js';
 import { AppError, UserCancelledError } from './errors.js';
 import { isCancel } from './ui.js';
 import type { StateManager } from './state/state-manager.js';

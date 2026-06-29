@@ -7,7 +7,7 @@ import {
   getTarget,
   type TargetConfig,
   type TargetId,
-} from '../config.js';
+} from '@llm-switch/core/config.js';
 import { detectInstalledTargets } from '../detector.js';
 import { exists } from '../fs-utils.js';
 import { UserCancelledError } from '../errors.js';

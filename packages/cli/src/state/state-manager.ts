@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { atomicWriteJson, exists } from '../fs-utils.js';
-import { homeDir, isTargetId, type TargetId } from '../config.js';
+import { homeDir, isTargetId, type TargetId } from '@llm-switch/core/config.js';
 
 export interface State {
   version: number;

@@ -1,5 +1,5 @@
-import type { TargetConfig } from '../config.js';
-import { getBackupPath } from '../config.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
+import { getBackupPath } from '@llm-switch/core/config.js';
 import { restoreBackup, isSameContent } from '../backup.js';
 import { exists } from '../fs-utils.js';
 import { NoBackupError } from '../errors.js';

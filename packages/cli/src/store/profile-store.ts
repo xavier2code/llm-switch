@@ -1,7 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { createAdapter } from '../adapters/index.js';
-import type { TargetConfig } from '../config.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
 import { ProfileNotFoundError } from '../errors.js';
 import { sha256String } from '../fs-utils.js';
 import type { Profile, ProfileContent } from '../adapters/types.js';

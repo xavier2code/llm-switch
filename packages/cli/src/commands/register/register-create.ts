@@ -43,7 +43,7 @@ failure that isn't recovered via the failure submenu.
 `,
     )
     .action(
-      async (opts?: {
+      async (opts: {
         provider?: string;
         alias?: string;
         baseUrl?: string;
@@ -58,12 +58,12 @@ failure that isn't recovered via the failure submenu.
           stderr: process.stderr,
           isTTY: Boolean(process.stdout.isTTY),
           store,
-          providerId: opts?.provider,
-          alias: opts?.alias,
-          baseUrl: opts?.baseUrl,
-          model: opts?.model,
-          apiKey: opts?.apiKey ?? process.env.LLM_SWITCH_API_KEY,
-          skipValidation: opts?.skipValidation,
+          providerId: opts.provider,
+          alias: opts.alias,
+          baseUrl: opts.baseUrl,
+          model: opts.model,
+          apiKey: opts.apiKey ?? process.env.LLM_SWITCH_API_KEY,
+          skipValidation: opts.skipValidation,
         });
       },
     );

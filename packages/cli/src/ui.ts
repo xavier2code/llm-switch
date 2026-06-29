@@ -1,7 +1,7 @@
 import { select, input, checkbox } from '@inquirer/prompts';
 import type { Profile } from './adapters/types.js';
-import { ALIAS_RE } from './config.js';
-import type { TargetConfig, TargetId } from './config.js';
+import { ALIAS_RE } from '@llm-switch/core/config.js';
+import type { TargetConfig, TargetId } from '@llm-switch/core/config.js';
 import { INTERACTIVE_TTY_REQUIRED } from './messages.js';
 import { UserCancelledError } from './errors.js';
 

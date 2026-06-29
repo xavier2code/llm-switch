@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { exists } from './fs-utils.js';
-import { getConfigDir, homeDir, TARGETS, type TargetConfig } from './config.js';
+import { getConfigDir, homeDir, TARGETS, type TargetConfig } from '@llm-switch/core/config.js';
 
 /**
  * Migrate legacy profiles into the centralized store under ~/.llm-switch/.

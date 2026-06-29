@@ -8,6 +8,10 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
+    "./config.js": {
+      "types": "./dist/config.d.ts",
+      "default": "./dist/config.js"
+    },
     "./fs-utils.js": {
       "types": "./dist/fs-utils.d.ts",
       "default": "./dist/fs-utils.js"

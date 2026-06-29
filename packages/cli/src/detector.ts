@@ -1,5 +1,5 @@
 import { execFile, execFileSync } from 'node:child_process';
-import { TARGETS, type TargetConfig, type TargetId } from './config.js';
+import { TARGETS, type TargetConfig, type TargetId } from '@llm-switch/core/config.js';
 
 /**
  * Returns true if the target's binary is resolvable on PATH. Uses
