@@ -7,7 +7,7 @@ import { toExitCode } from './exit.js';
 import { AppError } from './errors.js';
 import { isInquirerCancelError } from './ui.js';
 import { ensureMigrated, TARGETS, type TargetConfig } from '@llm-switch/core/config.js';
-import { ensureMigratedToCentralStore } from './migrate.js';
+import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
 import { defaultProfileStore, type ProfileStore } from './store/profile-store.js';
 import { selectTargets } from './target-selector.js';
 import { StateManager } from './state/state-manager.js';

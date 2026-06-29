@@ -16,6 +16,10 @@
       "types": "./dist/errors.d.ts",
       "default": "./dist/errors.js"
     },
+    "./migrate.js": {
+      "types": "./dist/migrate.d.ts",
+      "default": "./dist/migrate.js"
+    },
     "./fs-utils.js": {
       "types": "./dist/fs-utils.d.ts",
       "default": "./dist/fs-utils.js"

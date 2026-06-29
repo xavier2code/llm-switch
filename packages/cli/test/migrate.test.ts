@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { ensureMigratedToCentralStore } from '../src/migrate.js';
+import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
 import { getTarget } from '@llm-switch/core/config.js';
 
 let tmpDir: string;
