@@ -6,7 +6,7 @@ import { runInitWizard, maybeRunInitWizard } from '../../src/commands/init.js';
 import { UserCancelledError } from '../../src/errors.js';
 import { getActiveConfigPath, getTarget, type TargetId } from '@llm-switch/core/config.js';
 import { StateManager } from '../../src/state/state-manager.js';
-import { defaultBaseDir } from '../../src/store/profile-store.js';
+import { defaultBaseDir } from '@llm-switch/core/store/profile-store.js';
 
 let tmpDir: string;
 let savedClaude: string | undefined;

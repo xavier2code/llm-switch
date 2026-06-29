@@ -3,7 +3,7 @@ import { getBackupPath } from '@llm-switch/core/config.js';
 import { restoreBackup, isSameContent } from '../backup.js';
 import { exists } from '../fs-utils.js';
 import { NoBackupError } from '../errors.js';
-import { ProfileStore, defaultProfileStore } from '../store/profile-store.js';
+import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
 
 export interface RestoreIO {
   targets: TargetConfig[];

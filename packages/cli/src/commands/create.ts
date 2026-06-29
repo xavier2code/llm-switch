@@ -2,7 +2,7 @@ import type { Writable } from 'node:stream';
 import { select, input, password, confirm } from '@inquirer/prompts';
 import type { TargetConfig, TargetFamily } from '@llm-switch/core/config.js';
 import { validateAlias } from '@llm-switch/core/config.js';
-import { ProfileStore, defaultProfileStore } from '../store/profile-store.js';
+import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { PROVIDERS, getProvider, isProviderId, type Provider } from '@llm-switch/core/providers.js';
 import { validateAnthropic, validateOpenAi } from '@llm-switch/core/validator.js';
 import { isCancel } from '../ui.js';

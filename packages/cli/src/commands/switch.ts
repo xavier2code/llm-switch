@@ -1,7 +1,7 @@
 import type { Writable } from 'node:stream';
 import type { TargetConfig } from '@llm-switch/core/config.js';
 import { assertAlias } from '@llm-switch/core/config.js';
-import { ProfileStore, defaultProfileStore } from '../store/profile-store.js';
+import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { pickProfile } from '../ui.js';
 import { ProfileNotFoundError, UserCancelledError } from '../errors.js';
 import { restartHint, interactiveTtyRequiredHint } from '../messages.js';

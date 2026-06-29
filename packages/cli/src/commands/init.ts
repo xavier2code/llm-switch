@@ -14,7 +14,7 @@ import { UserCancelledError } from '../errors.js';
 import { INTERACTIVE_TTY_REQUIRED } from '../messages.js';
 import { isInquirerCancelError } from '../ui.js';
 import { StateManager } from '../state/state-manager.js';
-import { ProfileStore, defaultBaseDir } from '../store/profile-store.js';
+import { ProfileStore, defaultBaseDir } from '@llm-switch/core/store/profile-store.js';
 import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
 
 export interface InitIO {

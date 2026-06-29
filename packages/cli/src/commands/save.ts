@@ -2,7 +2,7 @@ import type { Writable } from 'node:stream';
 import { confirm as inquirerConfirm } from '@inquirer/prompts';
 import type { TargetConfig } from '@llm-switch/core/config.js';
 import { assertAlias } from '@llm-switch/core/config.js';
-import { ProfileStore, defaultProfileStore } from '../store/profile-store.js';
+import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { promptAlias } from '../ui.js';
 import { NoCurrentSettingsError, UserCancelledError } from '../errors.js';
 import { interactiveTtyRequiredHint } from '../messages.js';

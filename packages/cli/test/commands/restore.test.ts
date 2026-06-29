@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { run } from '../../src/commands/restore.js';
 import { NoBackupError } from '../../src/errors.js';
-import { ProfileStore } from '../../src/store/profile-store.js';
+import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { mockClaudeTarget, mockOpencodeTarget } from '../helpers.js';
 
 let tmpDir: string;

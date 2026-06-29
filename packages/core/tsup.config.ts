@@ -16,6 +16,7 @@ export default defineConfig({
     'src/adapters/anthropic-json-adapter.ts',
     'src/adapters/openai-toml-adapter.ts',
     'src/store/index.ts',
+    'src/store/profile-store.ts',
     'src/state/index.ts'
   ],
   format: ['esm'],

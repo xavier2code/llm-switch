@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { run } from '../../src/commands/save.js';
-import { ProfileStore } from '../../src/store/profile-store.js';
+import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { NoCurrentSettingsError, InvalidAliasError, UserCancelledError } from '../../src/errors.js';
 import { mockClaudeTarget } from '../helpers.js';
 

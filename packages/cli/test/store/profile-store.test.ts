@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { ProfileStore } from '../../src/store/profile-store.js';
+import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { getTarget } from '@llm-switch/core/config.js';
 
 let tmpDir: string;
