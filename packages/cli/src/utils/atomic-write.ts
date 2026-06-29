@@ -6,6 +6,11 @@ interface AtomicWriteOptions {
   mode?: number;
 }
 
+/**
+ * Write a file atomically by writing to a temporary file and renaming it
+ * into place. This ensures that the target path never contains a partially
+ * written file.
+ */
 export async function atomicWrite(
   targetPath: string,
   content: string,
@@ -15,12 +20,15 @@ export async function atomicWrite(
   const tmpName = `.atomic-write-${randomUUID()}.tmp`;
   const tmpPath = path.join(dir, tmpName);
 
+  let tempCreated = false;
+
   try {
     // 1. Ensure parent directory exists
     await fs.mkdir(dir, { recursive: true });
 
     // 2. Write to temporary file
     await fs.writeFile(tmpPath, content, 'utf-8');
+    tempCreated = true;
 
     // 3. Set file mode if provided
     if (options.mode !== undefined) {
@@ -30,11 +38,13 @@ export async function atomicWrite(
     // 4. Atomic rename
     await fs.rename(tmpPath, targetPath);
   } catch (err) {
-    // 5. Clean up temp file on any error
-    try {
-      await fs.unlink(tmpPath);
-    } catch {
-      // Ignore cleanup errors (e.g., temp file was never created)
+    // 5. Clean up temp file on any error, but only if we created it
+    if (tempCreated) {
+      try {
+        await fs.unlink(tmpPath);
+      } catch {
+        // Ignore cleanup errors
+      }
     }
     throw err;
   }
