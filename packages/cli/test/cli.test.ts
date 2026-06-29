@@ -189,26 +189,57 @@ describe('cli e2e', () => {
     expect(r.stdout).toContain('Base URL: https://x');
   });
 
-  it('create --help mentions create subcommand', async () => {
+  it('exits 1 for an unknown subcommand', async () => {
+    const r = await run(['not-a-command']);
+    expect(r.code).toBe(1);
+    expect(r.stderr).toMatch(/unknown command|not-a-command/i);
+  });
+
+  it('create --help documents non-interactive flags', async () => {
     const r = await run(['create', '--help']);
     expect(r.code).toBe(0);
-    expect(r.stdout).toContain('create');
+    expect(r.stdout).toContain('--provider');
+    expect(r.stdout).toContain('--alias');
+    expect(r.stdout).toContain('--base-url');
+    expect(r.stdout).toContain('--model');
+    expect(r.stdout).toContain('--api-key');
   });
 
-  it('create exits 0 when no TTY (user cancel)', async () => {
-    const r = await run(['create'], { env: { CLAUDE_CONFIG_DIR: tmpDir, HOME: tmpDir } });
-    expect(r.code).toBe(0);
-  });
-
-  it('init --help mentions init', async () => {
+  it('init --help documents --yes flag', async () => {
     const r = await run(['init', '--help']);
     expect(r.code).toBe(0);
-    expect(r.stdout).toContain('init');
+    expect(r.stdout).toContain('--yes');
   });
 
-  it('init exits 0 when no TTY (user cancel)', async () => {
-    const r = await run(['init'], { env: { CLAUDE_CONFIG_DIR: tmpDir } });
+  it('create with flags succeeds without TTY', async () => {
+    const r = await run(
+      [
+        '--target',
+        'claude',
+        'create',
+        '--provider',
+        'glm',
+        '--alias',
+        'glm-flag',
+        '--api-key',
+        'sk-test',
+        '--skip-validation',
+      ],
+      { env: { CLAUDE_CONFIG_DIR: tmpDir, HOME: tmpDir } },
+    );
     expect(r.code).toBe(0);
+    expect(r.stdout).toContain('Created and activated');
+
+    const active = await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8');
+    const parsed = JSON.parse(active);
+    expect(parsed.env.ANTHROPIC_MODEL).toBe('glm-4.5');
+    expect(parsed.env.ANTHROPIC_AUTH_TOKEN).toBe('sk-test');
+  });
+
+  it('init --yes selects detected tools without TTY', async () => {
+    const r = await run(['init', '--yes'], { env: { CLAUDE_CONFIG_DIR: tmpDir, HOME: tmpDir } });
+    expect(r.code).toBe(0);
+    expect(r.stdout).toContain('Initialized llm-switch');
   });
 
   it('--target opencode uses opencode paths', async () => {

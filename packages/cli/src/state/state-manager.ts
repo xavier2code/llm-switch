@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { exists } from '../fs-utils.js';
-import type { TargetId } from '../config.js';
+import { atomicWriteJson, exists } from '../fs-utils.js';
+import { isTargetId, type TargetId } from '../config.js';
 
 export interface State {
   version: number;
@@ -37,10 +37,9 @@ export class StateManager {
   }
 
   async write(state: State): Promise<void> {
-    await fs.mkdir(this.dir, { recursive: true });
+    await fs.mkdir(this.dir, { recursive: true, mode: 0o700 });
     const p = this.filePath();
-    await fs.writeFile(p, JSON.stringify(state, null, 2));
-    await fs.chmod(p, 0o600);
+    await atomicWriteJson(p, state, { mode: 0o600, tmpPrefix: '.state.' });
   }
 }
 
@@ -50,10 +49,11 @@ export function defaultStateDir(): string {
 
 export function migrateState(raw: unknown): State {
   const state = raw as Partial<State>;
+  const targets = Array.isArray(state.lastSelectedTargets) ? state.lastSelectedTargets : [];
+  const validTargets = targets.filter((id): id is TargetId => isTargetId(id));
   return {
     version: state.version ?? DEFAULT_STATE.version,
-    lastSelectedTargets: Array.isArray(state.lastSelectedTargets)
-      ? (state.lastSelectedTargets as TargetId[])
-      : [...DEFAULT_STATE.lastSelectedTargets],
+    lastSelectedTargets:
+      validTargets.length > 0 ? validTargets : [...DEFAULT_STATE.lastSelectedTargets],
   };
 }

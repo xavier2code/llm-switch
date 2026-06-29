@@ -78,24 +78,47 @@ export async function validateOpenAi(
   baseUrl: string,
   model: string,
   apiKey: string,
+  opts?: ValidateOptions,
 ): Promise<void> {
   assertSecureBaseUrl(baseUrl);
-  const url = new URL('/chat/completions', baseUrl);
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: 'hi' }],
-      max_tokens: 1,
-    }),
-    signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
-  });
-  if (!response.ok) {
-    const text = await response.text().catch(() => 'unknown');
-    throw new ValidationError(`OpenAI API error ${response.status}: ${text}`);
+  const url = new URL('/v1/messages', baseUrl);
+  const controller = new AbortController();
+  const timeoutMs = opts?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model,
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'hi' }],
+      }),
+      signal: controller.signal,
+    });
+
+    if (response.status === 401 || response.status === 403) {
+      throw new ValidationError(`Invalid API key (${response.status}).`);
+    }
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      const snippet = text.slice(0, BODY_SNIPPET_LEN);
+      throw new ValidationError(`Provider rejected request (${response.status}): ${snippet}`);
+    }
+  } catch (err: unknown) {
+    if (err instanceof ValidationError) throw err;
+    const name = (err as { name?: string } | null)?.name;
+    if (name === 'AbortError') {
+      throw new ValidationError(`Validation timed out after ${timeoutMs}ms.`);
+    }
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new ValidationError(`Network error: ${msg}`, err);
+  } finally {
+    clearTimeout(timer);
   }
 }

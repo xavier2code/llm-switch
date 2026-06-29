@@ -57,9 +57,9 @@ export const TARGETS: readonly TargetConfig[] = [
 ];
 
 const BY_ID: Record<TargetId, TargetConfig> = (() => {
-  const map = {} as Record<TargetId, TargetConfig>;
+  const map: Partial<Record<TargetId, TargetConfig>> = {};
   for (const t of TARGETS) map[t.id] = t;
-  return map;
+  return map as Record<TargetId, TargetConfig>;
 })();
 
 const TARGET_IDS: readonly string[] = TARGETS.map((t) => t.id);

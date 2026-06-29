@@ -28,4 +28,27 @@ describe('StateManager', () => {
     const state = await manager.read();
     expect(state.lastSelectedTargets).toEqual(['claude', 'codex']);
   });
+
+  it('reads default state when file contains invalid JSON', async () => {
+    await fs.writeFile(path.join(tmpDir, 'state.json'), '{not json');
+    await expect(manager.read()).rejects.toThrow();
+  });
+
+  it('filters invalid target ids from persisted state', async () => {
+    await fs.writeFile(
+      path.join(tmpDir, 'state.json'),
+      JSON.stringify({ version: 1, lastSelectedTargets: ['claude', 'not-a-target', 'codex'] }),
+    );
+    const state = await manager.read();
+    expect(state.lastSelectedTargets).toEqual(['claude', 'codex']);
+  });
+
+  it('falls back to default when persisted targets are all invalid', async () => {
+    await fs.writeFile(
+      path.join(tmpDir, 'state.json'),
+      JSON.stringify({ version: 1, lastSelectedTargets: ['not-a-target'] }),
+    );
+    const state = await manager.read();
+    expect(state.lastSelectedTargets).toEqual(['claude']);
+  });
 });

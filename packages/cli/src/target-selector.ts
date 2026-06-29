@@ -21,7 +21,7 @@ export interface TargetSelectorOptions {
   flag?: string;
   isTTY: boolean;
   stateManager: StateManager;
-  detectFn?: () => Record<TargetId, boolean>;
+  detectFn?: () => Promise<Record<TargetId, boolean>>;
   checkboxFn?: typeof checkbox;
 }
 
@@ -43,7 +43,7 @@ export async function selectTargets(
 
   if (isTTY) {
     const state = await stateManager.read();
-    const installed = detectFn ? detectFn() : detectInstalledTargets();
+    const installed = await (detectFn ? detectFn() : detectInstalledTargets());
     const selectFn = checkboxFn ?? checkbox;
     const result = (await selectFn({
       message: 'Select targets:',
@@ -52,12 +52,12 @@ export async function selectTargets(
         value: t.id,
         checked: state.lastSelectedTargets.includes(t.id),
       })),
-    })) as TargetId[] | undefined;
+    })) as unknown[] | undefined;
 
     if (isCancel(result)) {
       throw new UserCancelledError('Cancelled.');
     }
-    const ids = result ?? [];
+    const ids = (result ?? []).filter(isTargetId);
     if (ids.length === 0) {
       throw new UserCancelledError('No targets selected.');
     }

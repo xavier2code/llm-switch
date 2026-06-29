@@ -49,6 +49,11 @@ export async function run(io: SwitchIO): Promise<void> {
   }
 
   const chosen = await pickProfileFromIntersection(io.targets, store);
+  if (chosen === 'empty') {
+    throw new ProfileNotFoundError(
+      'No profiles are shared across the selected tools. Run `sw list` to see per-target profiles.',
+    );
+  }
   if (!chosen) {
     throw new UserCancelledError('Cancelled.');
   }
@@ -103,18 +108,25 @@ async function autoCreateProfile(
 async function pickProfileFromIntersection(
   targets: TargetConfig[],
   store: ProfileStore,
-): Promise<Profile | null> {
+): Promise<Profile | 'empty' | null> {
+  if (targets.length === 0) return null;
+
   const aliasSets = await Promise.all(
     targets.map(async (target) => {
       const profiles = await store.listProfiles(target);
       return new Set(profiles.map((p) => p.alias));
     }),
   );
-  const intersection = aliasSets.reduce<Set<string>>(
+  const [first, ...rest] = aliasSets;
+  const intersection = rest.reduce<Set<string>>(
     (acc, set) => new Set([...acc].filter((a) => set.has(a))),
-    aliasSets[0] ?? new Set<string>(),
+    first,
   );
 
-  const profiles = (await store.listProfiles(targets[0]!)).filter((p) => intersection.has(p.alias));
+  if (intersection.size === 0) {
+    return 'empty';
+  }
+
+  const profiles = (await store.listProfiles(targets[0])).filter((p) => intersection.has(p.alias));
   return pickProfile(profiles);
 }

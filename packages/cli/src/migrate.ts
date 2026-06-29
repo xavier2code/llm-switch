@@ -24,11 +24,13 @@ export async function ensureMigratedToCentralStore(
     if (!(await exists(oldDir))) continue;
 
     const newDir = path.join(profileRoot, target.id);
-    await fs.mkdir(newDir, { recursive: true });
+    await fs.mkdir(newDir, { recursive: true, mode: 0o700 });
     const entries = await fs.readdir(oldDir);
     for (const entry of entries) {
       if (entry.endsWith('.json') || entry.endsWith('.toml')) {
-        await fs.copyFile(path.join(oldDir, entry), path.join(newDir, entry));
+        const dest = path.join(newDir, entry);
+        await fs.copyFile(path.join(oldDir, entry), dest);
+        await fs.chmod(dest, 0o600);
       }
     }
 

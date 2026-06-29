@@ -1,25 +1,14 @@
-import fs from 'node:fs/promises';
-import path from 'node:path';
 import type { TargetConfig } from '../config.js';
-import { getActiveConfigPath, getBackupPath } from '../config.js';
-import { atomicWrite, exists } from '../fs-utils.js';
-import type { ProfileContent, TargetAdapter } from './types.js';
+import { BaseAdapter } from './base-adapter.js';
+import type { ProfileContent } from './types.js';
 
-export class AnthropicJsonAdapter implements TargetAdapter {
-  readonly target: TargetConfig;
-  readonly storeDir: string;
-
+export class AnthropicJsonAdapter extends BaseAdapter {
   constructor(target: TargetConfig, storeDir: string) {
-    this.target = target;
-    this.storeDir = storeDir;
+    super(target, storeDir);
   }
 
-  activePath(): string {
-    return getActiveConfigPath(this.target);
-  }
-
-  profilePath(alias: string): string {
-    return path.join(this.storeDir, `${alias}.json`);
+  fileExtension(): string {
+    return 'json';
   }
 
   serialize(content: ProfileContent): string {
@@ -48,60 +37,21 @@ export class AnthropicJsonAdapter implements TargetAdapter {
     };
   }
 
-  async readActive(): Promise<ProfileContent | null> {
-    const p = this.activePath();
-    if (!(await exists(p))) return null;
-    try {
-      const raw = await fs.readFile(p, 'utf8');
-      return this.deserialize(raw);
-    } catch (err: unknown) {
-      if (err instanceof SyntaxError) return null;
-      const code = (err as NodeJS.ErrnoException | null)?.code;
-      if (code === 'ENOENT') return null;
-      throw err;
+  isParseError(err: unknown): boolean {
+    return err instanceof SyntaxError;
+  }
+
+  applyProfileToExisting(existingRaw: string, content: ProfileContent): string {
+    const parsed = JSON.parse(existingRaw) as Record<string, unknown>;
+    parsed.env = {
+      ...((parsed.env as Record<string, unknown>) ?? {}),
+      ANTHROPIC_BASE_URL: content.baseUrl,
+      ANTHROPIC_MODEL: content.model,
+      ANTHROPIC_AUTH_TOKEN: content.apiKey,
+    };
+    if (content.providerId !== undefined) {
+      parsed.providerId = content.providerId;
     }
-  }
-
-  async writeActive(content: ProfileContent): Promise<void> {
-    const active = this.activePath();
-    if (await exists(active)) {
-      const backup = getBackupPath(this.target);
-      await fs.mkdir(path.dirname(backup), { recursive: true, mode: 0o700 });
-      await fs.copyFile(active, backup);
-      await fs.chmod(backup, 0o600);
-    }
-    await atomicWrite(active, this.serialize(content), { mode: 0o600 });
-  }
-
-  async readProfile(alias: string): Promise<ProfileContent | null> {
-    const p = this.profilePath(alias);
-    if (!(await exists(p))) return null;
-    try {
-      const raw = await fs.readFile(p, 'utf8');
-      return this.deserialize(raw);
-    } catch (err: unknown) {
-      if (err instanceof SyntaxError) return null;
-      const code = (err as NodeJS.ErrnoException | null)?.code;
-      if (code === 'ENOENT') return null;
-      throw err;
-    }
-  }
-
-  async writeProfile(alias: string, content: ProfileContent): Promise<void> {
-    const p = this.profilePath(alias);
-    await fs.mkdir(path.dirname(p), { recursive: true, mode: 0o700 });
-    await atomicWrite(p, this.serialize(content), { mode: 0o600 });
-  }
-
-  async deleteProfile(alias: string): Promise<void> {
-    await fs.rm(this.profilePath(alias), { force: true });
-  }
-
-  async listAliases(): Promise<string[]> {
-    if (!(await exists(this.storeDir))) return [];
-    const entries = await fs.readdir(this.storeDir);
-    return entries
-      .filter((name) => name.endsWith('.json'))
-      .map((name) => name.slice(0, -'.json'.length));
+    return JSON.stringify(parsed, null, 2);
   }
 }

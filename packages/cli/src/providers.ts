@@ -58,9 +58,9 @@ export const PROVIDERS: readonly Provider[] = [
 ];
 
 const BY_ID: Record<ProviderId, Provider> = (() => {
-  const map = {} as Record<ProviderId, Provider>;
+  const map: Partial<Record<ProviderId, Provider>> = {};
   for (const p of PROVIDERS) map[p.id] = p;
-  return map;
+  return map as Record<ProviderId, Provider>;
 })();
 
 const PROVIDER_IDS: readonly string[] = PROVIDERS.map((p) => p.id);

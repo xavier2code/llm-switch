@@ -22,20 +22,17 @@ export interface InitIO {
   stderr: Writable;
   isTTY: boolean;
   checkboxFn?: typeof checkbox;
-  detectFn?: () => Record<TargetId, boolean>;
+  detectFn?: () => Promise<Record<TargetId, boolean>>;
+  selectAllDetected?: boolean;
 }
 
 export async function runInitWizard(io: InitIO): Promise<void> {
-  if (!io.isTTY) {
-    throw new UserCancelledError(INTERACTIVE_TTY_REQUIRED);
-  }
-
   const baseDir = defaultBaseDir();
   const store = new ProfileStore(baseDir);
   const stateManager = new StateManager(baseDir);
 
   const detect = io.detectFn ?? detectInstalledTargets;
-  const installed = detect();
+  const installed = await detect();
 
   io.stdout.write('Detected CLI tools:\n');
   for (const target of TARGETS) {
@@ -52,15 +49,24 @@ export async function runInitWizard(io: InitIO): Promise<void> {
     );
   }
 
-  const checkboxFn = io.checkboxFn ?? checkbox;
-  const choice = (await checkboxFn({
-    message: 'Which tools should llm-switch manage? (Space to toggle)',
-    choices: TARGETS.map((t) => ({
-      name: installed[t.id] ? t.displayName : `${t.displayName} (not installed)`,
-      value: t.id,
-      checked: installed[t.id],
-    })),
-  })) as TargetId[];
+  let choice: TargetId[];
+  if (io.selectAllDetected) {
+    choice = TARGETS.filter((t) => installed[t.id]).map((t) => t.id);
+  } else {
+    if (!io.isTTY) {
+      throw new UserCancelledError(INTERACTIVE_TTY_REQUIRED);
+    }
+    const checkboxFn = io.checkboxFn ?? checkbox;
+    const result = (await checkboxFn({
+      message: 'Which tools should llm-switch manage? (Space to toggle)',
+      choices: TARGETS.map((t) => ({
+        name: installed[t.id] ? t.displayName : `${t.displayName} (not installed)`,
+        value: t.id,
+        checked: installed[t.id],
+      })),
+    })) as TargetId[];
+    choice = result;
+  }
 
   if (choice.length === 0) {
     throw new UserCancelledError('No tools selected.');

@@ -28,8 +28,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "git config core.hooksPath packages/cli/.githooks",
-    "prepublishOnly": "pnpm test && pnpm build"
+    "prepare": "[ -d .git ] && git config core.hooksPath packages/cli/.githooks || true",
+    "prepublishOnly": "pnpm typecheck && pnpm test && pnpm build"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",

@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { run } from '../../src/commands/restore.js';
-import { NoBackupError, NoCurrentSettingsError } from '../../src/errors.js';
+import { NoBackupError } from '../../src/errors.js';
 import { ProfileStore } from '../../src/store/profile-store.js';
 import { mockClaudeTarget, mockOpencodeTarget } from '../helpers.js';
 
@@ -50,11 +50,25 @@ describe('restore command', () => {
     await expect(run(io)).rejects.toBeInstanceOf(NoBackupError);
   });
 
-  it('throws NoCurrentSettingsError when settings.json missing but .bak exists', async () => {
+  it('throws NoBackupError when settings.json missing but .bak exists', async () => {
     await setupBackupsDir();
     await fs.writeFile(path.join(backupsDir(), 'settings.json.bak'), '{}');
     const io = { targets: [claude], store, ...captureIO() };
-    await expect(run(io)).rejects.toBeInstanceOf(NoCurrentSettingsError);
+    await expect(run(io)).rejects.toBeInstanceOf(NoBackupError);
+  });
+
+  it('continues with remaining targets when one lacks a backup', async () => {
+    await setupBackupsDir();
+    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"c":1}');
+    await fs.writeFile(path.join(tmpDir, 'opencode.json'), '{"c":1}');
+    await fs.writeFile(path.join(backupsDir(), 'opencode.json.bak'), '{"p":1}');
+    const io = { targets: [claude, opencode], store, ...captureIO() };
+    await expect(run(io)).rejects.toBeInstanceOf(NoBackupError);
+    expect(io.writes.join('')).toContain('OpenCode');
+    expect(io.writes.join('')).toContain('restored from backup');
+    expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'opencode.json'), 'utf8'))).toEqual({
+      p: 1,
+    });
   });
 
   it('reports already-at-backup-state when current == backup', async () => {
