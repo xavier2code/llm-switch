@@ -34,12 +34,12 @@ Exit codes: 1 if no active config exists, 0 otherwise. Cancellation
 (via prompt decline or Ctrl-C) exits 0.
 `,
     )
-    .action(async (alias?: string, opts?: { force?: boolean }) => {
+    .action(async (alias?: string, opts: { force?: boolean }) => {
       const { targets, store } = await ctx.resolveTargets();
       await saveCmd.run({
         targets,
         alias,
-        force: opts?.force,
+        force: opts.force,
         stdout: process.stdout,
         stderr: process.stderr,
         isTTY: Boolean(process.stdout.isTTY),

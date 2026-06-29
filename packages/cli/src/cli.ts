@@ -26,10 +26,10 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8
 
 export interface CliContext {
   program: Command;
-  resolveTargets: (
+  resolveTargets?: (
     targetFlag?: string,
   ) => Promise<{ targets: TargetConfig[]; store: ProfileStore }>;
-  targetFlagFromCli: () => string | undefined;
+  targetFlagFromCli: (program: Command) => string | undefined;
 }
 
 /**
@@ -39,7 +39,7 @@ export interface CliContext {
  * which lets the TargetSelector fall back to interactive selection, the
  * remembered state, or the LLM_SWITCH_TARGET default.
  */
-function targetFlagFromCli(): string | undefined {
+function targetFlagFromCli(program: Command): string | undefined {
   if (program.getOptionValueSource('target') !== 'cli') return undefined;
   const value = (program.opts().target as string | undefined)?.trim();
   return value || undefined;
@@ -53,11 +53,13 @@ function targetFlagFromCli(): string | undefined {
  * state → LLM_SWITCH_TARGET/claude default), migrate each resolved target's
  * legacy flat layout, then seed the centralized profile store.
  */
-async function resolveTargets(): Promise<{ targets: TargetConfig[]; store: ProfileStore }> {
+async function resolveTargets(
+  program: Command,
+): Promise<{ targets: TargetConfig[]; store: ProfileStore }> {
   const store = defaultProfileStore();
   const stateManager = new StateManager(store.baseDir);
   const { targets } = await selectTargets({
-    flag: targetFlagFromCli(),
+    flag: targetFlagFromCli(program),
     isTTY: Boolean(process.stdout.isTTY),
     stateManager,
   });
@@ -122,7 +124,7 @@ config (model, base_url, api_key).
 
 const ctx: CliContext = {
   program,
-  resolveTargets,
+  resolveTargets: () => resolveTargets(program),
   targetFlagFromCli,
 };
 
