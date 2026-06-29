@@ -43,12 +43,15 @@ describe('StateManager', () => {
     expect(state.lastSelectedTargets).toEqual(['claude', 'codex']);
   });
 
-  it('falls back to default when persisted targets are all invalid', async () => {
-    await fs.writeFile(
-      path.join(tmpDir, 'state.json'),
-      JSON.stringify({ version: 1, lastSelectedTargets: ['not-a-target'] }),
-    );
+  it('falls back to default when file contains non-object JSON', async () => {
+    await fs.writeFile(path.join(tmpDir, 'state.json'), '"string"');
     const state = await manager.read();
-    expect(state.lastSelectedTargets).toEqual(['claude']);
+    expect(state).toEqual({ version: 1, lastSelectedTargets: ['claude'] });
+  });
+
+  it('falls back to default when file contains null JSON', async () => {
+    await fs.writeFile(path.join(tmpDir, 'state.json'), 'null');
+    const state = await manager.read();
+    expect(state).toEqual({ version: 1, lastSelectedTargets: ['claude'] });
   });
 });

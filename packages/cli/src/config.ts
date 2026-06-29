@@ -84,7 +84,7 @@ export function getDefaultTarget(): TargetConfig {
   return TARGETS[0];
 }
 
-function homeDir(): string {
+export function homeDir(): string {
   return process.env.HOME ?? os.homedir();
 }
 
@@ -180,8 +180,8 @@ export async function ensureMigrated(target: TargetConfig = getDefaultTarget()):
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       // Fresh install: create the new directory structure and stop.
-      await fs.mkdir(profilesDir, { recursive: true });
-      await fs.mkdir(backupsDir, { recursive: true });
+      await fs.mkdir(profilesDir, { recursive: true, mode: 0o700 });
+      await fs.mkdir(backupsDir, { recursive: true, mode: 0o700 });
       return;
     }
     throw err;
@@ -194,13 +194,13 @@ export async function ensureMigrated(target: TargetConfig = getDefaultTarget()):
 
   // Nothing to migrate, but still create the new directory layout.
   if (oldProfiles.length === 0 && !oldBackup) {
-    await fs.mkdir(profilesDir, { recursive: true });
-    await fs.mkdir(backupsDir, { recursive: true });
+    await fs.mkdir(profilesDir, { recursive: true, mode: 0o700 });
+    await fs.mkdir(backupsDir, { recursive: true, mode: 0o700 });
     return;
   }
 
-  await fs.mkdir(profilesDir, { recursive: true });
-  await fs.mkdir(backupsDir, { recursive: true });
+  await fs.mkdir(profilesDir, { recursive: true, mode: 0o700 });
+  await fs.mkdir(backupsDir, { recursive: true, mode: 0o700 });
 
   const migrated: Array<{ from: string; to: string }> = [];
   try {

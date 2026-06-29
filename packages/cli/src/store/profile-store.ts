@@ -1,5 +1,4 @@
 import path from 'node:path';
-import os from 'node:os';
 import fs from 'node:fs/promises';
 import { createAdapter } from '../adapters/index.js';
 import type { TargetConfig } from '../config.js';
@@ -12,8 +11,10 @@ export class ProfileStore {
 
   constructor(baseDir: string = defaultBaseDir()) {
     this.baseDir = baseDir;
-    // Ensure the central store is private to the current user.
-    fs.mkdir(this.baseDir, { recursive: true, mode: 0o700 }).catch(() => undefined);
+  }
+
+  private async ensureBaseDir(): Promise<void> {
+    await fs.mkdir(this.baseDir, { recursive: true, mode: 0o700 });
   }
 
   profileDir(target: TargetConfig): string {
@@ -29,6 +30,7 @@ export class ProfileStore {
   }
 
   async writeProfile(target: TargetConfig, alias: string, content: ProfileContent): Promise<void> {
+    await this.ensureBaseDir();
     return this.adapter(target).writeProfile(alias, content);
   }
 
@@ -45,6 +47,7 @@ export class ProfileStore {
   }
 
   async listProfiles(target: TargetConfig): Promise<Profile[]> {
+    await this.ensureBaseDir();
     const adapter = this.adapter(target);
     const active = await adapter.readActive();
     const activeHash = active ? sha256String(adapter.serialize(active)) : null;

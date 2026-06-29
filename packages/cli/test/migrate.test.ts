@@ -97,23 +97,53 @@ describe('ensureMigratedToCentralStore', () => {
     expect(copied).toBe('{}');
   });
 
-  it('skips targets whose old profile dir does not exist', async () => {
+  it('migrates state.json from old central store to new central store', async () => {
+    const oldCentralDir = path.join(tmpDir, '.config', 'llm-switch');
+    await fs.mkdir(oldCentralDir, { recursive: true });
+    await fs.writeFile(path.join(oldCentralDir, 'state.json'), '{"version":1,"lastSelectedTargets":["codex"]}');
+
     const centralDir = path.join(tmpDir, 'central');
-    await ensureMigratedToCentralStore(centralDir, [getTarget('opencode')]);
-    // The marker is created even when there's nothing to migrate, but no profiles copied
+    await ensureMigratedToCentralStore(centralDir, [getTarget('claude')]);
+
+    const state = await fs.readFile(path.join(centralDir, 'state.json'), 'utf8');
+    expect(JSON.parse(state)).toEqual({ version: 1, lastSelectedTargets: ['codex'] });
+  });
+
+  it('does not overwrite existing state.json in new central store', async () => {
+    const oldCentralDir = path.join(tmpDir, '.config', 'llm-switch');
+    await fs.mkdir(oldCentralDir, { recursive: true });
+    await fs.writeFile(path.join(oldCentralDir, 'state.json'), '{"version":1,"lastSelectedTargets":["codex"]}');
+
+    const centralDir = path.join(tmpDir, 'central');
+    await fs.mkdir(centralDir, { recursive: true });
+    await fs.writeFile(path.join(centralDir, 'state.json'), '{"version":1,"lastSelectedTargets":["claude"]}');
+
+    await ensureMigratedToCentralStore(centralDir, [getTarget('claude')]);
+
+    const state = await fs.readFile(path.join(centralDir, 'state.json'), 'utf8');
+    expect(JSON.parse(state)).toEqual({ version: 1, lastSelectedTargets: ['claude'] });
+  });
+
+  it('removes markers on failure so next run can retry', async () => {
+    const oldClaudeProfiles = path.join(tmpDir, '.claude', 'llm-switch', 'profiles');
+    await fs.mkdir(oldClaudeProfiles, { recursive: true });
+    await fs.writeFile(path.join(oldClaudeProfiles, 'glm.json'), '{}');
+
+    const centralDir = path.join(tmpDir, 'central');
+    // Make the profiles directory read-only to force a copy failure
+    const claudeDir = path.join(centralDir, 'profiles', 'claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.chmod(claudeDir, 0o500);
+
+    await expect(ensureMigratedToCentralStore(centralDir, [getTarget('claude')])).rejects.toThrow();
+
+    // Marker should not exist after failure
     const markerExists = await fs
-      .stat(path.join(centralDir, 'profiles', 'opencode', '.migrated'))
-      .then(
-        () => true,
-        () => false,
-      );
-    expect(markerExists).toBe(true);
-    const profileExists = await fs
-      .stat(path.join(centralDir, 'profiles', 'opencode', 'any.json'))
-      .then(
-        () => true,
-        () => false,
-      );
-    expect(profileExists).toBe(false);
+      .stat(path.join(claudeDir, '.migrated'))
+      .then(() => true, () => false);
+    expect(markerExists).toBe(false);
+
+    // Restore permissions for cleanup
+    await fs.chmod(claudeDir, 0o700);
   });
 });

@@ -1,8 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import os from 'node:os';
 import { atomicWriteJson, exists } from '../fs-utils.js';
-import { isTargetId, type TargetId } from '../config.js';
+import { homeDir, isTargetId, type TargetId } from '../config.js';
 
 export interface State {
   version: number;
@@ -44,10 +43,11 @@ export class StateManager {
 }
 
 export function defaultStateDir(): string {
-  return path.join(process.env.HOME ?? os.homedir(), '.llm-switch');
+  return path.join(homeDir(), '.llm-switch');
 }
 
 export function migrateState(raw: unknown): State {
+  if (!raw || typeof raw !== 'object') return { ...DEFAULT_STATE };
   const state = raw as Partial<State>;
   const targets = Array.isArray(state.lastSelectedTargets) ? state.lastSelectedTargets : [];
   const validTargets = targets.filter((id): id is TargetId => isTargetId(id));

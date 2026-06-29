@@ -197,17 +197,26 @@ describe('migration', () => {
     );
   });
 
-  it('is a no-op when already migrated', async () => {
-    await fs.mkdir(path.join(tmpDir, '.llm-switch', 'profiles', 'claude'), { recursive: true });
-    await fs.mkdir(path.join(tmpDir, '.llm-switch', 'backups', 'claude'), { recursive: true });
-    await fs.mkdir(path.join(tmpDir, '.claude'), { recursive: true });
-    await fs.writeFile(path.join(tmpDir, '.claude', 'settings.json.glm'), '{}');
-
-    await ensureMigrated(mockClaudeTarget());
-
+  it('rolls back partial migrations on failure', async () => {
     const claudeDir = path.join(tmpDir, '.claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.writeFile(path.join(claudeDir, 'settings.json.glm'), '{}');
+    await fs.writeFile(path.join(claudeDir, 'settings.json.bak'), '{}');
+
+    // Make the destination profiles dir read-only to force a rename failure
+    const profilesDir = path.join(tmpDir, '.llm-switch', 'profiles', 'claude');
+    await fs.mkdir(profilesDir, { recursive: true });
+    await fs.chmod(profilesDir, 0o500);
+
+    await expect(ensureMigrated(mockClaudeTarget())).rejects.toThrow();
+
+    // Restore permissions for cleanup
+    await fs.chmod(profilesDir, 0o700);
+
+    // Original files should still be in place
     const root = await fs.readdir(claudeDir);
     expect(root).toContain('settings.json.glm');
+    expect(root).toContain('settings.json.bak');
   });
 });
 
