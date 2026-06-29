@@ -4,7 +4,9 @@ export default defineConfig({
   entry: [
     'src/index.ts',
     'src/config.ts',
+    'src/errors.ts',
     'src/fs-utils.ts',
+    'src/providers.ts',
     'src/adapters/index.ts',
     'src/store/index.ts',
     'src/state/index.ts'
