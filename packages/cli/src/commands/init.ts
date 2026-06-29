@@ -13,7 +13,7 @@ import { exists } from '../fs-utils.js';
 import { UserCancelledError } from '../errors.js';
 import { INTERACTIVE_TTY_REQUIRED } from '../messages.js';
 import { isInquirerCancelError } from '../ui.js';
-import { StateManager } from '../state/state-manager.js';
+import { StateManager } from '@llm-switch/core/state/index.js';
 import { ProfileStore, defaultBaseDir } from '@llm-switch/core/store/profile-store.js';
 import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
 

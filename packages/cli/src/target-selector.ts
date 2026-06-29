@@ -9,7 +9,7 @@ import {
 } from '@llm-switch/core/config.js';
 import { AppError, UserCancelledError } from './errors.js';
 import { isCancel } from './ui.js';
-import type { StateManager } from './state/state-manager.js';
+import type { StateManager } from '@llm-switch/core/state/index.js';
 import { detectInstalledTargets } from '@llm-switch/core/detector.js';
 
 export interface TargetSelectionResult {

@@ -75,6 +75,14 @@
     "./state": {
       "types": "./dist/state/index.d.ts",
       "default": "./dist/state/index.js"
+    },
+    "./state/index.js": {
+      "types": "./dist/state/index.d.ts",
+      "default": "./dist/state/index.js"
+    },
+    "./state/state-manager.js": {
+      "types": "./dist/state/index.d.ts",
+      "default": "./dist/state/index.js"
     }
   },
   "files": [

@@ -1,3 +1,3 @@
-// Placeholder for state module
-// To be implemented in later tasks (Task 11)
-export {};
+export { StateManager, DEFAULT_STATE as defaultState } from './state-manager.js';
+export { defaultStateDir, migrateState } from './state-manager.js';
+export type { State } from './state-manager.js';

@@ -10,7 +10,7 @@ import { ensureMigrated, TARGETS, type TargetConfig } from '@llm-switch/core/con
 import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
 import { defaultProfileStore, type ProfileStore } from '@llm-switch/core/store/index.js';
 import { selectTargets } from './target-selector.js';
-import { StateManager } from './state/state-manager.js';
+import { StateManager } from '@llm-switch/core/state/index.js';
 import { registerList } from './commands/register/register-list.js';
 import { registerSwitch } from './commands/register/register-switch.js';
 import { registerSave } from './commands/register/register-save.js';
