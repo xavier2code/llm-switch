@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { OpenAiTomlAdapter } from '../../src/adapters/openai-toml-adapter.js';
+import { OpenAiTomlAdapter } from '@llm-switch/core/adapters/openai-toml-adapter.js';
 import { getBackupPath, getTarget } from '@llm-switch/core/config.js';
 
 let tmpDir: string;

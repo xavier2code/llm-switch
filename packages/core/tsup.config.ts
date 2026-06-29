@@ -11,6 +11,10 @@ export default defineConfig({
     'src/validator.ts',
     'src/detector.ts',
     'src/adapters/index.ts',
+    'src/adapters/types.ts',
+    'src/adapters/base-adapter.ts',
+    'src/adapters/anthropic-json-adapter.ts',
+    'src/adapters/openai-toml-adapter.ts',
     'src/store/index.ts',
     'src/state/index.ts'
   ],

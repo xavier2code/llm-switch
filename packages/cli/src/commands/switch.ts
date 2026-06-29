@@ -5,7 +5,7 @@ import { ProfileStore, defaultProfileStore } from '../store/profile-store.js';
 import { pickProfile } from '../ui.js';
 import { ProfileNotFoundError, UserCancelledError } from '../errors.js';
 import { restartHint, interactiveTtyRequiredHint } from '../messages.js';
-import type { Profile, ProfileContent } from '../adapters/types.js';
+import type { Profile, ProfileContent } from '@llm-switch/core/adapters/types.js';
 
 export interface SwitchIO {
   targets: TargetConfig[];

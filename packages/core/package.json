@@ -40,6 +40,22 @@
       "types": "./dist/adapters/index.d.ts",
       "default": "./dist/adapters/index.js"
     },
+    "./adapters/types.js": {
+      "types": "./dist/adapters/types.d.ts",
+      "default": "./dist/adapters/types.js"
+    },
+    "./adapters/base-adapter.js": {
+      "types": "./dist/adapters/base-adapter.d.ts",
+      "default": "./dist/adapters/base-adapter.js"
+    },
+    "./adapters/anthropic-json-adapter.js": {
+      "types": "./dist/adapters/anthropic-json-adapter.d.ts",
+      "default": "./dist/adapters/anthropic-json-adapter.js"
+    },
+    "./adapters/openai-toml-adapter.js": {
+      "types": "./dist/adapters/openai-toml-adapter.d.ts",
+      "default": "./dist/adapters/openai-toml-adapter.js"
+    },
     "./store": {
       "types": "./dist/store/index.d.ts",
       "default": "./dist/store/index.js"

@@ -3,7 +3,7 @@ import { ConfigDirNotFoundError } from './errors.js';
 import type { TargetConfig } from '@llm-switch/core/config.js';
 import { getConfigDir } from '@llm-switch/core/config.js';
 import { ProfileStore, defaultProfileStore } from './store/profile-store.js';
-import type { Profile, ProfileContent } from './adapters/types.js';
+import type { Profile, ProfileContent } from '@llm-switch/core/adapters/types.js';
 
 export interface CurrentSummary {
   source: string;

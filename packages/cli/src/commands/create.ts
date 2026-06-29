@@ -9,7 +9,7 @@ import { isCancel } from '../ui.js';
 import { UserCancelledError } from '../errors.js';
 import { INTERACTIVE_TTY_REQUIRED, restartHint } from '../messages.js';
 import { exists } from '../fs-utils.js';
-import type { ProfileContent } from '../adapters/types.js';
+import type { ProfileContent } from '@llm-switch/core/adapters/types.js';
 
 export interface CreateIO {
   targets: TargetConfig[];

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { AnthropicJsonAdapter } from '../../src/adapters/anthropic-json-adapter.js';
+import { AnthropicJsonAdapter } from '@llm-switch/core/adapters/anthropic-json-adapter.js';
 import { getBackupPath, getTarget } from '@llm-switch/core/config.js';
 
 let tmpDir: string;

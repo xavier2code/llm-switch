@@ -1,8 +1,8 @@
 import type { TargetConfig } from '@llm-switch/core/config.js';
 import { AppError } from '../errors.js';
-import { AnthropicJsonAdapter } from './anthropic-json-adapter.js';
-import { OpenAiTomlAdapter } from './openai-toml-adapter.js';
-import type { TargetAdapter } from './types.js';
+import { AnthropicJsonAdapter } from '@llm-switch/core/adapters/anthropic-json-adapter.js';
+import { OpenAiTomlAdapter } from '@llm-switch/core/adapters/openai-toml-adapter.js';
+import type { TargetAdapter } from '@llm-switch/core/adapters/types.js';
 
 export function createAdapter(target: TargetConfig, storeDir: string): TargetAdapter {
   if (target.adapterType === 'anthropic-json') {
