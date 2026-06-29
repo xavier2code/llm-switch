@@ -129,46 +129,60 @@ describe('derived paths', () => {
     expect(getActiveConfigPath(mockOpencodeTarget())).toMatch(/opencode\.json$/);
   });
 
-  it('getBackupPath lives under llm-switch/backups', () => {
-    expect(getBackupPath(mockClaudeTarget())).toMatch(/llm-switch\/backups\/settings\.json\.bak$/);
+  it('getBackupPath lives under ~/.llm-switch/backups', () => {
+    process.env.HOME = '/Users/alice';
+    expect(getBackupPath(mockClaudeTarget())).toMatch(
+      /\.llm-switch\/backups\/claude\/settings\.json\.bak$/,
+    );
   });
 
-  it('profilePath lives under llm-switch/profiles and uses .json', () => {
-    expect(profilePath('glm', mockClaudeTarget())).toMatch(/llm-switch\/profiles\/glm\.json$/);
+  it('profilePath lives under ~/.llm-switch/profiles and uses .json', () => {
+    process.env.HOME = '/Users/alice';
+    expect(profilePath('glm', mockClaudeTarget())).toMatch(
+      /\.llm-switch\/profiles\/claude\/glm\.json$/,
+    );
   });
 
-  it('getProfilesDir returns the profiles subdirectory', () => {
-    expect(getProfilesDir(mockClaudeTarget())).toMatch(/llm-switch\/profiles$/);
+  it('getProfilesDir returns the profiles subdirectory under ~/.llm-switch', () => {
+    process.env.HOME = '/Users/alice';
+    expect(getProfilesDir(mockClaudeTarget())).toMatch(/\.llm-switch\/profiles\/claude$/);
   });
 });
 
 describe('migration', () => {
   let tmpDir: string;
-  const originalEnv = process.env.CLAUDE_CONFIG_DIR;
+  const originalHome = process.env.HOME;
+  const originalClaudeEnv = process.env.CLAUDE_CONFIG_DIR;
 
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'llm-switch-test-'));
-    process.env.CLAUDE_CONFIG_DIR = tmpDir;
+    process.env.HOME = tmpDir;
+    delete process.env.CLAUDE_CONFIG_DIR;
   });
 
   afterEach(async () => {
-    if (originalEnv === undefined) delete process.env.CLAUDE_CONFIG_DIR;
-    else process.env.CLAUDE_CONFIG_DIR = originalEnv;
+    if (originalHome === undefined) delete process.env.HOME;
+    else process.env.HOME = originalHome;
+    if (originalClaudeEnv === undefined) delete process.env.CLAUDE_CONFIG_DIR;
+    else process.env.CLAUDE_CONFIG_DIR = originalClaudeEnv;
     await fs.rm(tmpDir, { recursive: true, force: true });
   });
 
   it('migrates old flat-layout profiles and backup', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{}');
-    await fs.writeFile(path.join(tmpDir, 'settings.json.kimi'), '{}');
-    await fs.writeFile(path.join(tmpDir, 'settings.json.bak'), '{}');
+    // Old flat layout lives in the target config dir
+    const claudeDir = path.join(tmpDir, '.claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.writeFile(path.join(claudeDir, 'settings.json.glm'), '{}');
+    await fs.writeFile(path.join(claudeDir, 'settings.json.kimi'), '{}');
+    await fs.writeFile(path.join(claudeDir, 'settings.json.bak'), '{}');
 
     await ensureMigrated(mockClaudeTarget());
 
-    const profiles = await fs.readdir(path.join(tmpDir, 'llm-switch', 'profiles'));
+    const profiles = await fs.readdir(path.join(tmpDir, '.llm-switch', 'profiles', 'claude'));
     expect(profiles.sort()).toEqual(['glm.json', 'kimi.json']);
-    const backups = await fs.readdir(path.join(tmpDir, 'llm-switch', 'backups'));
+    const backups = await fs.readdir(path.join(tmpDir, '.llm-switch', 'backups', 'claude'));
     expect(backups).toEqual(['settings.json.bak']);
-    const root = await fs.readdir(tmpDir);
+    const root = await fs.readdir(claudeDir);
     expect(root).not.toContain('settings.json.glm');
     expect(root).not.toContain('settings.json.bak');
   });
@@ -176,18 +190,23 @@ describe('migration', () => {
   it('creates new directories when no old files exist', async () => {
     await ensureMigrated(mockClaudeTarget());
 
-    const stat = await fs.stat(path.join(tmpDir, 'llm-switch', 'profiles'));
+    const stat = await fs.stat(path.join(tmpDir, '.llm-switch', 'profiles', 'claude'));
     expect(stat.isDirectory()).toBe(true);
-    expect((await fs.readdir(path.join(tmpDir, 'llm-switch', 'profiles'))).length).toBe(0);
+    expect((await fs.readdir(path.join(tmpDir, '.llm-switch', 'profiles', 'claude'))).length).toBe(
+      0,
+    );
   });
 
   it('is a no-op when already migrated', async () => {
-    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
-    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{}');
+    await fs.mkdir(path.join(tmpDir, '.llm-switch', 'profiles', 'claude'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, '.llm-switch', 'backups', 'claude'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, '.claude'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, '.claude', 'settings.json.glm'), '{}');
 
     await ensureMigrated(mockClaudeTarget());
 
-    const root = await fs.readdir(tmpDir);
+    const claudeDir = path.join(tmpDir, '.claude');
+    const root = await fs.readdir(claudeDir);
     expect(root).toContain('settings.json.glm');
   });
 });

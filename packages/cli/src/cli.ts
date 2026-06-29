@@ -99,9 +99,9 @@ Environment:
                       overrides the default but not --target.
 
 Profile store (centralized):
-  ~/.config/llm-switch/profiles/<target-id>/<alias>.[json|toml]   saved profiles
-  ~/.config/llm-switch/state.json                                 last-selected targets
-  <config-dir>/llm-switch/backups/<active>.bak                    backup before a switch
+  ~/.llm-switch/profiles/<target-id>/<alias>.[json|toml]   saved profiles
+  ~/.llm-switch/state.json                                   last-selected targets
+  ~/.llm-switch/backups/<target-id>/<active>.bak             backup before a switch
 
 Built-in providers for \`create\`:
 ${providerRows}

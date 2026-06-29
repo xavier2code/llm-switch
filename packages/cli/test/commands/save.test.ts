@@ -110,4 +110,53 @@ describe('save command', () => {
     await run({ targets: [target], alias: 'glm', store, ...io(true), confirmFn });
     expect(confirmFn).not.toHaveBeenCalled();
   });
+
+  it('throws UserCancelledError in non-TTY when profile exists without --force', async () => {
+    await store.writeProfile(target, 'glm', {
+      baseUrl: 'https://old',
+      model: 'm',
+      apiKey: 'k',
+      extra: {},
+    });
+    await expect(
+      run({ targets: [target], alias: 'glm', store, ...io(false) }),
+    ).rejects.toBeInstanceOf(UserCancelledError);
+    const saved = await store.readProfile(target, 'glm');
+    expect(saved?.baseUrl).toBe('https://old');
+  });
+
+  it('lists all affected tools in a single overwrite prompt', async () => {
+    const opencode = {
+      ...target,
+      id: 'opencode',
+      displayName: 'OpenCode',
+      activeConfigFileName: 'opencode.json',
+    } as const;
+    // Create a minimal active config for the second target
+    await fs.writeFile(
+      path.join(tmpDir, 'opencode.json'),
+      JSON.stringify({
+        env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'm', ANTHROPIC_AUTH_TOKEN: 'k' },
+      }),
+    );
+    await store.writeProfile(target, 'glm', {
+      baseUrl: 'https://old',
+      model: 'm',
+      apiKey: 'k',
+      extra: {},
+    });
+    await store.writeProfile(opencode, 'glm', {
+      baseUrl: 'https://old',
+      model: 'm',
+      apiKey: 'k',
+      extra: {},
+    });
+
+    const confirmFn = vi.fn().mockResolvedValueOnce(true);
+    await run({ targets: [target, opencode], alias: 'glm', store, ...io(true), confirmFn });
+    expect(confirmFn).toHaveBeenCalledTimes(1);
+    const callArg = confirmFn.mock.calls[0]?.[0] as { message?: string } | undefined;
+    expect(callArg?.message).toContain('Claude Code');
+    expect(callArg?.message).toContain('OpenCode');
+  });
 });

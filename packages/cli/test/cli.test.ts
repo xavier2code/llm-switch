@@ -76,9 +76,9 @@ describe('cli e2e', () => {
   });
 
   it('list prints profiles from new layout', async () => {
-    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
-    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), '{}');
-    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'kimi.json'), '{}');
+    await fs.mkdir(path.join(tmpDir, '.llm-switch', 'profiles', 'claude'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, '.llm-switch', 'profiles', 'claude', 'glm.json'), '{}');
+    await fs.writeFile(path.join(tmpDir, '.llm-switch', 'profiles', 'claude', 'kimi.json'), '{}');
 
     const r = await run(['list'], { env: { CLAUDE_CONFIG_DIR: tmpDir, HOME: tmpDir } });
     expect(r.code).toBe(0);
@@ -87,43 +87,52 @@ describe('cli e2e', () => {
   });
 
   it('migrates old flat layout on first run and lists profiles', async () => {
-    await fs.writeFile(path.join(tmpDir, 'settings.json.glm'), '{}');
-    await fs.writeFile(path.join(tmpDir, 'settings.json.kimi'), '{}');
+    const claudeDir = path.join(tmpDir, '.claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.writeFile(path.join(claudeDir, 'settings.json.glm'), '{}');
+    await fs.writeFile(path.join(claudeDir, 'settings.json.kimi'), '{}');
 
-    const r = await run(['list'], { env: { CLAUDE_CONFIG_DIR: tmpDir, HOME: tmpDir } });
+    const r = await run(['list'], {
+      env: { CLAUDE_CONFIG_DIR: claudeDir, HOME: tmpDir },
+    });
     expect(r.code).toBe(0);
     expect(r.stdout).toContain('glm');
     expect(r.stdout).toContain('kimi');
 
-    const root = await fs.readdir(tmpDir);
+    const root = await fs.readdir(claudeDir);
     expect(root).not.toContain('settings.json.glm');
-    expect(root).toContain('llm-switch');
   });
 
   it('switch <alias> succeeds', async () => {
-    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
-    await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"a":1}');
+    const claudeDir = path.join(tmpDir, '.claude');
+    await fs.mkdir(claudeDir, { recursive: true });
+    await fs.mkdir(path.join(tmpDir, '.llm-switch', 'profiles', 'claude'), { recursive: true });
+    await fs.writeFile(path.join(claudeDir, 'settings.json'), '{"a":1}');
     // Profile content must be valid Anthropic format: the refactored switch
     // deserializes then re-serializes, so the active config reflects the
     // profile's env block rather than copying bytes verbatim.
     const profileContent = JSON.stringify({
       env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'm', ANTHROPIC_AUTH_TOKEN: 'k' },
     });
-    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), profileContent);
+    await fs.writeFile(
+      path.join(tmpDir, '.llm-switch', 'profiles', 'claude', 'glm.json'),
+      profileContent,
+    );
 
     const r = await run(['switch', 'glm'], {
-      env: { CLAUDE_CONFIG_DIR: tmpDir, HOME: tmpDir },
+      env: { CLAUDE_CONFIG_DIR: claudeDir, HOME: tmpDir },
     });
     expect(r.code).toBe(0);
     expect(r.stdout).toContain('Switched to glm');
 
-    const after = await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8');
+    const after = await fs.readFile(path.join(claudeDir, 'settings.json'), 'utf8');
     expect(JSON.parse(after)).toEqual({
+      a: 1,
       env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'm', ANTHROPIC_AUTH_TOKEN: 'k' },
     });
 
     const bak = await fs.readFile(
-      path.join(tmpDir, 'llm-switch', 'backups', 'settings.json.bak'),
+      path.join(tmpDir, '.llm-switch', 'backups', 'claude', 'settings.json.bak'),
       'utf8',
     );
     expect(JSON.parse(bak)).toEqual({ a: 1 });
@@ -140,8 +149,8 @@ describe('cli e2e', () => {
   });
 
   it('switch exits 0 with no TTY (user cancel)', async () => {
-    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
-    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), '{}');
+    await fs.mkdir(path.join(tmpDir, '.llm-switch', 'profiles', 'claude'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, '.llm-switch', 'profiles', 'claude', 'glm.json'), '{}');
 
     const r = await run(['switch'], { env: { CLAUDE_CONFIG_DIR: tmpDir, HOME: tmpDir } });
     // No TTY => UserCancelledError => exit 0
@@ -157,7 +166,7 @@ describe('cli e2e', () => {
   it('save <alias> succeeds in new layout', async () => {
     // Active config must be valid Anthropic format: the refactored save
     // deserializes it via the adapter, then re-serializes when writing the
-    // profile to the centralized store (HOME/.config/llm-switch/...).
+    // profile to the centralized store (HOME/.llm-switch/...).
     await fs.writeFile(
       path.join(tmpDir, 'settings.json'),
       JSON.stringify({
@@ -169,7 +178,7 @@ describe('cli e2e', () => {
     expect(r.code).toBe(0);
 
     const profile = await fs.readFile(
-      path.join(tmpDir, '.config', 'llm-switch', 'profiles', 'claude', 'glm.json'),
+      path.join(tmpDir, '.llm-switch', 'profiles', 'claude', 'glm.json'),
       'utf8',
     );
     expect(JSON.parse(profile)).toEqual({
@@ -243,41 +252,57 @@ describe('cli e2e', () => {
   });
 
   it('--target opencode uses opencode paths', async () => {
-    await fs.writeFile(path.join(tmpDir, 'opencode.json'), '{"a":1}');
-    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, '.config', 'opencode'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, '.config', 'opencode', 'opencode.json'), '{"a":1}');
+    await fs.mkdir(path.join(tmpDir, '.llm-switch', 'profiles', 'opencode'), { recursive: true });
     const profileContent = JSON.stringify({
       env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'm', ANTHROPIC_AUTH_TOKEN: 'k' },
     });
-    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), profileContent);
+    await fs.writeFile(
+      path.join(tmpDir, '.llm-switch', 'profiles', 'opencode', 'glm.json'),
+      profileContent,
+    );
 
     const r = await run(['--target', 'opencode', 'switch', 'glm'], {
-      env: { OPENCODE_CONFIG_DIR: tmpDir, HOME: tmpDir },
+      env: { OPENCODE_CONFIG_DIR: path.join(tmpDir, '.config', 'opencode'), HOME: tmpDir },
     });
     expect(r.code).toBe(0);
     expect(r.stdout).toContain('Switched to glm');
 
-    const after = await fs.readFile(path.join(tmpDir, 'opencode.json'), 'utf8');
+    const after = await fs.readFile(
+      path.join(tmpDir, '.config', 'opencode', 'opencode.json'),
+      'utf8',
+    );
     expect(JSON.parse(after)).toEqual({
+      a: 1,
       env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'm', ANTHROPIC_AUTH_TOKEN: 'k' },
     });
 
     const bak = await fs.readFile(
-      path.join(tmpDir, 'llm-switch', 'backups', 'opencode.json.bak'),
+      path.join(tmpDir, '.llm-switch', 'backups', 'opencode', 'opencode.json.bak'),
       'utf8',
     );
     expect(JSON.parse(bak)).toEqual({ a: 1 });
   });
 
   it('LLM_SWITCH_TARGET env var selects opencode', async () => {
-    await fs.writeFile(path.join(tmpDir, 'opencode.json'), '{"a":1}');
-    await fs.mkdir(path.join(tmpDir, 'llm-switch', 'profiles'), { recursive: true });
+    await fs.mkdir(path.join(tmpDir, '.config', 'opencode'), { recursive: true });
+    await fs.writeFile(path.join(tmpDir, '.config', 'opencode', 'opencode.json'), '{"a":1}');
+    await fs.mkdir(path.join(tmpDir, '.llm-switch', 'profiles', 'opencode'), { recursive: true });
     const profileContent = JSON.stringify({
       env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'm', ANTHROPIC_AUTH_TOKEN: 'k' },
     });
-    await fs.writeFile(path.join(tmpDir, 'llm-switch', 'profiles', 'glm.json'), profileContent);
+    await fs.writeFile(
+      path.join(tmpDir, '.llm-switch', 'profiles', 'opencode', 'glm.json'),
+      profileContent,
+    );
 
     const r = await run(['switch', 'glm'], {
-      env: { OPENCODE_CONFIG_DIR: tmpDir, LLM_SWITCH_TARGET: 'opencode', HOME: tmpDir },
+      env: {
+        OPENCODE_CONFIG_DIR: path.join(tmpDir, '.config', 'opencode'),
+        LLM_SWITCH_TARGET: 'opencode',
+        HOME: tmpDir,
+      },
     });
     expect(r.code).toBe(0);
     expect(r.stdout).toContain('Switched to glm');

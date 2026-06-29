@@ -106,16 +106,16 @@ export function getActiveConfigPath(target: TargetConfig = getDefaultTarget()): 
   return path.join(getConfigDir(target), target.activeConfigFileName);
 }
 
-export function getLlmswitchDir(target: TargetConfig = getDefaultTarget()): string {
-  return path.join(getConfigDir(target), 'llm-switch');
+export function getLlmswitchDir(): string {
+  return path.join(homeDir(), '.llm-switch');
 }
 
 export function getProfilesDir(target: TargetConfig = getDefaultTarget()): string {
-  return path.join(getLlmswitchDir(target), 'profiles');
+  return path.join(getLlmswitchDir(), 'profiles', target.id);
 }
 
 export function getBackupsDir(target: TargetConfig = getDefaultTarget()): string {
-  return path.join(getLlmswitchDir(target), 'backups');
+  return path.join(getLlmswitchDir(), 'backups', target.id);
 }
 
 export function getBackupPath(target: TargetConfig = getDefaultTarget()): string {
@@ -165,8 +165,9 @@ export function assertAlias(alias: string): void {
  * llm-switch/backups/<activeFile>.bak under the same config directory.
  */
 export async function ensureMigrated(target: TargetConfig = getDefaultTarget()): Promise<void> {
-  const llmswitchDir = getLlmswitchDir(target);
-  if (await exists(llmswitchDir)) return;
+  const profilesDir = getProfilesDir(target);
+  const backupsDir = getBackupsDir(target);
+  if ((await exists(profilesDir)) && (await exists(backupsDir))) return;
 
   const configDir = getConfigDir(target);
   const activeFile = target.activeConfigFileName;
@@ -179,8 +180,8 @@ export async function ensureMigrated(target: TargetConfig = getDefaultTarget()):
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       // Fresh install: create the new directory structure and stop.
-      await fs.mkdir(getProfilesDir(target), { recursive: true });
-      await fs.mkdir(getBackupsDir(target), { recursive: true });
+      await fs.mkdir(profilesDir, { recursive: true });
+      await fs.mkdir(backupsDir, { recursive: true });
       return;
     }
     throw err;
@@ -193,13 +194,13 @@ export async function ensureMigrated(target: TargetConfig = getDefaultTarget()):
 
   // Nothing to migrate, but still create the new directory layout.
   if (oldProfiles.length === 0 && !oldBackup) {
-    await fs.mkdir(getProfilesDir(target), { recursive: true });
-    await fs.mkdir(getBackupsDir(target), { recursive: true });
+    await fs.mkdir(profilesDir, { recursive: true });
+    await fs.mkdir(backupsDir, { recursive: true });
     return;
   }
 
-  await fs.mkdir(getProfilesDir(target), { recursive: true });
-  await fs.mkdir(getBackupsDir(target), { recursive: true });
+  await fs.mkdir(profilesDir, { recursive: true });
+  await fs.mkdir(backupsDir, { recursive: true });
 
   const migrated: Array<{ from: string; to: string }> = [];
   try {
@@ -224,7 +225,6 @@ export async function ensureMigrated(target: TargetConfig = getDefaultTarget()):
         // Best-effort rollback; ignore failures so we still throw the original error.
       });
     }
-    await fs.rm(llmswitchDir, { recursive: true, force: true });
     throw err;
   }
 }

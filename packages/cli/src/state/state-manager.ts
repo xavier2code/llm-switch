@@ -44,7 +44,7 @@ export class StateManager {
 }
 
 export function defaultStateDir(): string {
-  return path.join(process.env.HOME ?? os.homedir(), '.config', 'llm-switch');
+  return path.join(process.env.HOME ?? os.homedir(), '.llm-switch');
 }
 
 export function migrateState(raw: unknown): State {

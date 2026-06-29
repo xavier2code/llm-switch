@@ -45,6 +45,7 @@ export async function atomicWrite(
 ): Promise<void> {
   const { mode = 0o600, tmpPrefix = '.tmp.', fsync = false } = opts;
   const dir = path.dirname(filePath);
+  await fs.mkdir(dir, { recursive: true });
   const tmp = path.join(dir, `${tmpPrefix}${crypto.randomUUID()}`);
 
   try {

@@ -66,7 +66,7 @@ export class ProfileStore {
 }
 
 export function defaultBaseDir(): string {
-  return path.join(process.env.HOME ?? os.homedir(), '.config', 'llm-switch');
+  return path.join(process.env.HOME ?? os.homedir(), '.llm-switch');
 }
 
 export function defaultProfileStore(): ProfileStore {

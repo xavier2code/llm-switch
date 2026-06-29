@@ -3,6 +3,7 @@ import { ConfigDirNotFoundError } from './errors.js';
 import type { TargetConfig } from './config.js';
 import { getConfigDir } from './config.js';
 import { ProfileStore, defaultProfileStore } from './store/profile-store.js';
+import type { Profile, ProfileContent } from './adapters/types.js';
 
 export interface CurrentSummary {
   source: string;
@@ -10,6 +11,7 @@ export interface CurrentSummary {
   baseUrl?: string;
   model?: string;
   hasMcp: boolean;
+  warning?: string;
 }
 
 async function dirExists(dir: string): Promise<boolean> {
@@ -40,13 +42,40 @@ export async function summarize(
 
   const adapter = store.adapter(target);
   const settingsPath = adapter.activePath();
-  const active = await adapter.readActive();
+  let active: ProfileContent | null;
+  try {
+    active = await adapter.readActive();
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      source: 'default',
+      sourcePath: settingsPath,
+      baseUrl: undefined,
+      model: undefined,
+      hasMcp: false,
+      warning: `Could not read active config: ${message}`,
+    };
+  }
 
   if (!active) {
     return { source: 'default', sourcePath: settingsPath, hasMcp: false };
   }
 
-  const profiles = await store.listProfiles(target);
+  let profiles: Profile[];
+  try {
+    profiles = await store.listProfiles(target);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      source: 'default',
+      sourcePath: settingsPath,
+      baseUrl: active.baseUrl || undefined,
+      model: active.model || undefined,
+      hasMcp: hasMcpServers(active.extra),
+      warning: `Could not list profiles: ${message}`,
+    };
+  }
+
   const matched = profiles.find((p) => p.active);
   const hasMcp = hasMcpServers(active.extra);
 

@@ -20,13 +20,29 @@ export async function run(io: SwitchIO): Promise<void> {
   const store = io.store ?? defaultProfileStore();
 
   if (io.alias !== undefined) {
-    assertAlias(io.alias);
+    const alias = io.alias;
+    assertAlias(alias);
+
+    if (io.isTTY && io.targets.length > 1) {
+      const result = await profileAliasIntersection(io.targets, store);
+      if (result !== null && !result.intersection.has(alias)) {
+        const missing = io.targets.filter((t) => {
+          const idx = io.targets.indexOf(t);
+          return !result.aliasSets[idx]?.has(alias);
+        });
+        const missingNames = missing.map((t) => t.displayName).join(', ');
+        io.stderr.write(
+          `Warning: '${alias}' is not shared by all selected tools (missing on ${missingNames}).\n`,
+        );
+      }
+    }
+
     let switchedAny = false;
     for (const target of io.targets) {
       const adapter = store.adapter(target);
-      let content = await adapter.readProfile(io.alias);
+      let content = await adapter.readProfile(alias);
       if (!content) {
-        content = await autoCreateProfile(io, store, target, io.alias);
+        content = await autoCreateProfile(io, store, target, alias);
       }
       if (!content) continue;
       await adapter.writeActive(content);
@@ -34,10 +50,10 @@ export async function run(io: SwitchIO): Promise<void> {
     }
     if (!switchedAny) {
       throw new ProfileNotFoundError(
-        `Profile '${io.alias}' not found. Run 'sw list' to see available profiles.`,
+        `Profile '${alias}' not found. Run 'sw list' to see available profiles.`,
       );
     }
-    io.stdout.write(`Switched to ${io.alias}:\n`);
+    io.stdout.write(`Switched to ${alias}:\n`);
     for (const target of io.targets) {
       io.stdout.write(`  ${target.displayName}  ${restartHint(target)}\n`);
     }
@@ -109,6 +125,21 @@ async function pickProfileFromIntersection(
   targets: TargetConfig[],
   store: ProfileStore,
 ): Promise<Profile | 'empty' | null> {
+  const result = await profileAliasIntersection(targets, store);
+  if (result === null || result.intersection.size === 0) {
+    return result === null ? null : 'empty';
+  }
+
+  const profiles = (await store.listProfiles(targets[0])).filter((p) =>
+    result.intersection.has(p.alias),
+  );
+  return pickProfile(profiles);
+}
+
+async function profileAliasIntersection(
+  targets: TargetConfig[],
+  store: ProfileStore,
+): Promise<{ aliasSets: Set<string>[]; intersection: Set<string> } | null> {
   if (targets.length === 0) return null;
 
   const aliasSets = await Promise.all(
@@ -123,10 +154,5 @@ async function pickProfileFromIntersection(
     first,
   );
 
-  if (intersection.size === 0) {
-    return 'empty';
-  }
-
-  const profiles = (await store.listProfiles(targets[0])).filter((p) => intersection.has(p.alias));
-  return pickProfile(profiles);
+  return { aliasSets, intersection };
 }
