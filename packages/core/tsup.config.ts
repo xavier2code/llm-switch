@@ -7,6 +7,7 @@ export default defineConfig({
     'src/errors.ts',
     'src/fs-utils.ts',
     'src/providers.ts',
+    'src/validator.ts',
     'src/adapters/index.ts',
     'src/store/index.ts',
     'src/state/index.ts'

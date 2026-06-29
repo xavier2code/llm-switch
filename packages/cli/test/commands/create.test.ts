@@ -12,13 +12,13 @@ vi.mock('@inquirer/prompts', () => ({
   confirm: vi.fn(),
 }));
 
-vi.mock('../../src/validator.js', () => ({
+vi.mock('@llm-switch/core/validator.js', () => ({
   validateAnthropic: vi.fn(),
   validateOpenAi: vi.fn(),
 }));
 
 import { select, input, password, confirm } from '@inquirer/prompts';
-import { validateAnthropic, validateOpenAi } from '../../src/validator.js';
+import { validateAnthropic, validateOpenAi } from '@llm-switch/core/validator.js';
 import { run } from '../../src/commands/create.js';
 import { UserCancelledError, ValidationError } from '../../src/errors.js';
 import { ProfileStore } from '../../src/store/profile-store.js';

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { validateAnthropic, validateOpenAi } from '../src/validator.js';
+import { validateAnthropic, validateOpenAi } from '@llm-switch/core/validator.js';
 import { ValidationError } from '../src/errors.js';
 
 type FetchResp = {

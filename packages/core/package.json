@@ -24,6 +24,10 @@
       "types": "./dist/providers.d.ts",
       "default": "./dist/providers.js"
     },
+    "./validator.js": {
+      "types": "./dist/validator.d.ts",
+      "default": "./dist/validator.js"
+    },
     "./adapters": {
       "types": "./dist/adapters/index.d.ts",
       "default": "./dist/adapters/index.js"
