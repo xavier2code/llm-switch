@@ -433,11 +433,14 @@ export function App({ store, targets }: AppProps) {
           <Box
             flexDirection="row"
             justifyContent="space-between"
-            alignItems="center"
+            alignItems="flex-start"
+            height={4}
           >
-            <Text bold color={theme.panelTitle}>
-              {selectedTarget?.displayName} Profiles
-            </Text>
+            <Box flexDirection="column" justifyContent="center" height={4}>
+              <Text bold color={theme.panelTitle}>
+                {selectedTarget?.displayName} Profiles
+              </Text>
+            </Box>
             <Box flexDirection="row" gap={1}>
               <Text color={theme.textMuted}>Search:</Text>
               <Text color={theme.textMuted}>
@@ -446,7 +449,7 @@ export function App({ store, targets }: AppProps) {
             </Box>
           </Box>
 
-          <Box flexDirection="column" flexGrow={1} gap={1} marginTop={1}>
+          <Box flexDirection="column" flexGrow={1} gap={1}>
             {filteredProfiles.length === 0 && (
               <Box
                 flexGrow={1}
