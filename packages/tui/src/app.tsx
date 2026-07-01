@@ -508,13 +508,17 @@ export function App({ store, targets }: AppProps) {
                         {p.alias}
                       </Text>
                       <Box flexDirection="row" gap={1}>
-                        <Text color={theme.profileProviderFg}>
-                          {p.providerId ?? "custom"}
-                        </Text>
+                        {p.providerId && (
+                          <Text color={theme.profileProviderFg}>
+                            {p.providerId}
+                          </Text>
+                        )}
                         {p.active && (
                           <Text color={theme.profileActiveFg}>[active]</Text>
                         )}
-                        <Text color={theme.profileModelFg}>{p.model}</Text>
+                        {p.model && (
+                          <Text color={theme.profileModelFg}>{p.model}</Text>
+                        )}
                       </Box>
                     </Box>
                   </Box>
