@@ -436,14 +436,12 @@ export function App({ store, targets }: AppProps) {
           <Box
             flexDirection="row"
             justifyContent="space-between"
-            alignItems="flex-start"
-            height={4}
+            alignItems="center"
+            height={1}
           >
-            <Box flexDirection="column" justifyContent="center" height={4}>
-              <Text bold color={theme.panelTitle}>
-                {selectedTarget?.displayName} Profiles
-              </Text>
-            </Box>
+            <Text bold color={theme.panelTitle}>
+              {selectedTarget?.displayName} Profiles
+            </Text>
             <Box flexDirection="row" gap={1}>
               <Text color={theme.textMuted}>Search:</Text>
               <Text color={theme.textMuted}>
@@ -452,10 +450,16 @@ export function App({ store, targets }: AppProps) {
             </Box>
           </Box>
 
-          <Box flexDirection="column" flexGrow={1} gap={1}>
+          <Box
+            flexDirection="column"
+            flexGrow={1}
+            justifyContent="center"
+            gap={1}
+            marginY={1}
+            height={19}
+          >
             {filteredProfiles.length === 0 && (
               <Box
-                flexGrow={1}
                 alignItems="center"
                 justifyContent="center"
                 flexDirection="column"
@@ -477,6 +481,7 @@ export function App({ store, targets }: AppProps) {
                   paddingY={1}
                   borderStyle={isSelected && isFocused ? "single" : undefined}
                   borderColor={theme.profileSelectedBorder}
+                  height={3}
                 >
                   <Box flexDirection="row" alignItems="center" gap={1}>
                     <Box
@@ -531,8 +536,8 @@ export function App({ store, targets }: AppProps) {
             flexDirection="row"
             justifyContent="space-between"
             alignItems="center"
-            marginTop={1}
             paddingTop={1}
+            height={1}
           >
             <Box flexDirection="row" gap={2}>
               <Text color={theme.keyFg}>[c] Create</Text>
