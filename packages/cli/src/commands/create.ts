@@ -1,15 +1,15 @@
 import type { Writable } from 'node:stream';
 import { select, input, password, confirm } from '@inquirer/prompts';
-import type { TargetConfig, TargetFamily } from '../config.js';
-import { validateAlias } from '../config.js';
-import { ProfileStore, defaultProfileStore } from '../store/profile-store.js';
-import { PROVIDERS, getProvider, isProviderId, type Provider } from '../providers.js';
-import { validateAnthropic, validateOpenAi } from '../validator.js';
+import type { TargetConfig, TargetFamily } from '@llm-switch/core/config.js';
+import { validateAlias } from '@llm-switch/core/config.js';
+import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
+import { PROVIDERS, getProvider, isProviderId, type Provider } from '@llm-switch/core/providers.js';
+import { validateAnthropic, validateOpenAi } from '@llm-switch/core/validator.js';
 import { isCancel } from '../ui.js';
 import { UserCancelledError } from '../errors.js';
 import { INTERACTIVE_TTY_REQUIRED, restartHint } from '../messages.js';
 import { exists } from '../fs-utils.js';
-import type { ProfileContent } from '../adapters/types.js';
+import type { ProfileContent } from '@llm-switch/core/adapters/types.js';
 
 export interface CreateIO {
   targets: TargetConfig[];
@@ -22,6 +22,13 @@ export interface CreateIO {
   passwordFn?: typeof password;
   confirmFn?: typeof confirm;
   validateFn?: typeof validateAnthropic;
+  providerId?: string;
+  alias?: string;
+  baseUrl?: string;
+  model?: string;
+  apiKey?: string;
+  apiKeyEnv?: string;
+  skipValidation?: boolean;
 }
 
 function ensure(condition: unknown, message: string): asserts condition {
@@ -35,7 +42,8 @@ function nonEmpty(v: string): true | string {
 type SubmenuChoice = 'retry' | 'newkey' | 'edit' | 'cancel';
 
 export async function run(io: CreateIO): Promise<void> {
-  if (!io.isTTY) {
+  const hasRequiredFlags = Boolean(io.providerId && io.alias && (io.apiKey || io.apiKeyEnv));
+  if (!io.isTTY && !hasRequiredFlags) {
     throw new UserCancelledError(INTERACTIVE_TTY_REQUIRED);
   }
 
@@ -46,16 +54,25 @@ export async function run(io: CreateIO): Promise<void> {
   const cFn = io.confirmFn ?? confirm;
 
   const families = Array.from(new Set(io.targets.map((t) => t.family))) as TargetFamily[];
-  const providerByFamily: Record<TargetFamily, Provider> = {} as Record<TargetFamily, Provider>;
+  const providerByFamily = {} as Record<TargetFamily, Provider>;
 
   // 1. Per-family provider selection. A family with a single provider skips
   //    the prompt entirely (e.g. the openai family only has 'openai').
   for (const family of families) {
     const familyProviders = PROVIDERS.filter((p) => p.family === family);
     let provider: Provider;
-    if (familyProviders.length === 1) {
-      provider = familyProviders[0]!;
+    if (
+      io.providerId &&
+      isProviderId(io.providerId) &&
+      familyProviders.some((p) => p.id === io.providerId)
+    ) {
+      provider = getProvider(io.providerId);
+    } else if (familyProviders.length === 1) {
+      provider = familyProviders[0];
     } else {
+      if (!io.isTTY) {
+        throw new UserCancelledError(`Provider required for ${family} family.`);
+      }
       const choice = await sFn({
         message: `Select provider for ${family} family:`,
         choices: familyProviders.map((p) => ({ name: p.displayName, value: p.id })),
@@ -70,48 +87,66 @@ export async function run(io: CreateIO): Promise<void> {
   }
 
   // 2. Alias
-  const aliasInput = await iFn({
-    message: 'Alias for this profile:',
-    default: providerByFamily[families[0]!]!.id,
-    validate: (v: string) => {
-      const trimmed = v.trim();
-      if (!trimmed) return 'Required';
-      const err = validateAlias(trimmed);
-      return err ?? true;
-    },
-  });
-  ensure(!isCancel(aliasInput), 'Cancelled.');
-  const alias = (aliasInput as string).trim();
+  const firstFamily = families[0];
+  if (!firstFamily) {
+    throw new UserCancelledError('No target families to configure.');
+  }
+  let alias: string;
+  if (io.alias) {
+    const err = validateAlias(io.alias);
+    if (err) throw new UserCancelledError(err);
+    alias = io.alias;
+  } else if (!io.isTTY) {
+    throw new UserCancelledError('Alias required.');
+  } else {
+    const aliasInput = await iFn({
+      message: 'Alias for this profile:',
+      default: providerByFamily[firstFamily].id,
+      validate: (v: string) => {
+        const trimmed = v.trim();
+        if (!trimmed) return 'Required';
+        const validationErr = validateAlias(trimmed);
+        return validationErr ?? true;
+      },
+    });
+    ensure(!isCancel(aliasInput), 'Cancelled.');
+    alias = (aliasInput as string).trim();
+  }
 
   // 3. Per-family base URL + model
   const familyConfig = {} as Record<TargetFamily, { baseUrl: string; model: string }>;
   for (const family of families) {
-    const provider = providerByFamily[family]!;
-    let baseUrl = provider.baseUrl;
-    let model = provider.defaultModel;
+    const provider = providerByFamily[family];
+    const requestedBaseUrl = io.baseUrl;
+    const requestedModel = io.model;
+    let baseUrl = requestedBaseUrl ?? provider.baseUrl;
+    let model = requestedModel ?? provider.defaultModel;
 
-    const useDefaults = await cFn({
-      message: `${family}: use default BASE_URL (${baseUrl}) and model (${model})?`,
-      default: true,
-    });
-    ensure(!isCancel(useDefaults), 'Cancelled.');
-
-    if (!useDefaults) {
-      const urlInput = await iFn({
-        message: `${family} BASE URL:`,
-        default: baseUrl,
-        validate: nonEmpty,
+    const needsPrompt = !io.baseUrl || !io.model;
+    if (needsPrompt && io.isTTY) {
+      const useDefaults = await cFn({
+        message: `${family}: use default BASE_URL (${baseUrl}) and model (${model})?`,
+        default: true,
       });
-      ensure(!isCancel(urlInput), 'Cancelled.');
-      baseUrl = (urlInput as string).trim();
+      ensure(!isCancel(useDefaults), 'Cancelled.');
 
-      const modelInput = await iFn({
-        message: `${family} Model:`,
-        default: model,
-        validate: nonEmpty,
-      });
-      ensure(!isCancel(modelInput), 'Cancelled.');
-      model = (modelInput as string).trim();
+      if (!useDefaults) {
+        const urlInput = await iFn({
+          message: `${family} BASE URL:`,
+          default: baseUrl,
+          validate: nonEmpty,
+        });
+        ensure(!isCancel(urlInput), 'Cancelled.');
+        baseUrl = (urlInput as string).trim();
+
+        const modelInput = await iFn({
+          message: `${family} Model:`,
+          default: model,
+          validate: nonEmpty,
+        });
+        ensure(!isCancel(modelInput), 'Cancelled.');
+        model = (modelInput as string).trim();
+      }
     }
 
     familyConfig[family] = { baseUrl, model };
@@ -120,16 +155,37 @@ export async function run(io: CreateIO): Promise<void> {
   // 4-6. API key + per-family validation loop
   let apiKey = '';
   let needsNewKey = true;
+  const resolveApiKey = (): string => {
+    if (io.apiKey) return io.apiKey;
+    if (io.apiKeyEnv) {
+      const value = process.env[io.apiKeyEnv];
+      if (!value)
+        throw new UserCancelledError(`Environment variable '${io.apiKeyEnv}' is empty or unset.`);
+      return value;
+    }
+    return '';
+  };
+
   while (true) {
     if (needsNewKey) {
-      const keyInput = await pFn({ message: 'API key:', mask: '*', validate: nonEmpty });
-      ensure(!isCancel(keyInput), 'Cancelled.');
-      apiKey = (keyInput as string).trim();
+      const resolved = resolveApiKey();
+      if (resolved) {
+        apiKey = resolved;
+      } else if (!io.isTTY) {
+        throw new UserCancelledError('API key required.');
+      } else {
+        const keyInput = await pFn({ message: 'API key:', mask: '*', validate: nonEmpty });
+        ensure(!isCancel(keyInput), 'Cancelled.');
+        apiKey = (keyInput as string).trim();
+      }
     }
 
     try {
       for (const family of families) {
-        const { baseUrl, model } = familyConfig[family]!;
+        if (io.skipValidation) continue;
+        const config = familyConfig[family];
+        if (!config) continue;
+        const { baseUrl, model } = config;
         if (family === 'anthropic') {
           await (io.validateFn ?? validateAnthropic)(baseUrl, model, apiKey);
         } else {
@@ -138,6 +194,9 @@ export async function run(io: CreateIO): Promise<void> {
       }
       break;
     } catch (err: unknown) {
+      if (!io.isTTY) {
+        throw err;
+      }
       const message = err instanceof Error ? err.message : String(err);
       io.stderr.write(`Validation failed: ${message}\n`);
 
@@ -164,21 +223,23 @@ export async function run(io: CreateIO): Promise<void> {
       }
       // 'edit': re-prompt each family's BASE_URL and model
       for (const family of families) {
+        const config = familyConfig[family];
+        if (!config) continue;
         const urlInput = await iFn({
           message: `${family} BASE URL:`,
-          default: familyConfig[family]!.baseUrl,
+          default: config.baseUrl,
           validate: nonEmpty,
         });
         ensure(!isCancel(urlInput), 'Cancelled.');
-        familyConfig[family]!.baseUrl = (urlInput as string).trim();
+        config.baseUrl = (urlInput as string).trim();
 
         const modelInput = await iFn({
           message: `${family} Model:`,
-          default: familyConfig[family]!.model,
+          default: config.model,
           validate: nonEmpty,
         });
         ensure(!isCancel(modelInput), 'Cancelled.');
-        familyConfig[family]!.model = (modelInput as string).trim();
+        config.model = (modelInput as string).trim();
       }
       needsNewKey = false;
       continue;
@@ -187,8 +248,12 @@ export async function run(io: CreateIO): Promise<void> {
 
   // 7-9. Per-target overwrite prompt + write + activate
   for (const target of io.targets) {
-    const provider = providerByFamily[target.family]!;
-    const { baseUrl, model } = familyConfig[target.family]!;
+    const provider = providerByFamily[target.family];
+    const config = familyConfig[target.family];
+    if (!provider || !config) {
+      throw new UserCancelledError(`No provider configured for ${target.family}.`);
+    }
+    const { baseUrl, model } = config;
     const content: ProfileContent = {
       providerId: provider.id,
       baseUrl,
@@ -199,12 +264,16 @@ export async function run(io: CreateIO): Promise<void> {
 
     const profileFile = store.adapter(target).profilePath(alias);
     if (await exists(profileFile)) {
-      const overwrite = await cFn({
-        message: `Profile '${alias}' exists for ${target.displayName}. Overwrite?`,
-        default: false,
-      });
-      ensure(!isCancel(overwrite), 'Cancelled.');
-      if (!overwrite) throw new UserCancelledError('Cancelled.');
+      if (!io.isTTY) {
+        // In non-interactive mode, overwrite silently when flags are provided.
+      } else {
+        const overwrite = await cFn({
+          message: `Profile '${alias}' exists for ${target.displayName}. Overwrite?`,
+          default: false,
+        });
+        ensure(!isCancel(overwrite), 'Cancelled.');
+        if (!overwrite) throw new UserCancelledError('Cancelled.');
+      }
     }
 
     await store.writeProfile(target, alias, content);

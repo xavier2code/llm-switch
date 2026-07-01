@@ -1,24 +1,16 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import { NoBackupError } from './errors.js';
-
-export async function backupCurrent(settingsPath: string, backupPath: string): Promise<void> {
-  try {
-    // Ensure the backup directory exists (defensive: migration normally creates
-    // it, but don't silently lose a backup if it's missing).
-    await fs.mkdir(path.dirname(backupPath), { recursive: true });
-    await fs.copyFile(settingsPath, backupPath);
-    await fs.chmod(backupPath, 0o600);
-  } catch (err: unknown) {
-    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-      return;
-    }
-    throw err;
-  }
-}
 
 export async function restoreBackup(settingsPath: string, backupPath: string): Promise<void> {
   try {
+    // fsync the backup file before renaming it into place, so the restored
+    // active config is guaranteed to be on disk (best-effort).
+    const fh = await fs.open(backupPath, 'r+');
+    try {
+      await fh.sync();
+    } finally {
+      await fh.close();
+    }
     await fs.rename(backupPath, settingsPath);
   } catch (err: unknown) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -32,7 +24,11 @@ export async function isSameContent(a: string, b: string): Promise<boolean> {
   try {
     const [ca, cb] = await Promise.all([fs.readFile(a), fs.readFile(b)]);
     return ca.equals(cb);
-  } catch {
-    return false;
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException | null)?.code;
+    if (code === 'ENOENT') {
+      return false;
+    }
+    throw err;
   }
 }

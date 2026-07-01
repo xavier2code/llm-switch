@@ -1,9 +1,9 @@
-import type { TargetConfig } from '../config.js';
-import { getBackupPath } from '../config.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
+import { getBackupPath } from '@llm-switch/core/config.js';
 import { restoreBackup, isSameContent } from '../backup.js';
 import { exists } from '../fs-utils.js';
-import { NoBackupError, NoCurrentSettingsError } from '../errors.js';
-import { ProfileStore, defaultProfileStore } from '../store/profile-store.js';
+import { NoBackupError } from '../errors.js';
+import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
 
 export interface RestoreIO {
   targets: TargetConfig[];
@@ -13,25 +13,35 @@ export interface RestoreIO {
 
 export async function run(io: RestoreIO): Promise<void> {
   const store = io.store ?? defaultProfileStore();
+  const errors: string[] = [];
+  const restored: string[] = [];
+  const skipped: string[] = [];
 
   for (const target of io.targets) {
     const settingsPath = store.adapter(target).activePath();
     const backupPath = getBackupPath(target);
 
     if (!(await exists(backupPath))) {
-      throw new NoBackupError(`No backup found at ${backupPath}.`);
+      errors.push(`No backup found at ${backupPath}.`);
+      continue;
     }
     if (!(await exists(settingsPath))) {
-      throw new NoCurrentSettingsError(
-        `No current ${target.activeConfigFileName} to restore at ${settingsPath}.`,
-      );
+      errors.push(`No current ${target.activeConfigFileName} to restore at ${settingsPath}.`);
+      continue;
     }
     if (await isSameContent(settingsPath, backupPath)) {
-      io.stdout.write(`${target.displayName}: already at backup state.\n`);
+      skipped.push(`${target.displayName}: already at backup state.`);
       continue;
     }
 
     await restoreBackup(settingsPath, backupPath);
-    io.stdout.write(`${target.displayName}: restored from backup.\n`);
+    restored.push(`${target.displayName}: restored from backup.`);
+  }
+
+  for (const line of restored) io.stdout.write(`${line}\n`);
+  for (const line of skipped) io.stdout.write(`${line}\n`);
+
+  if (errors.length > 0) {
+    throw new NoBackupError(errors.join('\n'));
   }
 }

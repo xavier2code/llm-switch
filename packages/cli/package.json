@@ -28,12 +28,15 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "git config core.hooksPath packages/cli/.githooks",
-    "prepublishOnly": "pnpm test && pnpm build"
+    "prepare": "[ -d .git ] && git config core.hooksPath packages/cli/.githooks || true",
+    "sync-plugin-version": "node scripts/sync-plugin-version.js",
+    "prepublishOnly": "pnpm typecheck && pnpm test && pnpm build && pnpm sync-plugin-version"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
     "@inquirer/prompts": "^7.0.0",
+    "@llm-switch/core": "workspace:*",
+    "@llm-switch/tui": "workspace:*",
     "commander": "^12.0.0",
     "picocolors": "^1.1.0"
   },

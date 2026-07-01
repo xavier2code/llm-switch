@@ -8,7 +8,7 @@ import {
   NoCurrentSettingsError,
   UserCancelledError,
   ValidationError,
-} from '../src/errors.js';
+} from '@llm-switch/core';
 
 describe('AppError', () => {
   it('is an Error subclass with a code', () => {

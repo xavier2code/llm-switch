@@ -6,11 +6,11 @@ import {
   isTargetId,
   type TargetConfig,
   type TargetId,
-} from './config.js';
+} from '@llm-switch/core/config.js';
 import { AppError, UserCancelledError } from './errors.js';
 import { isCancel } from './ui.js';
-import type { StateManager } from './state/state-manager.js';
-import { detectInstalledTargets } from './detector.js';
+import type { StateManager } from '@llm-switch/core/state/index.js';
+import { detectInstalledTargets } from '@llm-switch/core/detector.js';
 
 export interface TargetSelectionResult {
   targets: TargetConfig[];
@@ -21,7 +21,7 @@ export interface TargetSelectorOptions {
   flag?: string;
   isTTY: boolean;
   stateManager: StateManager;
-  detectFn?: () => Record<TargetId, boolean>;
+  detectFn?: () => Promise<Record<TargetId, boolean>>;
   checkboxFn?: typeof checkbox;
 }
 
@@ -43,7 +43,7 @@ export async function selectTargets(
 
   if (isTTY) {
     const state = await stateManager.read();
-    const installed = detectFn ? detectFn() : detectInstalledTargets();
+    const installed = await (detectFn ? detectFn() : detectInstalledTargets());
     const selectFn = checkboxFn ?? checkbox;
     const result = (await selectFn({
       message: 'Select targets:',
@@ -52,12 +52,12 @@ export async function selectTargets(
         value: t.id,
         checked: state.lastSelectedTargets.includes(t.id),
       })),
-    })) as TargetId[] | undefined;
+    })) as unknown[] | undefined;
 
     if (isCancel(result)) {
       throw new UserCancelledError('Cancelled.');
     }
-    const ids = result ?? [];
+    const ids = (result ?? []).filter(isTargetId);
     if (ids.length === 0) {
       throw new UserCancelledError('No targets selected.');
     }

@@ -87,6 +87,7 @@ npm i -g llm-switch
 ## Usage
 
 ```bash
+sw                            # launch the interactive TUI (TTY only)
 sw list                       # show profiles for the selected targets
 sw switch                     # interactive menu (targets, then profile)
 sw switch glm                 # switch directly (prompts for targets)
@@ -104,6 +105,11 @@ LLM_SWITCH_TARGET=opencode sw current   # default target in scripts
 sw --help                     # full help, including env vars
 sw <cmd> --help               # per-command help with examples + exit codes
 ```
+
+When you run `sw` without arguments in a terminal, it launches a lazygit-style
+TUI for browsing targets and profiles, switching active configs, and viewing
+profile details. Pass a subcommand or `--help`/`--version` to stay on the CLI
+path.
 
 Set the config-dir env var to override a target's default location
 (`CLAUDE_CONFIG_DIR`, `OPENCODE_CONFIG_DIR`, or `CODEX_HOME`).
@@ -133,6 +139,8 @@ store directories — it never creates or edits a tool's own config file.
 wizard). Pass `-f` / `--force` to skip the prompt, or run in a TTY to get the
 interactive `Overwrite? [y/N]` prompt. In non-TTY contexts without `--force`,
 `save` exits 0 with a clear error instead of silently destroying the profile.
+When multiple targets are selected, the prompt lists every affected tool and
+applies the answer to all of them.
 
 ## Claude Code plugin
 

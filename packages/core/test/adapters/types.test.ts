@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { ProfileContent, TargetAdapter } from '../../src/adapters/types.js';
+import type { ProfileContent, TargetAdapter } from '@llm-switch/core/adapters/types.js';
 
 describe('adapter types', () => {
   it('ProfileContent has required fields', () => {

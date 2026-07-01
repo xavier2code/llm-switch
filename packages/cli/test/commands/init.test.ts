@@ -4,9 +4,9 @@ import path from 'node:path';
 import os from 'node:os';
 import { runInitWizard, maybeRunInitWizard } from '../../src/commands/init.js';
 import { UserCancelledError } from '../../src/errors.js';
-import { getActiveConfigPath, getTarget, type TargetId } from '../../src/config.js';
-import { StateManager } from '../../src/state/state-manager.js';
-import { defaultBaseDir } from '../../src/store/profile-store.js';
+import { getActiveConfigPath, getTarget, type TargetId } from '@llm-switch/core/config.js';
+import { StateManager } from '@llm-switch/core/state/index.js';
+import { defaultBaseDir } from '@llm-switch/core/store/profile-store.js';
 
 let tmpDir: string;
 let savedClaude: string | undefined;
@@ -55,7 +55,7 @@ describe('runInitWizard', () => {
   });
 
   it('prints detection status for the tools', async () => {
-    const detectFn = () =>
+    const detectFn = async () =>
       ({ claude: true, opencode: false, codex: false }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
@@ -65,7 +65,7 @@ describe('runInitWizard', () => {
   });
 
   it('creates centralized profile dirs and writes state', async () => {
-    const detectFn = () =>
+    const detectFn = async () =>
       ({ claude: true, opencode: false, codex: false }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
@@ -80,7 +80,7 @@ describe('runInitWizard', () => {
   });
 
   it('warns when no tool is installed', async () => {
-    const detectFn = () =>
+    const detectFn = async () =>
       ({ claude: false, opencode: false, codex: false }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
@@ -89,7 +89,7 @@ describe('runInitWizard', () => {
   });
 
   it('throws UserCancelledError when no tool is selected', async () => {
-    const detectFn = () =>
+    const detectFn = async () =>
       ({ claude: true, opencode: true, codex: true }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue([] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
@@ -97,7 +97,7 @@ describe('runInitWizard', () => {
   });
 
   it('warns when an active config is missing but still initializes', async () => {
-    const detectFn = () =>
+    const detectFn = async () =>
       ({ claude: true, opencode: true, codex: true }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
@@ -107,7 +107,7 @@ describe('runInitWizard', () => {
 
   it('does not warn when the active config exists', async () => {
     await fs.writeFile(getActiveConfigPath(getTarget('claude')), '{}');
-    const detectFn = () =>
+    const detectFn = async () =>
       ({ claude: true, opencode: true, codex: true }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };
@@ -116,7 +116,7 @@ describe('runInitWizard', () => {
   });
 
   it('initializes directories for every selected tool (multi-select)', async () => {
-    const detectFn = () =>
+    const detectFn = async () =>
       ({ claude: true, opencode: true, codex: true }) as Record<TargetId, boolean>;
     const checkboxFn = vi.fn().mockResolvedValue(['claude', 'codex'] as TargetId[]);
     const io = { ...mockIO(), isTTY: true, detectFn, checkboxFn };

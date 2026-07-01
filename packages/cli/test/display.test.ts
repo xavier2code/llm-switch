@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { summarize } from '../src/display.js';
-import { ProfileStore } from '../src/store/profile-store.js';
+import { ProfileStore } from '@llm-switch/core/store/index.js';
 import { ConfigDirNotFoundError } from '../src/errors.js';
 import { mockClaudeTarget } from './helpers.js';
 

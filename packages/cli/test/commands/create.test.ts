@@ -12,16 +12,16 @@ vi.mock('@inquirer/prompts', () => ({
   confirm: vi.fn(),
 }));
 
-vi.mock('../../src/validator.js', () => ({
+vi.mock('@llm-switch/core/validator.js', () => ({
   validateAnthropic: vi.fn(),
   validateOpenAi: vi.fn(),
 }));
 
 import { select, input, password, confirm } from '@inquirer/prompts';
-import { validateAnthropic, validateOpenAi } from '../../src/validator.js';
+import { validateAnthropic, validateOpenAi } from '@llm-switch/core/validator.js';
 import { run } from '../../src/commands/create.js';
 import { UserCancelledError, ValidationError } from '../../src/errors.js';
-import { ProfileStore } from '../../src/store/profile-store.js';
+import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { mockClaudeTarget, mockCodexTarget } from '../helpers.js';
 
 const mockSelect = vi.mocked(select);
@@ -33,19 +33,24 @@ const mockValidateOpenAi = vi.mocked(validateOpenAi);
 
 let tmpDir: string;
 let savedEnv: string | undefined;
+let savedHome: string | undefined;
 let store: ProfileStore;
 const target = mockClaudeTarget();
 
 beforeEach(async () => {
   tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'llm-switch-create-'));
   savedEnv = process.env.CLAUDE_CONFIG_DIR;
+  savedHome = process.env.HOME;
   process.env.CLAUDE_CONFIG_DIR = tmpDir;
-  store = new ProfileStore(path.join(tmpDir, 'llm-switch'));
+  process.env.HOME = tmpDir;
+  store = new ProfileStore(path.join(tmpDir, '.llm-switch'));
 });
 
 afterEach(async () => {
   if (savedEnv === undefined) delete process.env.CLAUDE_CONFIG_DIR;
   else process.env.CLAUDE_CONFIG_DIR = savedEnv;
+  if (savedHome === undefined) delete process.env.HOME;
+  else process.env.HOME = savedHome;
   await fs.rm(tmpDir, { recursive: true, force: true });
   vi.clearAllMocks();
   mockValidateAnthropic.mockReset();
@@ -113,6 +118,8 @@ describe('create command', () => {
 
   it('skips provider select when family has a single provider (openai/codex)', async () => {
     const codex = mockCodexTarget();
+    // Create the codex config dir so atomicWrite can write the active config
+    await fs.mkdir(path.join(tmpDir, '.codex'), { recursive: true });
     // No provider select (openai is the only openai-family provider).
     mockInput.mockResolvedValueOnce('openai' as never);
     mockConfirm.mockResolvedValueOnce(true as never);
@@ -257,7 +264,10 @@ describe('create command', () => {
     const settings = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8'));
     expect(settings.env.ANTHROPIC_AUTH_TOKEN).toBe('sk-test');
     const bak = JSON.parse(
-      await fs.readFile(path.join(tmpDir, 'llm-switch', 'backups', 'settings.json.bak'), 'utf8'),
+      await fs.readFile(
+        path.join(tmpDir, '.llm-switch', 'backups', 'claude', 'settings.json.bak'),
+        'utf8',
+      ),
     );
     expect(bak.env.PREV).toBe('yes');
   });

@@ -7,35 +7,32 @@ import {
   getTarget,
   type TargetConfig,
   type TargetId,
-} from '../config.js';
-import { detectInstalledTargets } from '../detector.js';
+} from '@llm-switch/core/config.js';
+import { detectInstalledTargets } from '@llm-switch/core/detector.js';
 import { exists } from '../fs-utils.js';
 import { UserCancelledError } from '../errors.js';
 import { INTERACTIVE_TTY_REQUIRED } from '../messages.js';
 import { isInquirerCancelError } from '../ui.js';
-import { StateManager } from '../state/state-manager.js';
-import { ProfileStore, defaultBaseDir } from '../store/profile-store.js';
-import { ensureMigratedToCentralStore } from '../migrate.js';
+import { StateManager } from '@llm-switch/core/state/index.js';
+import { ProfileStore, defaultBaseDir } from '@llm-switch/core/store/profile-store.js';
+import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
 
 export interface InitIO {
   stdout: Writable;
   stderr: Writable;
   isTTY: boolean;
   checkboxFn?: typeof checkbox;
-  detectFn?: () => Record<TargetId, boolean>;
+  detectFn?: () => Promise<Record<TargetId, boolean>>;
+  selectAllDetected?: boolean;
 }
 
 export async function runInitWizard(io: InitIO): Promise<void> {
-  if (!io.isTTY) {
-    throw new UserCancelledError(INTERACTIVE_TTY_REQUIRED);
-  }
-
   const baseDir = defaultBaseDir();
   const store = new ProfileStore(baseDir);
   const stateManager = new StateManager(baseDir);
 
   const detect = io.detectFn ?? detectInstalledTargets;
-  const installed = detect();
+  const installed = await detect();
 
   io.stdout.write('Detected CLI tools:\n');
   for (const target of TARGETS) {
@@ -52,15 +49,24 @@ export async function runInitWizard(io: InitIO): Promise<void> {
     );
   }
 
-  const checkboxFn = io.checkboxFn ?? checkbox;
-  const choice = (await checkboxFn({
-    message: 'Which tools should llm-switch manage? (Space to toggle)',
-    choices: TARGETS.map((t) => ({
-      name: installed[t.id] ? t.displayName : `${t.displayName} (not installed)`,
-      value: t.id,
-      checked: installed[t.id],
-    })),
-  })) as TargetId[];
+  let choice: TargetId[];
+  if (io.selectAllDetected) {
+    choice = TARGETS.filter((t) => installed[t.id]).map((t) => t.id);
+  } else {
+    if (!io.isTTY) {
+      throw new UserCancelledError(INTERACTIVE_TTY_REQUIRED);
+    }
+    const checkboxFn = io.checkboxFn ?? checkbox;
+    const result = (await checkboxFn({
+      message: 'Which tools should llm-switch manage? (Space to toggle)',
+      choices: TARGETS.map((t) => ({
+        name: installed[t.id] ? t.displayName : `${t.displayName} (not installed)`,
+        value: t.id,
+        checked: installed[t.id],
+      })),
+    })) as TargetId[];
+    choice = result;
+  }
 
   if (choice.length === 0) {
     throw new UserCancelledError('No tools selected.');
@@ -74,7 +80,7 @@ export async function runInitWizard(io: InitIO): Promise<void> {
     const active = getActiveConfigPath(target);
     if (!(await exists(active))) {
       io.stderr.write(
-        `Warning: ${target.displayName} active config not found at ${active}. Run ${target.displayName} once to create it.\n`,
+        `Warning: ${target.displayName} active config not found at ${active}. Run ${target.displayName} once to create it. Run \`sw create\` to set one up.\n`,
       );
     }
   }

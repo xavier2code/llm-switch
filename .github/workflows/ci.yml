@@ -30,20 +30,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build workspace dependencies
+        run: pnpm -F @llm-switch/core build && pnpm -F @llm-switch/tui build
+
       - name: Typecheck
-        run: pnpm -F llm-switch typecheck
+        run: pnpm -r typecheck
 
       - name: Lint
-        run: pnpm -F llm-switch lint
+        run: pnpm -r lint
 
       - name: Format check
-        run: pnpm -F llm-switch format:check
+        run: pnpm -r format:check
 
       - name: Test
-        run: pnpm test
+        run: pnpm -r test
 
       - name: Build
-        run: pnpm -F llm-switch build
+        run: pnpm -r build
 
       - name: Coverage
         run: pnpm -F llm-switch test:coverage

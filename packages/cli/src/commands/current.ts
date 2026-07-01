@@ -1,5 +1,5 @@
-import type { TargetConfig } from '../config.js';
-import { ProfileStore, defaultProfileStore } from '../store/profile-store.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
+import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { summarize } from '../display.js';
 
 export interface CurrentIO {
@@ -16,6 +16,7 @@ export async function run(io: CurrentIO): Promise<void> {
     const s = await summarize(target, store);
     lines.push(`${target.displayName}:`);
     lines.push(`  Source: ${s.source} (${s.sourcePath})`);
+    if (s.warning) lines.push(`  Warning: ${s.warning}`);
     if (s.baseUrl) lines.push(`  Base URL: ${s.baseUrl}`);
     if (s.model) lines.push(`  Model: ${s.model}`);
     lines.push(`  MCP servers: ${s.hasMcp ? 'yes' : 'no'}`);

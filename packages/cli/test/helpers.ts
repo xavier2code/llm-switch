@@ -1,4 +1,4 @@
-import type { TargetConfig } from '../src/config.js';
+import type { TargetConfig } from '@llm-switch/core/config.js';
 
 export function mockClaudeTarget(): TargetConfig {
   return {
