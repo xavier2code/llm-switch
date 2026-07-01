@@ -34,7 +34,7 @@
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
-    "@inquirer/prompts": "^7.0.0",
+    "@inquirer/prompts": "^8.5.2",
     "@llm-switch/core": "workspace:*",
     "@llm-switch/tui": "workspace:*",
     "commander": "^15.0.0",
