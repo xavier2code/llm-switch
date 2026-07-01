@@ -1,7 +1,7 @@
 # llm-switch
 
-[![npm version](https://img.shields.io/npm/v/llm-switch?style=flat-square)](https://www.npmjs.com/package/llm-switch)
-[![npm downloads](https://img.shields.io/npm/dm/llm-switch?style=flat-square)](https://www.npmjs.com/package/llm-switch)
+[![npm version](https://img.shields.io/npm/v/@xavier2code/llm-switch?style=flat-square)](https://www.npmjs.com/package/@xavier2code/llm-switch)
+[![npm downloads](https://img.shields.io/npm/dm/@xavier2code/llm-switch?style=flat-square)](https://www.npmjs.com/package/@xavier2code/llm-switch)
 [![CI](https://img.shields.io/github/actions/workflow/status/xavier2code/llm-switch/ci.yml?branch=main&style=flat-square)](https://github.com/xavier2code/llm-switch/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg?style=flat-square)](https://nodejs.org/)
@@ -10,10 +10,13 @@
 Switch LLM profiles for Claude Code, OpenCode, Codex, and other AI CLI tools.
 The recommended command name is `sw`; `llm-switch` is installed as a legacy alias.
 
+> **Note:** The unscoped `llm-switch` package is deprecated. Install
+> `@xavier2code/llm-switch` for the latest releases.
+
 ## Install
 
 ```bash
-npm i -g llm-switch
+npm i -g @xavier2code/llm-switch
 ```
 
 ## Quick start
@@ -90,10 +93,10 @@ sw <cmd> --help                     # per-command help and exit codes
 
 `sw` automatically migrates profiles from earlier layouts on first run:
 
-- `0.5.x` and earlier: flat `settings.json.<alias>` files are moved into the
-  central store.
-- `0.7.x`: per-tool `llm-switch/profiles/` directories are copied into the
-  central store; originals are left in place.
+- `0.5.x` and earlier (legacy `llm-switch` package): flat
+  `settings.json.<alias>` files are moved into the central store.
+- `0.7.x` (legacy `llm-switch` package): per-tool `llm-switch/profiles/`
+  directories are copied into the central store; originals are left in place.
 
 Run `sw init` to review detected tools and directory status.
 
