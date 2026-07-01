@@ -18,12 +18,6 @@ importers:
       '@inquirer/prompts':
         specifier: ^8.5.2
         version: 8.5.2(@types/node@26.0.1)
-      '@xavier2code/llm-switch-core':
-        specifier: workspace:*
-        version: link:../core
-      '@xavier2code/llm-switch-tui':
-        specifier: workspace:*
-        version: link:../tui
       commander:
         specifier: ^15.0.0
         version: 15.0.0
@@ -46,6 +40,12 @@ importers:
       '@vitest/coverage-v8':
         specifier: ^4.1.9
         version: 4.1.9(vitest@4.1.9)
+      '@xavier2code/llm-switch-core':
+        specifier: workspace:*
+        version: link:../core
+      '@xavier2code/llm-switch-tui':
+        specifier: workspace:*
+        version: link:../tui
       eslint:
         specifier: ^10.6.0
         version: 10.6.0

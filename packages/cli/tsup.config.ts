@@ -8,6 +8,9 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   shims: false,
+  bundle: true,
+  noExternal: ['@xavier2code/llm-switch-core', '@xavier2code/llm-switch-tui'],
+  external: ['react-devtools-core'],
   banner: {
     js: '#!/usr/bin/env node',
   },
