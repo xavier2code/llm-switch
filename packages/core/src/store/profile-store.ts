@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import { createAdapter } from '../adapters/index.js';
 import type { TargetConfig } from '../config.js';
 import { ProfileNotFoundError } from '../errors.js';
-import { sha256String } from '../fs-utils.js';
+import { cleanupStaleTmp, sha256, sha256String } from '../fs-utils.js';
 import type { Profile, ProfileContent } from '../adapters/types.js';
 
 export class ProfileStore {
@@ -16,6 +16,8 @@ export class ProfileStore {
 
   private async ensureBaseDir(): Promise<void> {
     await fs.mkdir(this.baseDir, { recursive: true, mode: 0o700 });
+    await cleanupStaleTmp(this.baseDir, '.tmp.');
+    await cleanupStaleTmp(this.baseDir, '.state.');
   }
 
   profileDir(target: TargetConfig): string {
@@ -50,14 +52,13 @@ export class ProfileStore {
   async listProfiles(target: TargetConfig): Promise<Profile[]> {
     await this.ensureBaseDir();
     const adapter = this.adapter(target);
-    const active = await adapter.readActive();
-    const activeHash = active ? sha256String(adapter.serialize(active)) : null;
+    const activePath = adapter.activePath();
+    const activeHash = await sha256(activePath);
     const aliases = await adapter.listAliases();
     const profiles = await Promise.all(
       aliases.map(async (alias) => {
-        const content = await adapter.readProfile(alias);
         const profilePath = adapter.profilePath(alias);
-        const hash = content ? sha256String(adapter.serialize(content)) : null;
+        const hash = await sha256(profilePath);
         return {
           alias,
           path: profilePath,

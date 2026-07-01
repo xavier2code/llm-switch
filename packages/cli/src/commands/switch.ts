@@ -14,6 +14,7 @@ export interface SwitchIO {
   stderr: Writable;
   isTTY: boolean;
   store?: ProfileStore;
+  dryRun?: boolean;
 }
 
 export async function run(io: SwitchIO): Promise<void> {
@@ -42,10 +43,23 @@ export async function run(io: SwitchIO): Promise<void> {
       const adapter = store.adapter(target);
       let content = await adapter.readProfile(alias);
       if (!content) {
+        if (io.dryRun) {
+          const source = await dryRunAutoCreateSource(io, store, target, alias);
+          if (!source) continue;
+          io.stdout.write(
+            `[dry-run] Would switch ${target.displayName} to '${alias}' (${source}).\n`,
+          );
+          switchedAny = true;
+          continue;
+        }
         content = await autoCreateProfile(io, store, target, alias);
       }
       if (!content) continue;
-      await adapter.writeActive(content);
+      if (io.dryRun) {
+        io.stdout.write(`[dry-run] Would switch ${target.displayName} to '${alias}'.\n`);
+      } else {
+        await adapter.writeActive(content);
+      }
       switchedAny = true;
     }
     if (!switchedAny) {
@@ -53,9 +67,11 @@ export async function run(io: SwitchIO): Promise<void> {
         `Profile '${alias}' not found. Run 'sw list' to see available profiles.`,
       );
     }
-    io.stdout.write(`Switched to ${alias}:\n`);
-    for (const target of io.targets) {
-      io.stdout.write(`  ${target.displayName}  ${restartHint(target)}\n`);
+    if (!io.dryRun) {
+      io.stdout.write(`Switched to ${alias}:\n`);
+      for (const target of io.targets) {
+        io.stdout.write(`  ${target.displayName}  ${restartHint(target)}\n`);
+      }
     }
     return;
   }
@@ -78,12 +94,37 @@ export async function run(io: SwitchIO): Promise<void> {
     const adapter = store.adapter(target);
     const content = await adapter.readProfile(chosen.alias);
     if (!content) continue;
+    if (io.dryRun) {
+      io.stdout.write(`[dry-run] Would switch ${target.displayName} to '${chosen.alias}'.\n`);
+      continue;
+    }
     await adapter.writeActive(content);
   }
-  io.stdout.write(`Switched to ${chosen.alias}:\n`);
-  for (const target of io.targets) {
-    io.stdout.write(`  ${target.displayName}  ${restartHint(target)}\n`);
+  if (!io.dryRun) {
+    io.stdout.write(`Switched to ${chosen.alias}:\n`);
+    for (const target of io.targets) {
+      io.stdout.write(`  ${target.displayName}  ${restartHint(target)}\n`);
+    }
   }
+}
+
+async function dryRunAutoCreateSource(
+  io: SwitchIO,
+  store: ProfileStore,
+  target: TargetConfig,
+  alias: string,
+): Promise<string | null> {
+  for (const other of io.targets) {
+    if (other.id === target.id) continue;
+    if (other.family !== target.family) continue;
+    const otherContent = await store.readProfile(other, alias);
+    if (otherContent) {
+      return `auto-create from ${other.displayName}`;
+    }
+  }
+  const active = await store.adapter(target).readActive();
+  if (active) return 'auto-create from current config';
+  return null;
 }
 
 async function autoCreateProfile(

@@ -1,17 +1,39 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-    open-pull-requests-limit: 5
-    groups:
-      patch-and-minor:
-        applies-to: version-updates
-        update-types:
-          - "minor"
-          - "patch"
-    ignore:
-      # Major bumps need manual review — they're likely to break something
-      - update-types: ["major"]
+      interval: 'weekly'
+    open-pull-requests-limit: 10
+    labels:
+      - 'dependencies'
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'
+  - package-ecosystem: 'npm'
+    directory: '/packages/cli'
+    schedule:
+      interval: 'weekly'
+    labels:
+      - 'dependencies'
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'
+  - package-ecosystem: 'npm'
+    directory: '/packages/core'
+    schedule:
+      interval: 'weekly'
+    labels:
+      - 'dependencies'
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'
+  - package-ecosystem: 'npm'
+    directory: '/packages/claude-code-plugin'
+    schedule:
+      interval: 'weekly'
+    labels:
+      - 'dependencies'
+    commit-message:
+      prefix: 'chore'
+      include: 'scope'

@@ -53,7 +53,7 @@ export abstract class BaseAdapter implements TargetAdapter {
 
     const output =
       raw !== null ? this.applyProfileToExisting(raw, content) : this.serialize(content);
-    await atomicWrite(active, output, { mode: 0o600 });
+    await atomicWrite(active, output, { mode: 0o600, fsync: true });
   }
 
   async readProfile(alias: string): Promise<ProfileContent | null> {

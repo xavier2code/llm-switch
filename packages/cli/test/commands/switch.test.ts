@@ -6,6 +6,7 @@ import { run } from '../../src/commands/switch.js';
 import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { ProfileNotFoundError, UserCancelledError, InvalidAliasError } from '../../src/errors.js';
 import { mockClaudeTarget, mockOpencodeTarget } from '../helpers.js';
+import { createAdapter } from '@llm-switch/core/adapters/index.js';
 
 let tmpDir: string;
 let savedClaudeEnv: string | undefined;
@@ -78,7 +79,22 @@ describe('switch command', () => {
     ).rejects.toBeInstanceOf(UserCancelledError);
   });
 
-  it('auto-creates a missing same-family profile from another target', async () => {
+  it('dry-run prints intended actions without writing', async () => {
+    await store.writeProfile(target, 'glm', {
+      baseUrl: 'https://x',
+      model: 'm',
+      apiKey: 'k',
+      extra: {},
+    });
+    const adapter = createAdapter(target, store.profileDir(target));
+    const io = mockIO();
+    await run({ targets: [target], alias: 'glm', store, ...io, isTTY: true, dryRun: true });
+    const out = io.writes.join('');
+    expect(out).toContain("[dry-run] Would switch Claude Code to 'glm'.");
+    expect(await adapter.readActive()).toBeNull();
+  });
+
+  it('dry-run reports auto-create source without writing', async () => {
     const opencode = mockOpencodeTarget();
     const opencodeConfigDir = path.join(tmpDir, 'opencode');
     process.env.OPENCODE_CONFIG_DIR = opencodeConfigDir;
@@ -96,10 +112,12 @@ describe('switch command', () => {
       store,
       ...io,
       isTTY: true,
+      dryRun: true,
     });
     const out = io.writes.join('');
-    expect(out).toContain('Auto-created');
-    // opencode profile now exists in the central store
-    expect(await store.readProfile(opencode, 'glm')).not.toBeNull();
+    expect(out).toContain(
+      "[dry-run] Would switch OpenCode to 'glm' (auto-create from Claude Code).",
+    );
+    expect(await store.readProfile(opencode, 'glm')).toBeNull();
   });
 });

@@ -2,6 +2,8 @@ import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 import path from 'node:path';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function sha256(filePath: string): Promise<string | null> {
   try {
     const buf = await fs.readFile(filePath);
@@ -74,4 +76,24 @@ export async function atomicWriteJson(
   opts: AtomicWriteOptions = {},
 ): Promise<void> {
   await atomicWrite(filePath, JSON.stringify(obj, null, 2), opts);
+}
+
+/**
+ * Remove stale temporary files created by `atomicWrite` that were left behind
+ * after a crash or SIGKILL. Matches files whose name is `<prefix><uuid>`.
+ * Safe to call at startup; ignores non-matching entries and errors.
+ */
+export async function cleanupStaleTmp(dir: string, tmpPrefix: string = '.tmp.'): Promise<void> {
+  try {
+    const entries = await fs.readdir(dir);
+    await Promise.all(
+      entries.map(async (name) => {
+        const suffix = name.slice(tmpPrefix.length);
+        if (!name.startsWith(tmpPrefix) || !UUID_RE.test(suffix)) return;
+        await fs.rm(path.join(dir, name), { force: true });
+      }),
+    );
+  } catch {
+    // Directory may not exist or be unreadable; ignore.
+  }
 }

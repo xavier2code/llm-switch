@@ -11,6 +11,7 @@ import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
 import { defaultProfileStore, type ProfileStore } from '@llm-switch/core/store/index.js';
 import { selectTargets } from './target-selector.js';
 import { StateManager } from '@llm-switch/core/state/index.js';
+import { runTui } from '@llm-switch/tui';
 import { registerList } from './commands/register/register-list.js';
 import { registerSwitch } from './commands/register/register-switch.js';
 import { registerSave } from './commands/register/register-save.js';
@@ -26,7 +27,7 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8
 
 export interface CliContext {
   program: Command;
-  resolveTargets?: (
+  resolveTargets: (
     targetFlag?: string,
   ) => Promise<{ targets: TargetConfig[]; store: ProfileStore }>;
   targetFlagFromCli: (program: Command) => string | undefined;
@@ -138,6 +139,17 @@ registerInit(program, ctx);
 
 async function main(): Promise<void> {
   try {
+    const args = process.argv.slice(2);
+    const hasSubcommand = args.length > 0 && !args[0]?.startsWith('-');
+    const wantsHelp = args.includes('--help') || args.includes('-h');
+    const wantsVersion = args.includes('--version') || args.includes('-V');
+
+    if (!hasSubcommand && !wantsHelp && !wantsVersion && process.stdout.isTTY) {
+      const { targets, store } = await resolveTargets(program);
+      await runTui(store, targets);
+      return;
+    }
+
     await program.parseAsync(process.argv);
   } catch (err: unknown) {
     if (isInquirerCancelError(err)) {

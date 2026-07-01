@@ -6,6 +6,7 @@ export function registerSwitch(program: Command, ctx: CliContext): void {
   program
     .command('switch [alias]')
     .description('Switch to a profile (interactive if no alias is given)')
+    .option('--dry-run', 'print the actions without modifying any config files')
     .addHelpText(
       'after',
       `
@@ -22,12 +23,13 @@ Examples:
   $ sw switch            # interactive picker
   $ sw switch glm        # switch directly to the 'glm' profile
   $ sw --target opencode switch glm
+  $ sw switch glm --dry-run
 
 Exit codes: 0 on success, 2 if the named profile does not exist, 0 (no error)
 if cancelled via Ctrl-C.
 `,
     )
-    .action(async (alias?: string) => {
+    .action(async (alias: string | undefined, opts: { dryRun?: boolean }) => {
       const { targets, store } = await ctx.resolveTargets();
       await switchCmd.run({
         targets,
@@ -36,6 +38,7 @@ if cancelled via Ctrl-C.
         stderr: process.stderr,
         isTTY: Boolean(process.stdout.isTTY),
         store,
+        dryRun: opts.dryRun,
       });
     });
 }

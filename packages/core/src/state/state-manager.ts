@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { atomicWriteJson, exists } from '../fs-utils.js';
+import { atomicWriteJson, cleanupStaleTmp, exists } from '../fs-utils.js';
 import { homeDir, isTargetId, type TargetId } from '../config.js';
 
 export interface State {
@@ -38,7 +38,8 @@ export class StateManager {
   async write(state: State): Promise<void> {
     await fs.mkdir(this.dir, { recursive: true, mode: 0o700 });
     const p = this.filePath();
-    await atomicWriteJson(p, state, { mode: 0o600, tmpPrefix: '.state.' });
+    await atomicWriteJson(p, state, { mode: 0o600, tmpPrefix: '.state.', fsync: true });
+    await cleanupStaleTmp(this.dir, '.state.');
   }
 }
 

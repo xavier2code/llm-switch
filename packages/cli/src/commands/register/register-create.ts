@@ -10,7 +10,11 @@ export function registerCreate(program: Command, ctx: CliContext): void {
     .option('--alias <name>', 'profile alias')
     .option('--base-url <url>', 'override provider BASE_URL')
     .option('--model <model>', 'override provider model')
-    .option('--api-key <key>', 'API key (use LLM_SWITCH_API_KEY env var to avoid shell history)')
+    .option(
+      '--api-key <key>',
+      'API key (use LLM_SWITCH_API_KEY env var or --api-key-env to avoid shell history)',
+    )
+    .option('--api-key-env <name>', 'read API key from this environment variable')
     .option('--skip-validation', 'skip the live API validation (useful in CI/scripts)')
     .addHelpText(
       'after',
@@ -37,6 +41,7 @@ Examples:
   $ sw create             # run the wizard
   $ sw --target codex create
   $ sw create --provider glm --alias glm --api-key $API_KEY
+  $ sw create --provider glm --alias glm --api-key-env API_KEY
 
 Exit codes: 0 if created (or cleanly cancelled), non-zero on validation
 failure that isn't recovered via the failure submenu.
@@ -49,6 +54,7 @@ failure that isn't recovered via the failure submenu.
         baseUrl?: string;
         model?: string;
         apiKey?: string;
+        apiKeyEnv?: string;
         skipValidation?: boolean;
       }) => {
         const { targets, store } = await ctx.resolveTargets();
@@ -63,6 +69,7 @@ failure that isn't recovered via the failure submenu.
           baseUrl: opts.baseUrl,
           model: opts.model,
           apiKey: opts.apiKey ?? process.env.LLM_SWITCH_API_KEY,
+          apiKeyEnv: opts.apiKeyEnv,
           skipValidation: opts.skipValidation,
         });
       },

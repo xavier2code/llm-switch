@@ -27,6 +27,7 @@ export interface CreateIO {
   baseUrl?: string;
   model?: string;
   apiKey?: string;
+  apiKeyEnv?: string;
   skipValidation?: boolean;
 }
 
@@ -41,7 +42,7 @@ function nonEmpty(v: string): true | string {
 type SubmenuChoice = 'retry' | 'newkey' | 'edit' | 'cancel';
 
 export async function run(io: CreateIO): Promise<void> {
-  const hasRequiredFlags = Boolean(io.providerId && io.alias && io.apiKey);
+  const hasRequiredFlags = Boolean(io.providerId && io.alias && (io.apiKey || io.apiKeyEnv));
   if (!io.isTTY && !hasRequiredFlags) {
     throw new UserCancelledError(INTERACTIVE_TTY_REQUIRED);
   }
@@ -154,10 +155,22 @@ export async function run(io: CreateIO): Promise<void> {
   // 4-6. API key + per-family validation loop
   let apiKey = '';
   let needsNewKey = true;
+  const resolveApiKey = (): string => {
+    if (io.apiKey) return io.apiKey;
+    if (io.apiKeyEnv) {
+      const value = process.env[io.apiKeyEnv];
+      if (!value)
+        throw new UserCancelledError(`Environment variable '${io.apiKeyEnv}' is empty or unset.`);
+      return value;
+    }
+    return '';
+  };
+
   while (true) {
     if (needsNewKey) {
-      if (io.apiKey) {
-        apiKey = io.apiKey;
+      const resolved = resolveApiKey();
+      if (resolved) {
+        apiKey = resolved;
       } else if (!io.isTTY) {
         throw new UserCancelledError('API key required.');
       } else {

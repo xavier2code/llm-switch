@@ -45,6 +45,18 @@ describe('cli smoke tests', () => {
     });
   });
 
+  describe('no arguments in non-TTY', () => {
+    it('displays help because TUI requires a terminal', () => {
+      let stderr = '';
+      try {
+        execFileSync('node', [BIN], { encoding: 'utf8' });
+      } catch (err) {
+        stderr = (err as { stderr?: string }).stderr ?? '';
+      }
+      expect(stderr).toContain('Usage: sw [options] [command]');
+    });
+  });
+
   describe('unknown command', () => {
     it('exits non-zero with error', () => {
       expect(() => {
