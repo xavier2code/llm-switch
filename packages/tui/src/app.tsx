@@ -426,7 +426,8 @@ export function App({ store, targets }: AppProps) {
         </Box>
 
         <Box
-          flexGrow={1}
+          width={58}
+          flexShrink={0}
           flexDirection="column"
           borderStyle="round"
           borderColor={theme.border}
@@ -555,6 +556,7 @@ export function App({ store, targets }: AppProps) {
 
         <Box
           width={42}
+          flexShrink={0}
           flexDirection="column"
           borderStyle="round"
           borderColor={theme.border}
