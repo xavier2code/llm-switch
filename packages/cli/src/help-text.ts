@@ -30,7 +30,11 @@ Environment:
 Profile store (centralized):
   ~/.llm-switch/profiles/<target-id>/<alias>.[json|toml]   saved profiles
   ~/.llm-switch/state.json                                   last-selected targets
-  ~/.llm-switch/backups/<target-id>/<active>.bak             backup before a switch
+
+Backup (next to the active config it protects):
+  ~/.claude/settings.json.bak        backup before a Claude Code switch
+  ~/.config/opencode/opencode.json.bak  backup before an OpenCode switch
+  ~/.codex/config.toml.bak           backup before a Codex switch
 
 Built-in providers for \`create\`:
 ${providerRows}

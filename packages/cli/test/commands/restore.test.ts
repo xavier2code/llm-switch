@@ -36,14 +36,6 @@ afterEach(async () => {
   await fs.rm(tmpDir, { recursive: true, force: true });
 });
 
-function backupsDir(): string {
-  return path.join(tmpDir, '.llm-switch', 'backups');
-}
-
-async function setupBackupsDir(): Promise<void> {
-  await fs.mkdir(path.join(backupsDir(), 'claude'), { recursive: true });
-}
-
 function captureIO() {
   const writes: string[] = [];
   return { writes, stdout: { write: (s: string) => writes.push(s) } };
@@ -56,18 +48,15 @@ describe('restore command', () => {
   });
 
   it('throws NoBackupError when settings.json missing but .bak exists', async () => {
-    await setupBackupsDir();
-    await fs.writeFile(path.join(backupsDir(), 'claude', 'settings.json.bak'), '{}');
+    await fs.writeFile(path.join(tmpDir, 'settings.json.bak'), '{}');
     const io = { targets: [claude], store, ...captureIO() };
     await expect(run(io)).rejects.toBeInstanceOf(NoBackupError);
   });
 
   it('continues with remaining targets when one lacks a backup', async () => {
-    await fs.mkdir(path.join(backupsDir(), 'claude'), { recursive: true });
-    await fs.mkdir(path.join(backupsDir(), 'opencode'), { recursive: true });
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"c":1}');
     await fs.writeFile(path.join(tmpDir, 'opencode.json'), '{"c":1}');
-    await fs.writeFile(path.join(backupsDir(), 'opencode', 'opencode.json.bak'), '{"p":1}');
+    await fs.writeFile(path.join(tmpDir, 'opencode.json.bak'), '{"p":1}');
     const io = { targets: [claude, opencode], store, ...captureIO() };
     await expect(run(io)).rejects.toBeInstanceOf(NoBackupError);
     expect(io.writes.join('')).toContain('OpenCode');
@@ -78,18 +67,16 @@ describe('restore command', () => {
   });
 
   it('reports already-at-backup-state when current == backup', async () => {
-    await fs.mkdir(path.join(backupsDir(), 'claude'), { recursive: true });
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"a":1}');
-    await fs.writeFile(path.join(backupsDir(), 'claude', 'settings.json.bak'), '{"a":1}');
+    await fs.writeFile(path.join(tmpDir, 'settings.json.bak'), '{"a":1}');
     const io = { targets: [claude], store, ...captureIO() };
     await run(io);
     expect(io.writes.join('')).toContain('already at backup state');
   });
 
   it('restores from backup and prefixes target name', async () => {
-    await fs.mkdir(path.join(backupsDir(), 'claude'), { recursive: true });
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"current":true}');
-    await fs.writeFile(path.join(backupsDir(), 'claude', 'settings.json.bak'), '{"previous":true}');
+    await fs.writeFile(path.join(tmpDir, 'settings.json.bak'), '{"previous":true}');
     const io = { targets: [claude], store, ...captureIO() };
     await run(io);
     expect(JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8'))).toEqual({
@@ -100,12 +87,10 @@ describe('restore command', () => {
   });
 
   it('loops over multiple targets', async () => {
-    await fs.mkdir(path.join(backupsDir(), 'claude'), { recursive: true });
-    await fs.mkdir(path.join(backupsDir(), 'opencode'), { recursive: true });
     await fs.writeFile(path.join(tmpDir, 'settings.json'), '{"c":1}');
     await fs.writeFile(path.join(tmpDir, 'opencode.json'), '{"c":1}');
-    await fs.writeFile(path.join(backupsDir(), 'claude', 'settings.json.bak'), '{"p":1}');
-    await fs.writeFile(path.join(backupsDir(), 'opencode', 'opencode.json.bak'), '{"p":1}');
+    await fs.writeFile(path.join(tmpDir, 'settings.json.bak'), '{"p":1}');
+    await fs.writeFile(path.join(tmpDir, 'opencode.json.bak'), '{"p":1}');
     const io = { targets: [claude, opencode], store, ...captureIO() };
     await run(io);
     const out = io.writes.join('');

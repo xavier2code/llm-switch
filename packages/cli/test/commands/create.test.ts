@@ -263,12 +263,7 @@ describe('create command', () => {
 
     const settings = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json'), 'utf8'));
     expect(settings.env.ANTHROPIC_AUTH_TOKEN).toBe('sk-test');
-    const bak = JSON.parse(
-      await fs.readFile(
-        path.join(tmpDir, '.llm-switch', 'backups', 'claude', 'settings.json.bak'),
-        'utf8',
-      ),
-    );
+    const bak = JSON.parse(await fs.readFile(path.join(tmpDir, 'settings.json.bak'), 'utf8'));
     expect(bak.env.PREV).toBe('yes');
   });
 

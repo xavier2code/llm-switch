@@ -131,10 +131,7 @@ describe('cli e2e', () => {
       env: { ANTHROPIC_BASE_URL: 'https://x', ANTHROPIC_MODEL: 'm', ANTHROPIC_AUTH_TOKEN: 'k' },
     });
 
-    const bak = await fs.readFile(
-      path.join(tmpDir, '.llm-switch', 'backups', 'claude', 'settings.json.bak'),
-      'utf8',
-    );
+    const bak = await fs.readFile(path.join(claudeDir, 'settings.json.bak'), 'utf8');
     expect(JSON.parse(bak)).toEqual({ a: 1 });
   });
 
@@ -279,7 +276,7 @@ describe('cli e2e', () => {
     });
 
     const bak = await fs.readFile(
-      path.join(tmpDir, '.llm-switch', 'backups', 'opencode', 'opencode.json.bak'),
+      path.join(tmpDir, '.config', 'opencode', 'opencode.json.bak'),
       'utf8',
     );
     expect(JSON.parse(bak)).toEqual({ a: 1 });

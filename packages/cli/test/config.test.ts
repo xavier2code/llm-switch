@@ -129,11 +129,9 @@ describe('derived paths', () => {
     expect(getActiveConfigPath(mockOpencodeTarget())).toMatch(/opencode\.json$/);
   });
 
-  it('getBackupPath lives under ~/.llm-switch/backups', () => {
-    process.env.HOME = '/Users/alice';
-    expect(getBackupPath(mockClaudeTarget())).toMatch(
-      /\.llm-switch\/backups\/claude\/settings\.json\.bak$/,
-    );
+  it('getBackupPath lives next to the active config file', () => {
+    process.env.CLAUDE_CONFIG_DIR = '/tmp/cfg';
+    expect(getBackupPath(mockClaudeTarget())).toBe(path.join('/tmp/cfg', 'settings.json.bak'));
   });
 
   it('profilePath lives under ~/.llm-switch/profiles and uses .json', () => {
@@ -180,11 +178,12 @@ describe('migration', () => {
 
     const profiles = await fs.readdir(path.join(tmpDir, '.llm-switch', 'profiles', 'claude'));
     expect(profiles.sort()).toEqual(['glm.json', 'kimi.json']);
-    const backups = await fs.readdir(path.join(tmpDir, '.llm-switch', 'backups', 'claude'));
-    expect(backups).toEqual(['settings.json.bak']);
+    // Backup stays next to the active config file in the config dir root.
+    const backup = await fs.readFile(path.join(claudeDir, 'settings.json.bak'), 'utf8');
+    expect(backup).toBe('{}');
     const root = await fs.readdir(claudeDir);
     expect(root).not.toContain('settings.json.glm');
-    expect(root).not.toContain('settings.json.bak');
+    expect(root).toContain('settings.json.bak');
   });
 
   it('creates new directories when no old files exist', async () => {

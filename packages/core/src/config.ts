@@ -119,7 +119,7 @@ export function getBackupsDir(target: TargetConfig = getDefaultTarget()): string
 }
 
 export function getBackupPath(target: TargetConfig = getDefaultTarget()): string {
-  return path.join(getBackupsDir(target), `${target.activeConfigFileName}.bak`);
+  return `${getActiveConfigPath(target)}.bak`;
 }
 
 export function profilePath(alias: string, target: TargetConfig = getDefaultTarget()): string {
@@ -161,8 +161,9 @@ export function assertAlias(alias: string): void {
  *
  * Old layout: settings.json.<alias> and settings.json.bak in the tool's
  * config directory root.
- * New layout: llm-switch/profiles/<alias>.json and
- * llm-switch/backups/<activeFile>.bak under the same config directory.
+ * New layout: llm-switch/profiles/<alias>.json under the same config directory,
+ * and the active config backup stays next to the active config file
+ * (<activeFile>.bak in the config directory root).
  */
 export async function ensureMigrated(target: TargetConfig = getDefaultTarget()): Promise<void> {
   const profilesDir = getProfilesDir(target);
@@ -215,8 +216,10 @@ export async function ensureMigrated(target: TargetConfig = getDefaultTarget()):
     if (oldBackup) {
       const oldPath = path.join(configDir, oldBackup);
       const newPath = getBackupPath(target);
-      await fs.rename(oldPath, newPath);
-      migrated.push({ from: newPath, to: oldPath });
+      if (oldPath !== newPath) {
+        await fs.rename(oldPath, newPath);
+        migrated.push({ from: newPath, to: oldPath });
+      }
     }
   } catch (err) {
     // Rollback any files we already moved so the next run can retry.

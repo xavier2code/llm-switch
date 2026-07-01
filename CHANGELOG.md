@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Backup files now live next to the active config they protect (e.g.
+  `~/.claude/settings.json.bak`) instead of the centralized
+  `~/.llm-switch/backups/<target>/` directory. This makes backups respect
+  `CLAUDE_CONFIG_DIR`, `OPENCODE_CONFIG_DIR`, and `CODEX_HOME`, fixing EPERM
+  failures in sandboxed/CI environments and preventing tests from polluting the
+  user's real `~/.llm-switch` directory.
+
 ## [0.9.1] - 2026-07-01
 
 ### Added

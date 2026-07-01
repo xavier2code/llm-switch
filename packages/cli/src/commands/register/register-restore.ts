@@ -9,7 +9,7 @@ export function registerRestore(program: Command, ctx: CliContext): void {
     .addHelpText(
       'after',
       `
-Restores the active config from the most recent backup (\`llm-switch/backups/<active>.bak\`,
+Restores the active config from the most recent backup (\`<config-dir>/<active>.bak\`,
 the file written by the most recent successful \`switch\` or \`save\`). The backup
 is removed after restore.
 
