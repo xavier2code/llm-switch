@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { Box, Text, useInput, useApp } from "ink";
+import { Box, Text, useInput, useApp, useStdout } from "ink";
 import type { ProfileStore } from "@llm-switch/core/store/profile-store.js";
 import type { TargetConfig } from "@llm-switch/core/config.js";
 import type { Profile } from "@llm-switch/core/adapters/types.js";
@@ -26,6 +26,26 @@ type Modal =
   | { type: "restore" }
   | { type: "search" }
   | { type: "help" };
+
+function useTerminalSize() {
+  const { stdout } = useStdout();
+  const [size, setSize] = useState({
+    columns: stdout.columns,
+    rows: stdout.rows,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setSize({ columns: stdout.columns, rows: stdout.rows });
+    };
+    stdout.on("resize", handleResize);
+    return () => {
+      stdout.off("resize", handleResize);
+    };
+  }, [stdout]);
+
+  return size;
+}
 
 function useTui(store: ProfileStore, targets: TargetConfig[]) {
   const [selectedTargetIndex, setSelectedTargetIndex] = useState(0);
@@ -243,6 +263,21 @@ function modalIsOpen(modal: Modal): boolean {
 
 export function App({ store, targets }: AppProps) {
   const { exit } = useApp();
+  const { rows, columns } = useTerminalSize();
+  const profileItemHeight = 3;
+  const headerHeight = 3;
+  const footerHeight = 1;
+  const panelPaddingY = 2;
+  const panelGapY = 1;
+  const availableRows = Math.max(
+    10,
+    rows - headerHeight - footerHeight - panelPaddingY * 2 - panelGapY * 2 - 2,
+  );
+  const pageSize = Math.max(
+    1,
+    Math.floor((availableRows - footerHeight - panelGapY) / profileItemHeight),
+  );
+
   const {
     selectedTarget,
     selectedTargetIndex,
@@ -357,412 +392,423 @@ export function App({ store, targets }: AppProps) {
   }
 
   return (
-    <Box flexDirection="column" paddingX={2} paddingY={1} height={34}>
+    <Box flexDirection="column" width={columns} height={rows}>
       <Box
-        marginBottom={2}
-        flexDirection="row"
-        justifyContent="space-between"
-        alignItems="center"
+        flexDirection="column"
+        paddingX={2}
+        paddingY={1}
+        flexGrow={1}
+        justifyContent="center"
       >
-        <Box flexDirection="row" alignItems="center" gap={1}>
-          <Text bold color={theme.headerTitle}>
-            llm-switch
-          </Text>
-          <Text color={theme.headerVersion}> v0.9.0</Text>
-        </Box>
-        <Box flexDirection="row" alignItems="center" gap={1}>
-          <Text color={theme.headerStatus}>*</Text>
-          <Text color={theme.textMuted}>
-            {targets.length} targets · {selectedTarget?.displayName}
-          </Text>
-          {searchQuery && (
-            <Text color={theme.profileActiveFg}> · filter: {searchQuery}</Text>
-          )}
-        </Box>
-      </Box>
-
-      <Box flexGrow={1} gap={3}>
         <Box
-          width={28}
-          flexDirection="column"
-          borderStyle="round"
-          borderColor={theme.border}
-          paddingX={1}
-          paddingY={1}
+          marginBottom={2}
+          flexDirection="row"
+          justifyContent="space-between"
+          alignItems="center"
         >
-          <Box marginBottom={1}>
-            <Text bold color={theme.panelTitle}>
-              Targets
+          <Box flexDirection="row" alignItems="center" gap={1}>
+            <Text bold color={theme.headerTitle}>
+              llm-switch
             </Text>
+            <Text color={theme.headerVersion}> v0.9.0</Text>
           </Box>
-          {targets.map((t, i) => {
-            const isActive = i === selectedTargetIndex;
-            const isFocused = focus === "target";
-            return (
-              <Box
-                key={t.id}
-                flexDirection="row"
-                alignItems="center"
-                gap={1}
-                paddingX={1}
-                paddingY={1}
-              >
-                <Text
-                  bold
-                  color={
-                    isActive && isFocused
-                      ? theme.targetSelectedFg
-                      : theme.targetNormalFg
-                  }
-                >
-                  {isActive && isFocused ? "> " : "  "}
-                  {t.displayName}
-                </Text>
-              </Box>
-            );
-          })}
+          <Box flexDirection="row" alignItems="center" gap={1}>
+            <Text color={theme.headerStatus}>*</Text>
+            <Text color={theme.textMuted}>
+              {targets.length} targets · {selectedTarget?.displayName}
+            </Text>
+            {searchQuery && (
+              <Text color={theme.profileActiveFg}>
+                {" "}
+                · filter: {searchQuery}
+              </Text>
+            )}
+          </Box>
         </Box>
 
-        <Box
-          width={58}
-          flexShrink={0}
-          flexDirection="column"
-          borderStyle="round"
-          borderColor={theme.border}
-          paddingX={1}
-          paddingY={1}
-        >
+        <Box flexGrow={1} gap={3}>
           <Box
-            flexDirection="row"
-            justifyContent="space-between"
-            alignItems="center"
-            height={1}
+            width={28}
+            flexDirection="column"
+            borderStyle="round"
+            borderColor={theme.border}
+            paddingX={1}
+            paddingY={1}
           >
-            <Text bold color={theme.panelTitle}>
-              {selectedTarget?.displayName} Profiles
-            </Text>
-            <Box flexDirection="row" gap={1}>
-              <Text color={theme.textMuted}>Search:</Text>
-              <Text color={theme.textMuted}>
-                {modal.type === "search" ? "typing..." : "press /"}
+            <Box marginBottom={1}>
+              <Text bold color={theme.panelTitle}>
+                Targets
               </Text>
             </Box>
-          </Box>
-
-          <Box
-            flexDirection="column"
-            flexGrow={1}
-            justifyContent="center"
-            gap={1}
-            marginY={1}
-            height={19}
-          >
-            {filteredProfiles.length === 0 && (
-              <Box
-                alignItems="center"
-                justifyContent="center"
-                flexDirection="column"
-              >
-                <Text color={theme.textMuted}>No profiles yet</Text>
-                <Text color={theme.textMuted}>Press `c` to create one</Text>
-              </Box>
-            )}
-            {filteredProfiles.map((p, i) => {
-              const isSelected = i === selectedProfileIndex;
-              const isFocused = focus === "profile";
+            {targets.map((t, i) => {
+              const isActive = i === selectedTargetIndex;
+              const isFocused = focus === "target";
               return (
                 <Box
-                  key={p.alias}
+                  key={t.id}
                   flexDirection="row"
-                  justifyContent="space-between"
                   alignItems="center"
-                  paddingX={2}
+                  gap={1}
+                  paddingX={1}
                   paddingY={1}
-                  height={3}
                 >
-                  <Box flexDirection="row" alignItems="center" gap={1}>
-                    <Box
-                      width={6}
-                      height={3}
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Text
-                        bold
-                        color={theme.detailBadgeFg}
-                        backgroundColor={theme.detailBadgeBg}
-                      >
-                        {p.alias.slice(0, 2).toUpperCase()}
-                      </Text>
-                    </Box>
-                    <Box flexDirection="column">
-                      <Text
-                        bold
-                        color={
-                          isSelected && isFocused
-                            ? theme.profileSelectedFg
-                            : theme.profileNormalFg
-                        }
-                      >
-                        {isSelected && isFocused ? "> " : "  "}
-                        {p.alias}
-                      </Text>
-                      <Box flexDirection="row" gap={1}>
-                        {p.providerId && (
-                          <Text color={theme.profileProviderFg}>
-                            {p.providerId}
-                          </Text>
-                        )}
-                        {p.active && (
-                          <Text color={theme.profileActiveFg}>[active]</Text>
-                        )}
-                        {p.model && (
-                          <Text color={theme.profileModelFg}>{p.model}</Text>
-                        )}
-                      </Box>
-                    </Box>
-                  </Box>
-
-                  {isSelected && isFocused && filteredProfiles.length > 0 && (
-                    <Box flexDirection="row" gap={1}>
-                      <Text color={theme.profileHintFg}>Enter activate</Text>
-                      <Text color={theme.profileHintFg}>d delete</Text>
-                    </Box>
-                  )}
+                  <Text
+                    bold
+                    color={
+                      isActive && isFocused
+                        ? theme.targetSelectedFg
+                        : theme.targetNormalFg
+                    }
+                  >
+                    {isActive && isFocused ? "> " : "  "}
+                    {t.displayName}
+                  </Text>
                 </Box>
               );
             })}
           </Box>
 
           <Box
-            flexDirection="row"
-            justifyContent="space-between"
-            alignItems="center"
-            paddingTop={1}
-            height={1}
+            width={58}
+            flexShrink={0}
+            flexDirection="column"
+            borderStyle="round"
+            borderColor={theme.border}
+            paddingX={1}
+            paddingY={1}
           >
-            <Box flexDirection="row" gap={2}>
-              <Text color={theme.keyFg}>[c] Create</Text>
-              <Text color={theme.keyFg}>[r] Restore</Text>
-              <Text color={theme.keyFg}>[s] Save</Text>
+            <Box
+              flexDirection="row"
+              justifyContent="space-between"
+              alignItems="center"
+              height={1}
+            >
+              <Text bold color={theme.panelTitle}>
+                {selectedTarget?.displayName} Profiles
+              </Text>
+              <Box flexDirection="row" gap={1}>
+                <Text color={theme.textMuted}>Search:</Text>
+                <Text color={theme.textMuted}>
+                  {modal.type === "search" ? "typing..." : "press /"}
+                </Text>
+              </Box>
             </Box>
-            <Box flexDirection="row" gap={2}>
-              <Text color={theme.textMuted}>j/k navigate</Text>
-              <Text color={theme.textMuted}>Tab switch</Text>
-              <Text color={theme.textMuted}>? help</Text>
-              <Text color={theme.textMuted}>q quit</Text>
-            </Box>
-          </Box>
-        </Box>
 
-        <Box
-          width={42}
-          flexShrink={0}
-          flexDirection="column"
-          borderStyle="round"
-          borderColor={theme.border}
-          paddingX={2}
-          paddingY={1}
-          gap={1}
-        >
-          {selectedProfile ? (
-            <>
-              <Box
-                flexDirection="row"
-                alignItems="center"
-                gap={1}
-                marginBottom={1}
-              >
+            <Box
+              flexDirection="column"
+              flexGrow={1}
+              justifyContent="center"
+              gap={1}
+              marginY={1}
+              height={pageSize * profileItemHeight}
+            >
+              {filteredProfiles.length === 0 && (
                 <Box
-                  width={8}
-                  height={4}
                   alignItems="center"
                   justifyContent="center"
+                  flexDirection="column"
                 >
-                  <Text
-                    bold
-                    color={theme.detailBadgeFg}
-                    backgroundColor={theme.detailBadgeBg}
+                  <Text color={theme.textMuted}>No profiles yet</Text>
+                  <Text color={theme.textMuted}>Press `c` to create one</Text>
+                </Box>
+              )}
+              {filteredProfiles.map((p, i) => {
+                const isSelected = i === selectedProfileIndex;
+                const isFocused = focus === "profile";
+                return (
+                  <Box
+                    key={p.alias}
+                    flexDirection="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    paddingX={2}
+                    paddingY={1}
+                    height={3}
                   >
-                    {selectedProfile.alias.slice(0, 2).toUpperCase()}
-                  </Text>
-                </Box>
-                <Box flexDirection="column">
-                  <Text bold color={theme.profileNormalFg}>
-                    {selectedProfile.alias}
-                  </Text>
-                  <Text color={theme.textMuted}>
-                    {selectedProfile.active
-                      ? "Active profile"
-                      : "Saved profile"}
-                  </Text>
-                </Box>
-              </Box>
+                    <Box flexDirection="row" alignItems="center" gap={1}>
+                      <Box
+                        width={6}
+                        height={3}
+                        alignItems="center"
+                        justifyContent="center"
+                      >
+                        <Text
+                          bold
+                          color={theme.detailBadgeFg}
+                          backgroundColor={theme.detailBadgeBg}
+                        >
+                          {p.alias.slice(0, 2).toUpperCase()}
+                        </Text>
+                      </Box>
+                      <Box flexDirection="column">
+                        <Text
+                          bold
+                          color={
+                            isSelected && isFocused
+                              ? theme.profileSelectedFg
+                              : theme.profileNormalFg
+                          }
+                        >
+                          {isSelected && isFocused ? "> " : "  "}
+                          {p.alias}
+                        </Text>
+                        <Box flexDirection="row" gap={1}>
+                          {p.providerId && (
+                            <Text color={theme.profileProviderFg}>
+                              {p.providerId}
+                            </Text>
+                          )}
+                          {p.active && (
+                            <Text color={theme.profileActiveFg}>[active]</Text>
+                          )}
+                          {p.model && (
+                            <Text color={theme.profileModelFg}>{p.model}</Text>
+                          )}
+                        </Box>
+                      </Box>
+                    </Box>
 
-              <Box flexDirection="column" gap={1}>
-                <Text color={theme.detailLabelFg}>Base URL</Text>
-                <Text
-                  color={theme.detailValueFg}
-                  backgroundColor={theme.detailValueBg}
-                >
-                  {" "}
-                  {selectedProfile.baseUrl ?? "-"}
-                </Text>
-              </Box>
+                    {isSelected && isFocused && filteredProfiles.length > 0 && (
+                      <Box flexDirection="row" gap={1}>
+                        <Text color={theme.profileHintFg}>Enter activate</Text>
+                        <Text color={theme.profileHintFg}>d delete</Text>
+                      </Box>
+                    )}
+                  </Box>
+                );
+              })}
+            </Box>
 
-              <Box flexDirection="column" gap={1}>
-                <Text color={theme.detailLabelFg}>API Key</Text>
-                <Text
-                  color={theme.textMuted}
-                  backgroundColor={theme.detailValueBg}
-                >
-                  {" "}
-                  ••••••••••••
-                </Text>
-              </Box>
-
-              <Box flexDirection="column" gap={1}>
-                <Text color={theme.detailLabelFg}>Path</Text>
-                <Text
-                  color={theme.detailValueFg}
-                  backgroundColor={theme.detailValueBg}
-                  wrap="wrap"
-                >
-                  {" "}
-                  {selectedProfile.path}
-                </Text>
-              </Box>
-            </>
-          ) : (
             <Box
-              flexGrow={1}
+              flexDirection="row"
+              justifyContent="space-between"
               alignItems="center"
-              justifyContent="center"
-              flexDirection="column"
+              paddingTop={1}
+              height={1}
             >
-              <Text color={theme.textMuted}>
-                Select a profile to view details
-              </Text>
-            </Box>
-          )}
-        </Box>
-      </Box>
-
-      {status && (
-        <Box
-          marginTop={1}
-          flexDirection="row"
-          alignItems="center"
-          gap={1}
-          alignSelf="center"
-          paddingX={2}
-          paddingY={1}
-          borderStyle="round"
-          borderColor={
-            status.includes("Error")
-              ? theme.statusErrorBorder
-              : theme.statusSuccessBorder
-          }
-        >
-          <Text
-            color={
-              status.includes("Error")
-                ? theme.statusErrorFg
-                : theme.statusSuccessFg
-            }
-          >
-            {status.includes("Error") ? "x" : "ok"}
-          </Text>
-          <Text color={theme.text}>{status}</Text>
-        </Box>
-      )}
-
-      {modal.type === "search" && (
-        <Box marginTop={1} flexDirection="row" gap={1} alignItems="center">
-          <Text color={theme.keyFg}>/</Text>
-          <TextInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onSubmit={closeModal}
-            focus
-          />
-          <Text color={theme.textMuted}>Esc/Enter close</Text>
-        </Box>
-      )}
-
-      {modal.type === "create" && selectedTarget && (
-        <Box marginTop={1}>
-          <CreateWizard
-            target={selectedTarget}
-            store={store}
-            onDone={() => {
-              closeModal();
-              refresh();
-              setStatus(
-                `Created and activated profile on ${selectedTarget.displayName}`,
-              );
-            }}
-            onCancel={closeModal}
-            isActive
-          />
-        </Box>
-      )}
-
-      {modal.type === "save" && (
-        <Box marginTop={1}>
-          <Box
-            borderStyle="single"
-            paddingX={2}
-            paddingY={1}
-            width={50}
-            borderColor={theme.border}
-          >
-            <Text bold color={theme.wizardTitle}>
-              Save current config as profile
-            </Text>
-            <Box marginTop={1}>
-              <Text color={theme.text}>Alias:</Text>
-              <TextInput
-                value={saveAlias}
-                onChange={setSaveAlias}
-                onSubmit={confirmSave}
-                focus
-              />
-            </Box>
-            <Box marginTop={1}>
-              <Text color={theme.wizardHint}>Enter save · Esc cancel</Text>
+              <Box flexDirection="row" gap={2}>
+                <Text color={theme.keyFg}>[c] Create</Text>
+                <Text color={theme.keyFg}>[r] Restore</Text>
+                <Text color={theme.keyFg}>[s] Save</Text>
+              </Box>
+              <Box flexDirection="row" gap={2}>
+                <Text color={theme.textMuted}>j/k navigate</Text>
+                <Text color={theme.textMuted}>Tab switch</Text>
+                <Text color={theme.textMuted}>? help</Text>
+                <Text color={theme.textMuted}>q quit</Text>
+              </Box>
             </Box>
           </Box>
-        </Box>
-      )}
 
-      {modal.type === "delete" && (
-        <Box marginTop={1}>
-          <ConfirmDialog
-            message={`Delete '${modal.alias}' from ${selectedTarget?.displayName ?? ""}?`}
-            onConfirm={confirmDelete}
-            onCancel={closeModal}
-            isActive
-          />
-        </Box>
-      )}
+          <Box
+            width={42}
+            flexShrink={0}
+            flexDirection="column"
+            borderStyle="round"
+            borderColor={theme.border}
+            paddingX={2}
+            paddingY={1}
+            gap={1}
+          >
+            {selectedProfile ? (
+              <>
+                <Box
+                  flexDirection="row"
+                  alignItems="center"
+                  gap={1}
+                  marginBottom={1}
+                >
+                  <Box
+                    width={8}
+                    height={4}
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <Text
+                      bold
+                      color={theme.detailBadgeFg}
+                      backgroundColor={theme.detailBadgeBg}
+                    >
+                      {selectedProfile.alias.slice(0, 2).toUpperCase()}
+                    </Text>
+                  </Box>
+                  <Box flexDirection="column">
+                    <Text bold color={theme.profileNormalFg}>
+                      {selectedProfile.alias}
+                    </Text>
+                    <Text color={theme.textMuted}>
+                      {selectedProfile.active
+                        ? "Active profile"
+                        : "Saved profile"}
+                    </Text>
+                  </Box>
+                </Box>
 
-      {modal.type === "restore" && (
-        <Box marginTop={1}>
-          <ConfirmDialog
-            message={`Restore ${selectedTarget?.displayName ?? ""} from backup?`}
-            onConfirm={confirmRestore}
-            onCancel={closeModal}
-            isActive
-          />
-        </Box>
-      )}
+                <Box flexDirection="column" gap={1}>
+                  <Text color={theme.detailLabelFg}>Base URL</Text>
+                  <Text
+                    color={theme.detailValueFg}
+                    backgroundColor={theme.detailValueBg}
+                  >
+                    {" "}
+                    {selectedProfile.baseUrl ?? "-"}
+                  </Text>
+                </Box>
 
-      {modal.type === "help" && (
-        <Box marginTop={1}>
-          <HelpScreen onClose={closeModal} isActive />
+                <Box flexDirection="column" gap={1}>
+                  <Text color={theme.detailLabelFg}>API Key</Text>
+                  <Text
+                    color={theme.textMuted}
+                    backgroundColor={theme.detailValueBg}
+                  >
+                    {" "}
+                    ••••••••••••
+                  </Text>
+                </Box>
+
+                <Box flexDirection="column" gap={1}>
+                  <Text color={theme.detailLabelFg}>Path</Text>
+                  <Text
+                    color={theme.detailValueFg}
+                    backgroundColor={theme.detailValueBg}
+                    wrap="wrap"
+                  >
+                    {" "}
+                    {selectedProfile.path}
+                  </Text>
+                </Box>
+              </>
+            ) : (
+              <Box
+                flexGrow={1}
+                alignItems="center"
+                justifyContent="center"
+                flexDirection="column"
+              >
+                <Text color={theme.textMuted}>
+                  Select a profile to view details
+                </Text>
+              </Box>
+            )}
+          </Box>
         </Box>
-      )}
+
+        {status && (
+          <Box
+            marginTop={1}
+            flexDirection="row"
+            alignItems="center"
+            gap={1}
+            alignSelf="center"
+            paddingX={2}
+            paddingY={1}
+            borderStyle="round"
+            borderColor={
+              status.includes("Error")
+                ? theme.statusErrorBorder
+                : theme.statusSuccessBorder
+            }
+          >
+            <Text
+              color={
+                status.includes("Error")
+                  ? theme.statusErrorFg
+                  : theme.statusSuccessFg
+              }
+            >
+              {status.includes("Error") ? "x" : "ok"}
+            </Text>
+            <Text color={theme.text}>{status}</Text>
+          </Box>
+        )}
+
+        {modal.type === "search" && (
+          <Box marginTop={1} flexDirection="row" gap={1} alignItems="center">
+            <Text color={theme.keyFg}>/</Text>
+            <TextInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              onSubmit={closeModal}
+              focus
+            />
+            <Text color={theme.textMuted}>Esc/Enter close</Text>
+          </Box>
+        )}
+
+        {modal.type === "create" && selectedTarget && (
+          <Box marginTop={1}>
+            <CreateWizard
+              target={selectedTarget}
+              store={store}
+              onDone={() => {
+                closeModal();
+                refresh();
+                setStatus(
+                  `Created and activated profile on ${selectedTarget.displayName}`,
+                );
+              }}
+              onCancel={closeModal}
+              isActive
+            />
+          </Box>
+        )}
+
+        {modal.type === "save" && (
+          <Box marginTop={1}>
+            <Box
+              borderStyle="single"
+              paddingX={2}
+              paddingY={1}
+              width={50}
+              borderColor={theme.border}
+            >
+              <Text bold color={theme.wizardTitle}>
+                Save current config as profile
+              </Text>
+              <Box marginTop={1}>
+                <Text color={theme.text}>Alias:</Text>
+                <TextInput
+                  value={saveAlias}
+                  onChange={setSaveAlias}
+                  onSubmit={confirmSave}
+                  focus
+                />
+              </Box>
+              <Box marginTop={1}>
+                <Text color={theme.wizardHint}>Enter save · Esc cancel</Text>
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        {modal.type === "delete" && (
+          <Box marginTop={1}>
+            <ConfirmDialog
+              message={`Delete '${modal.alias}' from ${selectedTarget?.displayName ?? ""}?`}
+              onConfirm={confirmDelete}
+              onCancel={closeModal}
+              isActive
+            />
+          </Box>
+        )}
+
+        {modal.type === "restore" && (
+          <Box marginTop={1}>
+            <ConfirmDialog
+              message={`Restore ${selectedTarget?.displayName ?? ""} from backup?`}
+              onConfirm={confirmRestore}
+              onCancel={closeModal}
+              isActive
+            />
+          </Box>
+        )}
+
+        {modal.type === "help" && (
+          <Box marginTop={1}>
+            <HelpScreen onClose={closeModal} isActive />
+          </Box>
+        )}
+      </Box>
     </Box>
   );
 }
