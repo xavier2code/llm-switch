@@ -593,38 +593,11 @@ export function App({ store, targets }: AppProps) {
                             <Text color={theme.profileActiveFg}> [active]</Text>
                           )}
                         </Text>
-                      </Box>
                     </Box>
-
-                    {isSelected && isFocused && filteredProfiles.length > 0 && (
-                      <Box flexDirection="row" gap={1}>
-                        <Text color={theme.profileHintFg}>Enter activate</Text>
-                        <Text color={theme.profileHintFg}>d delete</Text>
-                      </Box>
-                    )}
+                  </Box>
                   </Box>
                 );
               })}
-            </Box>
-
-            <Box
-              flexDirection="row"
-              justifyContent="space-between"
-              alignItems="center"
-              paddingTop={1}
-              height={1}
-            >
-              <Box flexDirection="row" gap={2}>
-                <Text color={theme.keyFg}>[c] Create</Text>
-                <Text color={theme.keyFg}>[r] Restore</Text>
-                <Text color={theme.keyFg}>[s] Save</Text>
-              </Box>
-              <Box flexDirection="row" gap={2}>
-                <Text color={theme.textMuted}>j/k navigate</Text>
-                <Text color={theme.textMuted}>Tab switch</Text>
-                <Text color={theme.textMuted}>? help</Text>
-                <Text color={theme.textMuted}>q quit</Text>
-              </Box>
             </Box>
           </Box>
 
@@ -776,10 +749,19 @@ export function App({ store, targets }: AppProps) {
                 <Text color={theme.keyFg}>[s] Save</Text>
               </Box>
               <Box flexDirection="row" gap={2}>
-                <Text color={theme.textMuted}>j/k navigate</Text>
-                <Text color={theme.textMuted}>Tab switch</Text>
-                <Text color={theme.textMuted}>? help</Text>
-                <Text color={theme.textMuted}>q quit</Text>
+                {selectedProfile ? (
+                  <>
+                    <Text color={theme.profileHintFg}>Enter activate</Text>
+                    <Text color={theme.profileHintFg}>d delete</Text>
+                  </>
+                ) : (
+                  <>
+                    <Text color={theme.textMuted}>j/k navigate</Text>
+                    <Text color={theme.textMuted}>Tab switch</Text>
+                    <Text color={theme.textMuted}>? help</Text>
+                    <Text color={theme.textMuted}>q quit</Text>
+                  </>
+                )}
               </Box>
             </>
           )}
