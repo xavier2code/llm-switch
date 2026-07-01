@@ -23,6 +23,7 @@ type Modal =
   | { type: "create" }
   | { type: "save" }
   | { type: "delete"; alias: string }
+  | { type: "activate"; alias: string }
   | { type: "restore" }
   | { type: "search" }
   | { type: "help" };
@@ -121,6 +122,12 @@ function useTui(store: ProfileStore, targets: TargetConfig[]) {
   const activateSelected = useCallback(async () => {
     const profile = filteredProfiles[selectedProfileIndex];
     if (!profile || !selectedTarget) return;
+    if (profile.active) {
+      setStatus(
+        `${profile.alias} is already active on ${selectedTarget.displayName}`,
+      );
+      return;
+    }
     try {
       await store.activateProfile(selectedTarget, profile.alias);
       setStatus(`Switched ${selectedTarget.displayName} to ${profile.alias}`);
@@ -130,14 +137,25 @@ function useTui(store: ProfileStore, targets: TargetConfig[]) {
     }
   }, [filteredProfiles, selectedProfileIndex, selectedTarget, store, refresh]);
 
-  const openSearch = useCallback(() => {
-    setSearchQuery("");
-    setModal({ type: "search" });
-  }, []);
-
   const closeModal = useCallback(() => {
     setModal({ type: "none" });
     setSaveAlias("");
+  }, []);
+
+  const openActivate = useCallback(() => {
+    const profile = filteredProfiles[selectedProfileIndex];
+    if (!profile || !selectedTarget || profile.active) return;
+    setModal({ type: "activate", alias: profile.alias });
+  }, [filteredProfiles, selectedProfileIndex, selectedTarget]);
+
+  const confirmActivate = useCallback(async () => {
+    await activateSelected();
+    closeModal();
+  }, [activateSelected, closeModal]);
+
+  const openSearch = useCallback(() => {
+    setSearchQuery("");
+    setModal({ type: "search" });
   }, []);
 
   const openCreate = useCallback(() => {
@@ -243,7 +261,8 @@ function useTui(store: ProfileStore, targets: TargetConfig[]) {
     moveUp,
     moveDown,
     toggleFocus,
-    activateSelected,
+    openActivate,
+    confirmActivate,
     openSearch,
     closeModal,
     openCreate,
@@ -297,7 +316,8 @@ export function App({ store, targets }: AppProps) {
     moveUp,
     moveDown,
     toggleFocus,
-    activateSelected,
+    openActivate,
+    confirmActivate,
     openSearch,
     closeModal,
     openCreate,
@@ -380,7 +400,10 @@ export function App({ store, targets }: AppProps) {
         return;
       }
       if (key.return) {
-        activateSelected();
+        if (focus === "profile") {
+          openActivate();
+        }
+        return;
       }
     },
     { isActive: modal.type !== "create" && modal.type !== "save" },
@@ -779,6 +802,17 @@ export function App({ store, targets }: AppProps) {
             <ConfirmDialog
               message={`Delete '${modal.alias}' from ${selectedTarget?.displayName ?? ""}?`}
               onConfirm={confirmDelete}
+              onCancel={closeModal}
+              isActive
+            />
+          </Box>
+        )}
+
+        {modal.type === "activate" && (
+          <Box marginTop={1}>
+            <ConfirmDialog
+              message={`Activate '${modal.alias}' on ${selectedTarget?.displayName ?? ""}?`}
+              onConfirm={confirmActivate}
               onCancel={closeModal}
               isActive
             />
