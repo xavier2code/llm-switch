@@ -6,7 +6,10 @@ vi.mock('node:child_process', () => ({
 }));
 
 import { execFile, execFileSync } from 'node:child_process';
-import { isToolBinaryInstalled, detectInstalledTargets } from '@llm-switch/core/detector.js';
+import {
+  isToolBinaryInstalled,
+  detectInstalledTargets,
+} from '@xavier2code/llm-switch-core/detector.js';
 import { mockClaudeTarget, mockOpencodeTarget } from './helpers.js';
 
 const mockExecSync = vi.mocked(execFileSync);

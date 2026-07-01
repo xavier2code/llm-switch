@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { PROVIDERS, getProvider, isProviderId } from '@llm-switch/core/providers.js';
-import { AppError } from '@llm-switch/core/errors.js';
+import { PROVIDERS, getProvider, isProviderId } from '@xavier2code/llm-switch-core/providers.js';
+import { AppError } from '@xavier2code/llm-switch-core/errors.js';
 
 describe('PROVIDERS', () => {
   it('contains exactly 6 providers', () => {

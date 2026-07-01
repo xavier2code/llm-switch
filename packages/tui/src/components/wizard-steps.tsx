@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Text } from "ink";
 import { theme } from "../theme.js";
 import { TextInput } from "./text-input.js";
-import type { Provider } from "@llm-switch/core/providers.js";
+import type { Provider } from "@xavier2code/llm-switch-core/providers.js";
 
 export interface ProviderStepProps {
   providers: Provider[];

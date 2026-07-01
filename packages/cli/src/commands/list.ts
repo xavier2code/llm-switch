@@ -1,6 +1,9 @@
-import type { TargetConfig } from '@llm-switch/core/config.js';
-import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
-import { NoProfilesError } from '@llm-switch/core';
+import type { TargetConfig } from '@xavier2code/llm-switch-core/config.js';
+import {
+  ProfileStore,
+  defaultProfileStore,
+} from '@xavier2code/llm-switch-core/store/profile-store.js';
+import { NoProfilesError } from '@xavier2code/llm-switch-core';
 
 export interface CommandIO {
   targets: TargetConfig[];

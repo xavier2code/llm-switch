@@ -4,9 +4,12 @@ import {
   getTarget,
   type TargetConfig,
   type TargetId,
-} from '@llm-switch/core/config.js';
-import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
-import { defaultProfileStore, type ProfileStore } from '@llm-switch/core/store/index.js';
+} from '@xavier2code/llm-switch-core/config.js';
+import { ensureMigratedToCentralStore } from '@xavier2code/llm-switch-core/migrate.js';
+import {
+  defaultProfileStore,
+  type ProfileStore,
+} from '@xavier2code/llm-switch-core/store/index.js';
 
 function parseTargetFlagFromArgs(args: string[]): string | undefined {
   for (let i = 0; i < args.length; i++) {

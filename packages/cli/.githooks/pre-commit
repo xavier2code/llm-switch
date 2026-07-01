@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 # Pre-commit hook: runs lint and format check on staged source files.
-# Enable with: pnpm -F llm-switch run prepare
+# Enable with: pnpm -F @xavier2code/llm-switch run prepare
 
 set -e
 
@@ -8,7 +8,7 @@ set -e
 cd "$(git rev-parse --show-toplevel)"
 
 echo "[pre-commit] running lint..."
-pnpm -F llm-switch lint
+pnpm -F @xavier2code/llm-switch lint
 
 echo "[pre-commit] checking format..."
-pnpm -F llm-switch format:check
+pnpm -F @xavier2code/llm-switch format:check

@@ -4,14 +4,17 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { log } from './logger.js';
 import { toExitCode } from './exit.js';
-import { AppError } from '@llm-switch/core';
+import { AppError } from '@xavier2code/llm-switch-core';
 import { isInquirerCancelError } from './ui.js';
-import { ensureMigrated, type TargetConfig } from '@llm-switch/core/config.js';
-import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
-import { defaultProfileStore, type ProfileStore } from '@llm-switch/core/store/index.js';
+import { ensureMigrated, type TargetConfig } from '@xavier2code/llm-switch-core/config.js';
+import { ensureMigratedToCentralStore } from '@xavier2code/llm-switch-core/migrate.js';
+import {
+  defaultProfileStore,
+  type ProfileStore,
+} from '@xavier2code/llm-switch-core/store/index.js';
 import { selectTargets } from './target-selector.js';
-import { StateManager } from '@llm-switch/core/state/index.js';
-import { runTui } from '@llm-switch/tui';
+import { StateManager } from '@xavier2code/llm-switch-core/state/index.js';
+import { runTui } from '@xavier2code/llm-switch-tui';
 import { registerList } from './commands/register/register-list.js';
 import { registerSwitch } from './commands/register/register-switch.js';
 import { registerSave } from './commands/register/register-save.js';

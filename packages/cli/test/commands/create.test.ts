@@ -12,16 +12,16 @@ vi.mock('@inquirer/prompts', () => ({
   confirm: vi.fn(),
 }));
 
-vi.mock('@llm-switch/core/validator.js', () => ({
+vi.mock('@xavier2code/llm-switch-core/validator.js', () => ({
   validateAnthropic: vi.fn(),
   validateOpenAi: vi.fn(),
 }));
 
 import { select, input, password, confirm } from '@inquirer/prompts';
-import { validateAnthropic, validateOpenAi } from '@llm-switch/core/validator.js';
+import { validateAnthropic, validateOpenAi } from '@xavier2code/llm-switch-core/validator.js';
 import { run } from '../../src/commands/create.js';
-import { UserCancelledError, ValidationError } from '@llm-switch/core';
-import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
+import { UserCancelledError, ValidationError } from '@xavier2code/llm-switch-core';
+import { ProfileStore } from '@xavier2code/llm-switch-core/store/profile-store.js';
 import { mockClaudeTarget, mockCodexTarget } from '../helpers.js';
 
 const mockSelect = vi.mocked(select);

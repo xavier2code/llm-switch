@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { theme } from "../theme.js";
-import type { Profile } from "@llm-switch/core/adapters/types.js";
+import type { Profile } from "@xavier2code/llm-switch-core/adapters/types.js";
 
 export interface ProfilePanelProps {
   title: string;

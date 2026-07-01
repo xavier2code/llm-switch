@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
-import { getTarget } from '@llm-switch/core/config.js';
+import { ProfileStore } from '@xavier2code/llm-switch-core/store/profile-store.js';
+import { getTarget } from '@xavier2code/llm-switch-core/config.js';
 
 let tmpDir: string;
 let store: ProfileStore;

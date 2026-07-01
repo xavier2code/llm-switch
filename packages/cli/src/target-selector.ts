@@ -6,11 +6,11 @@ import {
   isTargetId,
   type TargetConfig,
   type TargetId,
-} from '@llm-switch/core/config.js';
-import { AppError, UserCancelledError } from '@llm-switch/core';
+} from '@xavier2code/llm-switch-core/config.js';
+import { AppError, UserCancelledError } from '@xavier2code/llm-switch-core';
 import { isCancel } from './ui.js';
-import type { StateManager } from '@llm-switch/core/state/index.js';
-import { detectInstalledTargets } from '@llm-switch/core/detector.js';
+import type { StateManager } from '@xavier2code/llm-switch-core/state/index.js';
+import { detectInstalledTargets } from '@xavier2code/llm-switch-core/detector.js';
 
 export interface TargetSelectionResult {
   targets: TargetConfig[];

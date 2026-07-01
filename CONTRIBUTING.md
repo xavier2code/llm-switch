@@ -25,12 +25,12 @@ pnpm test
 | Command | What it does |
 |---|---|
 | `pnpm test` | Run the vitest suite once |
-| `pnpm -F llm-switch test:watch` | Watch mode for one package |
-| `pnpm -F llm-switch typecheck` | `tsc --noEmit` |
-| `pnpm -F llm-switch lint` | ESLint over `packages/cli/` |
-| `pnpm -F llm-switch format` | Prettier --write (auto-format) |
-| `pnpm -F llm-switch format:check` | Prettier --check (CI mode) |
-| `pnpm -F llm-switch build` | Bundle the CLI with tsup to `packages/cli/dist/` |
+| `pnpm -F @xavier2code/llm-switch test:watch` | Watch mode for one package |
+| `pnpm -F @xavier2code/llm-switch typecheck` | `tsc --noEmit` |
+| `pnpm -F @xavier2code/llm-switch lint` | ESLint over `packages/cli/` |
+| `pnpm -F @xavier2code/llm-switch format` | Prettier --write (auto-format) |
+| `pnpm -F @xavier2code/llm-switch format:check` | Prettier --check (CI mode) |
+| `pnpm -F @xavier2code/llm-switch build` | Bundle the CLI with tsup to `packages/cli/dist/` |
 | `pnpm -r build` | Build every workspace package |
 
 ## Commit conventions
@@ -63,10 +63,10 @@ chore: bump to 0.5.0
 3. Run the full local check before pushing:
    ```bash
    pnpm test
-   pnpm -F llm-switch lint
-   pnpm -F llm-switch format:check
-   pnpm -F llm-switch typecheck
-   pnpm -F llm-switch build
+   pnpm -F @xavier2code/llm-switch lint
+   pnpm -F @xavier2code/llm-switch format:check
+   pnpm -F @xavier2code/llm-switch typecheck
+   pnpm -F @xavier2code/llm-switch build
    ```
    The pre-commit hook runs the lint + format subset automatically.
 4. Open a PR against `main`. CI will run the same checks on Node 22 and Node 24.
@@ -76,7 +76,7 @@ chore: bump to 0.5.0
 
 ```
 packages/
-├── cli/                 # the published npm package `llm-switch`
+├── cli/                 # the published npm package `@xavier2code/llm-switch`
 │   ├── src/
 │   │   ├── cli.ts       # commander entrypoint, subcommand wiring
 │   │   ├── commands/    # one file per subcommand (list, switch, ...)
@@ -91,8 +91,8 @@ packages/
 ## Code style
 
 - TypeScript strict mode is on (`tsconfig.json` has `"strict": true`). The project compiles to ESM and targets Node 20.
-- Prettier handles whitespace and quote style. Run `pnpm -F llm-switch format` to auto-format.
-- ESLint enforces basic hygiene (`@typescript-eslint/recommended` plus a few custom rules). Run `pnpm -F llm-switch lint`.
+- Prettier handles whitespace and quote style. Run `pnpm -F @xavier2code/llm-switch format` to auto-format.
+- ESLint enforces basic hygiene (`@typescript-eslint/recommended` plus a few custom rules). Run `pnpm -F @xavier2code/llm-switch lint`.
 - Keep public APIs typed. Don't add `any` without a comment explaining why.
 
 ## Testing approach

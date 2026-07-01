@@ -3,8 +3,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { summarize } from '../src/display.js';
-import { ProfileStore } from '@llm-switch/core/store/index.js';
-import { ConfigDirNotFoundError } from '@llm-switch/core';
+import { ProfileStore } from '@xavier2code/llm-switch-core/store/index.js';
+import { ConfigDirNotFoundError } from '@xavier2code/llm-switch-core';
 import { mockClaudeTarget } from './helpers.js';
 
 let tmpDir: string;

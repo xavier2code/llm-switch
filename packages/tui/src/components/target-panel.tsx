@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { theme } from "../theme.js";
-import type { TargetConfig } from "@llm-switch/core/config.js";
+import type { TargetConfig } from "@xavier2code/llm-switch-core/config.js";
 
 export interface TargetPanelProps {
   targets: TargetConfig[];

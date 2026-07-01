@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createAdapter, AnthropicJsonAdapter, OpenAiTomlAdapter } from '../../src/adapters/index.js';
-import { getTarget } from '@llm-switch/core/config.js';
+import { getTarget } from '@xavier2code/llm-switch-core/config.js';
 
 describe('createAdapter', () => {
   it('returns AnthropicJsonAdapter for claude', () => {

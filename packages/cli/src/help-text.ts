@@ -1,4 +1,4 @@
-import { TARGETS } from '@llm-switch/core/config.js';
+import { TARGETS } from '@xavier2code/llm-switch-core/config.js';
 
 const providerRows = [
   ['GLM (智谱)', 'https://open.bigmodel.cn/api/anthropic', 'glm-4.5'],

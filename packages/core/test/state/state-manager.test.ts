@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { StateManager } from '@llm-switch/core/state/index.js';
+import { StateManager } from '@xavier2code/llm-switch-core/state/index.js';
 
 let tmpDir: string;
 let manager: StateManager;

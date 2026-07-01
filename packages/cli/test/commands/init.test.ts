@@ -3,10 +3,14 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { runInitWizard, maybeRunInitWizard } from '../../src/commands/init.js';
-import { UserCancelledError } from '@llm-switch/core';
-import { getActiveConfigPath, getTarget, type TargetId } from '@llm-switch/core/config.js';
-import { StateManager } from '@llm-switch/core/state/index.js';
-import { defaultBaseDir } from '@llm-switch/core/store/profile-store.js';
+import { UserCancelledError } from '@xavier2code/llm-switch-core';
+import {
+  getActiveConfigPath,
+  getTarget,
+  type TargetId,
+} from '@xavier2code/llm-switch-core/config.js';
+import { StateManager } from '@xavier2code/llm-switch-core/state/index.js';
+import { defaultBaseDir } from '@xavier2code/llm-switch-core/store/profile-store.js';
 
 let tmpDir: string;
 let savedClaude: string | undefined;

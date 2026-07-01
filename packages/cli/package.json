@@ -1,11 +1,14 @@
 {
-  "name": "llm-switch",
+  "name": "@xavier2code/llm-switch",
   "version": "0.9.1",
-  "description": "Switch LLM profiles for Claude Code, OpenCode, and other CLI tools",
+  "description": "Switch LLM profiles for Claude Code, OpenCode, Codex, and other AI CLI tools",
   "type": "module",
   "bin": {
     "llm-switch": "bin/llm-switch.js",
     "sw": "bin/sw.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "bin",
@@ -35,8 +38,8 @@
   "dependencies": {
     "@iarna/toml": "^2.2.5",
     "@inquirer/prompts": "^8.5.2",
-    "@llm-switch/core": "workspace:*",
-    "@llm-switch/tui": "workspace:*",
+    "@xavier2code/llm-switch-core": "workspace:*",
+    "@xavier2code/llm-switch-tui": "workspace:*",
     "commander": "^15.0.0",
     "picocolors": "^1.1.0"
   },

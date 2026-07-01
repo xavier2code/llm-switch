@@ -1,13 +1,13 @@
 import { useState } from "react";
-import type { TargetConfig } from "@llm-switch/core/config.js";
-import { validateAlias } from "@llm-switch/core/config.js";
-import type { ProfileStore } from "@llm-switch/core/store/profile-store.js";
-import { PROVIDERS } from "@llm-switch/core/providers.js";
-import type { Provider } from "@llm-switch/core/providers.js";
+import type { TargetConfig } from "@xavier2code/llm-switch-core/config.js";
+import { validateAlias } from "@xavier2code/llm-switch-core/config.js";
+import type { ProfileStore } from "@xavier2code/llm-switch-core/store/profile-store.js";
+import { PROVIDERS } from "@xavier2code/llm-switch-core/providers.js";
+import type { Provider } from "@xavier2code/llm-switch-core/providers.js";
 import {
   validateAnthropic,
   validateOpenAi,
-} from "@llm-switch/core/validator.js";
+} from "@xavier2code/llm-switch-core/validator.js";
 
 export type WizardStep =
   | { type: "provider" }

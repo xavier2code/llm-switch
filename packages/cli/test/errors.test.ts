@@ -8,7 +8,7 @@ import {
   NoCurrentSettingsError,
   UserCancelledError,
   ValidationError,
-} from '@llm-switch/core';
+} from '@xavier2code/llm-switch-core';
 
 describe('AppError', () => {
   it('is an Error subclass with a code', () => {

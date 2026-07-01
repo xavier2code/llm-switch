@@ -5,8 +5,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { App } from "../src/app.js";
-import { ProfileStore } from "@llm-switch/core/store/profile-store.js";
-import { TARGETS, getTarget } from "@llm-switch/core/config.js";
+import { ProfileStore } from "@xavier2code/llm-switch-core/store/profile-store.js";
+import { TARGETS, getTarget } from "@xavier2code/llm-switch-core/config.js";
 
 let tmpDir: string;
 let store: ProfileStore;

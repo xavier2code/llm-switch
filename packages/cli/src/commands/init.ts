@@ -7,15 +7,15 @@ import {
   getTarget,
   type TargetConfig,
   type TargetId,
-} from '@llm-switch/core/config.js';
-import { detectInstalledTargets } from '@llm-switch/core/detector.js';
-import { exists } from '@llm-switch/core/fs-utils.js';
-import { UserCancelledError } from '@llm-switch/core';
+} from '@xavier2code/llm-switch-core/config.js';
+import { detectInstalledTargets } from '@xavier2code/llm-switch-core/detector.js';
+import { exists } from '@xavier2code/llm-switch-core/fs-utils.js';
+import { UserCancelledError } from '@xavier2code/llm-switch-core';
 import { INTERACTIVE_TTY_REQUIRED } from '../messages.js';
 import { isInquirerCancelError } from '../ui.js';
-import { StateManager } from '@llm-switch/core/state/index.js';
-import { ProfileStore, defaultBaseDir } from '@llm-switch/core/store/profile-store.js';
-import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
+import { StateManager } from '@xavier2code/llm-switch-core/state/index.js';
+import { ProfileStore, defaultBaseDir } from '@xavier2code/llm-switch-core/store/profile-store.js';
+import { ensureMigratedToCentralStore } from '@xavier2code/llm-switch-core/migrate.js';
 
 export interface InitIO {
   stdout: Writable;

@@ -1,10 +1,13 @@
 import type { Writable } from 'node:stream';
 import { confirm as inquirerConfirm } from '@inquirer/prompts';
-import type { TargetConfig } from '@llm-switch/core/config.js';
-import { assertAlias } from '@llm-switch/core/config.js';
-import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
+import type { TargetConfig } from '@xavier2code/llm-switch-core/config.js';
+import { assertAlias } from '@xavier2code/llm-switch-core/config.js';
+import {
+  ProfileStore,
+  defaultProfileStore,
+} from '@xavier2code/llm-switch-core/store/profile-store.js';
 import { promptAlias } from '../ui.js';
-import { NoCurrentSettingsError, UserCancelledError } from '@llm-switch/core';
+import { NoCurrentSettingsError, UserCancelledError } from '@xavier2code/llm-switch-core';
 import { interactiveTtyRequiredHint } from '../messages.js';
 
 export interface SaveIO {

@@ -31,7 +31,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build workspace dependencies
-        run: pnpm -F @llm-switch/core build && pnpm -F @llm-switch/tui build
+        run: pnpm -F @xavier2code/llm-switch-core build && pnpm -F @xavier2code/llm-switch-tui build
 
       - name: Typecheck
         run: pnpm -r typecheck
@@ -49,7 +49,7 @@ jobs:
         run: pnpm -r build
 
       - name: Coverage
-        run: pnpm -F llm-switch test:coverage
+        run: pnpm -F @xavier2code/llm-switch test:coverage
 
       - name: Upload coverage artifact
         if: matrix.node-version == 22
@@ -107,9 +107,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build
-        run: pnpm -F llm-switch build
+        run: pnpm -F @xavier2code/llm-switch build
 
       - name: Publish to npm
-        run: pnpm -F llm-switch publish --no-git-checks --provenance --access public
+        run: pnpm -F @xavier2code/llm-switch publish --no-git-checks --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

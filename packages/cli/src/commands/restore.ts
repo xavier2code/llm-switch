@@ -1,9 +1,12 @@
-import type { TargetConfig } from '@llm-switch/core/config.js';
-import { getBackupPath } from '@llm-switch/core/config.js';
-import { restoreBackup, isSameContent } from '@llm-switch/core/backup.js';
-import { exists } from '@llm-switch/core/fs-utils.js';
-import { NoBackupError } from '@llm-switch/core';
-import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
+import type { TargetConfig } from '@xavier2code/llm-switch-core/config.js';
+import { getBackupPath } from '@xavier2code/llm-switch-core/config.js';
+import { restoreBackup, isSameContent } from '@xavier2code/llm-switch-core/backup.js';
+import { exists } from '@xavier2code/llm-switch-core/fs-utils.js';
+import { NoBackupError } from '@xavier2code/llm-switch-core';
+import {
+  ProfileStore,
+  defaultProfileStore,
+} from '@xavier2code/llm-switch-core/store/profile-store.js';
 
 export interface RestoreIO {
   targets: TargetConfig[];

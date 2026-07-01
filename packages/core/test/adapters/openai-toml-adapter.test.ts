@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { OpenAiTomlAdapter } from '@llm-switch/core/adapters/openai-toml-adapter.js';
-import { getBackupPath, getTarget } from '@llm-switch/core/config.js';
+import { OpenAiTomlAdapter } from '@xavier2code/llm-switch-core/adapters/openai-toml-adapter.js';
+import { getBackupPath, getTarget } from '@xavier2code/llm-switch-core/config.js';
 
 let tmpDir: string;
 let storeDir: string;

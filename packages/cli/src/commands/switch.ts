@@ -1,11 +1,14 @@
 import type { Writable } from 'node:stream';
-import type { TargetConfig } from '@llm-switch/core/config.js';
-import { assertAlias } from '@llm-switch/core/config.js';
-import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
+import type { TargetConfig } from '@xavier2code/llm-switch-core/config.js';
+import { assertAlias } from '@xavier2code/llm-switch-core/config.js';
+import {
+  ProfileStore,
+  defaultProfileStore,
+} from '@xavier2code/llm-switch-core/store/profile-store.js';
 import { pickProfile } from '../ui.js';
-import { ProfileNotFoundError, UserCancelledError } from '@llm-switch/core';
+import { ProfileNotFoundError, UserCancelledError } from '@xavier2code/llm-switch-core';
 import { interactiveTtyRequiredHint, printSwitched } from '../messages.js';
-import type { Profile, ProfileContent } from '@llm-switch/core/adapters/types.js';
+import type { Profile, ProfileContent } from '@xavier2code/llm-switch-core/adapters/types.js';
 
 export interface SwitchIO {
   targets: TargetConfig[];

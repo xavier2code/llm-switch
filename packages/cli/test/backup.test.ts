@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { restoreBackup, isSameContent } from '@llm-switch/core/backup.js';
-import { NoBackupError } from '@llm-switch/core';
+import { restoreBackup, isSameContent } from '@xavier2code/llm-switch-core/backup.js';
+import { NoBackupError } from '@xavier2code/llm-switch-core';
 
 let tmpDir: string;
 

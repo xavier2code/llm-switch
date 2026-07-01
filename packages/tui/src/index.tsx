@@ -1,7 +1,7 @@
 import React from "react";
 import { render } from "ink";
-import type { ProfileStore } from "@llm-switch/core/store/profile-store.js";
-import type { TargetConfig } from "@llm-switch/core/config.js";
+import type { ProfileStore } from "@xavier2code/llm-switch-core/store/profile-store.js";
+import type { TargetConfig } from "@xavier2code/llm-switch-core/config.js";
 import { App } from "./app.js";
 
 export async function runTui(

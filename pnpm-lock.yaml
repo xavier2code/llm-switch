@@ -18,10 +18,10 @@ importers:
       '@inquirer/prompts':
         specifier: ^8.5.2
         version: 8.5.2(@types/node@26.0.1)
-      '@llm-switch/core':
+      '@xavier2code/llm-switch-core':
         specifier: workspace:*
         version: link:../core
-      '@llm-switch/tui':
+      '@xavier2code/llm-switch-tui':
         specifier: workspace:*
         version: link:../tui
       commander:
@@ -92,7 +92,7 @@ importers:
 
   packages/tui:
     dependencies:
-      '@llm-switch/core':
+      '@xavier2code/llm-switch-core':
         specifier: workspace:*
         version: link:../core
       ink:

@@ -1,4 +1,4 @@
-import type { TargetConfig } from '@llm-switch/core/config.js';
+import type { TargetConfig } from '@xavier2code/llm-switch-core/config.js';
 
 /**
  * Target-specific restart hint. Centralized so wording stays consistent across

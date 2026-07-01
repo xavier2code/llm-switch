@@ -3,10 +3,14 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { run } from '../../src/commands/switch.js';
-import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
-import { ProfileNotFoundError, UserCancelledError, InvalidAliasError } from '@llm-switch/core';
+import { ProfileStore } from '@xavier2code/llm-switch-core/store/profile-store.js';
+import {
+  ProfileNotFoundError,
+  UserCancelledError,
+  InvalidAliasError,
+} from '@xavier2code/llm-switch-core';
 import { mockClaudeTarget, mockOpencodeTarget } from '../helpers.js';
-import { createAdapter } from '@llm-switch/core/adapters/index.js';
+import { createAdapter } from '@xavier2code/llm-switch-core/adapters/index.js';
 
 let tmpDir: string;
 let savedClaudeEnv: string | undefined;

@@ -13,7 +13,7 @@ import {
   isTargetId,
   ensureMigrated,
   TARGETS,
-} from '@llm-switch/core/config.js';
+} from '@xavier2code/llm-switch-core/config.js';
 import { mockClaudeTarget, mockOpencodeTarget } from './helpers.js';
 import fs from 'node:fs/promises';
 import os from 'node:os';

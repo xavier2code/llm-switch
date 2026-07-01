@@ -1,15 +1,23 @@
 import type { Writable } from 'node:stream';
 import { select, input, password, confirm } from '@inquirer/prompts';
-import type { TargetConfig, TargetFamily } from '@llm-switch/core/config.js';
-import { validateAlias } from '@llm-switch/core/config.js';
-import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
-import { PROVIDERS, getProvider, isProviderId, type Provider } from '@llm-switch/core/providers.js';
-import { validateAnthropic, validateOpenAi } from '@llm-switch/core/validator.js';
+import type { TargetConfig, TargetFamily } from '@xavier2code/llm-switch-core/config.js';
+import { validateAlias } from '@xavier2code/llm-switch-core/config.js';
+import {
+  ProfileStore,
+  defaultProfileStore,
+} from '@xavier2code/llm-switch-core/store/profile-store.js';
+import {
+  PROVIDERS,
+  getProvider,
+  isProviderId,
+  type Provider,
+} from '@xavier2code/llm-switch-core/providers.js';
+import { validateAnthropic, validateOpenAi } from '@xavier2code/llm-switch-core/validator.js';
 import { isCancel } from '../ui.js';
-import { UserCancelledError } from '@llm-switch/core';
+import { UserCancelledError } from '@xavier2code/llm-switch-core';
 import { INTERACTIVE_TTY_REQUIRED, printCreatedAndActivated } from '../messages.js';
-import { exists } from '@llm-switch/core/fs-utils.js';
-import type { ProfileContent } from '@llm-switch/core/adapters/types.js';
+import { exists } from '@xavier2code/llm-switch-core/fs-utils.js';
+import type { ProfileContent } from '@xavier2code/llm-switch-core/adapters/types.js';
 
 export interface CreateIO {
   targets: TargetConfig[];

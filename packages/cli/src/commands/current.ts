@@ -1,5 +1,8 @@
-import type { TargetConfig } from '@llm-switch/core/config.js';
-import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
+import type { TargetConfig } from '@xavier2code/llm-switch-core/config.js';
+import {
+  ProfileStore,
+  defaultProfileStore,
+} from '@xavier2code/llm-switch-core/store/profile-store.js';
 import { summarize } from '../display.js';
 
 export interface CurrentIO {

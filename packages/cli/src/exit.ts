@@ -7,7 +7,7 @@ import {
   NoProfilesError,
   ProfileNotFoundError,
   UserCancelledError,
-} from '@llm-switch/core';
+} from '@xavier2code/llm-switch-core';
 
 export function toExitCode(err: unknown): number {
   if (err == null) return 0;

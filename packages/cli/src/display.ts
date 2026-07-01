@@ -1,9 +1,12 @@
 import fs from 'node:fs/promises';
-import { ConfigDirNotFoundError } from '@llm-switch/core';
-import type { TargetConfig } from '@llm-switch/core/config.js';
-import { getConfigDir } from '@llm-switch/core/config.js';
-import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
-import type { Profile, ProfileContent } from '@llm-switch/core/adapters/types.js';
+import { ConfigDirNotFoundError } from '@xavier2code/llm-switch-core';
+import type { TargetConfig } from '@xavier2code/llm-switch-core/config.js';
+import { getConfigDir } from '@xavier2code/llm-switch-core/config.js';
+import {
+  ProfileStore,
+  defaultProfileStore,
+} from '@xavier2code/llm-switch-core/store/profile-store.js';
+import type { Profile, ProfileContent } from '@xavier2code/llm-switch-core/adapters/types.js';
 
 export interface CurrentSummary {
   source: string;

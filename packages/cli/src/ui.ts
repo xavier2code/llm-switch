@@ -1,9 +1,9 @@
 import { select, input, checkbox } from '@inquirer/prompts';
-import type { Profile } from '@llm-switch/core/adapters/types.js';
-import { ALIAS_RE } from '@llm-switch/core/config.js';
-import type { TargetConfig, TargetId } from '@llm-switch/core/config.js';
+import type { Profile } from '@xavier2code/llm-switch-core/adapters/types.js';
+import { ALIAS_RE } from '@xavier2code/llm-switch-core/config.js';
+import type { TargetConfig, TargetId } from '@xavier2code/llm-switch-core/config.js';
 import { INTERACTIVE_TTY_REQUIRED } from './messages.js';
-import { UserCancelledError } from '@llm-switch/core';
+import { UserCancelledError } from '@xavier2code/llm-switch-core';
 
 const NEW_SENTINEL: unique symbol = Symbol.for('llm-switch:create-new');
 

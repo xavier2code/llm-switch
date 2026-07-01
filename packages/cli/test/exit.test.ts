@@ -9,7 +9,7 @@ import {
   UserCancelledError,
   InvalidAliasError,
   AppError,
-} from '@llm-switch/core';
+} from '@xavier2code/llm-switch-core';
 
 describe('toExitCode', () => {
   it('returns 0 for null/undefined', () => {

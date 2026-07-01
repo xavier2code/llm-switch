@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import type { ProfileStore } from "@llm-switch/core/store/profile-store.js";
-import type { TargetConfig } from "@llm-switch/core/config.js";
-import { getBackupPath } from "@llm-switch/core/config.js";
-import { exists } from "@llm-switch/core/fs-utils.js";
-import { restoreBackup } from "@llm-switch/core/backup.js";
-import type { Profile } from "@llm-switch/core/adapters/types.js";
+import type { ProfileStore } from "@xavier2code/llm-switch-core/store/profile-store.js";
+import type { TargetConfig } from "@xavier2code/llm-switch-core/config.js";
+import { getBackupPath } from "@xavier2code/llm-switch-core/config.js";
+import { exists } from "@xavier2code/llm-switch-core/fs-utils.js";
+import { restoreBackup } from "@xavier2code/llm-switch-core/backup.js";
+import type { Profile } from "@xavier2code/llm-switch-core/adapters/types.js";
 
 export type Focus = "target" | "profile";
 export type Modal =

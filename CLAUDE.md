@@ -60,10 +60,10 @@ When the team decides the criteria are met:
 1. `packages/cli/package.json` — bump `version`
 2. `CHANGELOG.md` — convert the `[Unreleased]` section into a versioned
    section, add a fresh empty `[Unreleased]` above it
-3. `git tag -a vX.Y.Z -m "vX.Y.Z: brief description"`
+3. `git tag -a vX.Y.Z -m "vX.Y.Z: brief description"``
 4. `git push origin main` and `git push origin vX.Y.Z`
 5. `gh release create vX.Y.Z` with notes summarizing the changes
-6. `npm publish` (requires an Automation token; never commit the token)
+6. `npm publish` for `@xavier2code/llm-switch` (requires an Automation token; never commit the token)
 7. **Plugin sync**: `packages/claude-code-plugin/package.json` and
    `packages/claude-code-plugin/.claude-plugin/plugin.json` — bump to the
    same `X.Y.Z` as the CLI. The plugin follows the CLI version verbatim

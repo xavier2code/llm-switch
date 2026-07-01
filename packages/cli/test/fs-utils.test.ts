@@ -9,7 +9,7 @@ import {
   exists,
   atomicWrite,
   atomicWriteJson,
-} from '@llm-switch/core/fs-utils.js';
+} from '@xavier2code/llm-switch-core/fs-utils.js';
 
 let tmpDir: string;
 

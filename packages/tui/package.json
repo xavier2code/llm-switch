@@ -1,5 +1,5 @@
 {
-  "name": "@llm-switch/tui",
+  "name": "@xavier2code/llm-switch-tui",
   "version": "0.9.1",
   "type": "module",
   "description": "Ink-based terminal UI for llm-switch",
@@ -24,7 +24,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "@llm-switch/core": "workspace:*",
+    "@xavier2code/llm-switch-core": "workspace:*",
     "ink": "^5.0.0",
     "react": "^18.3.0"
   },
