@@ -415,7 +415,7 @@ export function App({ store, targets }: AppProps) {
                       : theme.targetNormalFg
                   }
                 >
-                  {isActive ? "> " : "  "}
+                  {isActive && isFocused ? "> " : "  "}
                   {t.displayName}
                 </Text>
               </Box>
