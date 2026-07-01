@@ -52,28 +52,17 @@ export class ProfileStore {
   async listProfiles(target: TargetConfig): Promise<Profile[]> {
     await this.ensureBaseDir();
     const adapter = this.adapter(target);
-    const activePath = adapter.activePath();
-    const activeRaw = await fs.readFile(activePath, 'utf8').catch((err: unknown) => {
-      const code = (err as NodeJS.ErrnoException | null)?.code;
-      if (code === 'ENOENT') return null;
-      throw err;
-    });
-    const activeHash = activeRaw !== null ? sha256String(activeRaw) : null;
+    const activeContent = await adapter.readActive();
+    const activeBaseUrl = activeContent?.baseUrl ?? null;
     const aliases = await adapter.listAliases();
     const profiles = await Promise.all(
       aliases.map(async (alias) => {
         const profilePath = adapter.profilePath(alias);
-        const profileRaw = await fs.readFile(profilePath, 'utf8').catch((err: unknown) => {
-          const code = (err as NodeJS.ErrnoException | null)?.code;
-          if (code === 'ENOENT') return null;
-          throw err;
-        });
-        const content = profileRaw !== null ? adapter.deserialize(profileRaw) : null;
-        const hash = profileRaw !== null ? sha256String(profileRaw) : '';
+        const content = await adapter.readProfile(alias);
         return {
           alias,
           path: profilePath,
-          active: activeHash !== null && hash === activeHash,
+          active: activeBaseUrl !== null && activeBaseUrl !== '' && activeBaseUrl === content?.baseUrl,
           providerId: content?.providerId,
           baseUrl: content?.baseUrl,
           model: content?.model,
