@@ -37,7 +37,7 @@
     "@inquirer/prompts": "^7.0.0",
     "@llm-switch/core": "workspace:*",
     "@llm-switch/tui": "workspace:*",
-    "commander": "^12.0.0",
+    "commander": "^15.0.0",
     "picocolors": "^1.1.0"
   },
   "devDependencies": {
