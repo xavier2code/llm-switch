@@ -389,11 +389,12 @@ export function App({ store, targets }: AppProps) {
           borderColor={theme.border}
           paddingX={1}
           paddingY={1}
-          gap={1}
         >
-          <Text bold color={theme.panelTitle}>
-            Targets
-          </Text>
+          <Box marginBottom={1}>
+            <Text bold color={theme.panelTitle}>
+              Targets
+            </Text>
+          </Box>
           {targets.map((t, i) => {
             const isActive = i === selectedTargetIndex;
             return (
@@ -433,7 +434,6 @@ export function App({ store, targets }: AppProps) {
             flexDirection="row"
             justifyContent="space-between"
             alignItems="center"
-            marginBottom={1}
           >
             <Text bold color={theme.panelTitle}>
               {selectedTarget?.displayName} Profiles
@@ -446,7 +446,7 @@ export function App({ store, targets }: AppProps) {
             </Box>
           </Box>
 
-          <Box flexDirection="column" flexGrow={1} gap={1}>
+          <Box flexDirection="column" flexGrow={1} gap={1} marginTop={1}>
             {filteredProfiles.length === 0 && (
               <Box
                 flexGrow={1}
