@@ -310,7 +310,10 @@ export function App({ store, targets }: AppProps) {
     refresh,
   } = useTui(store, targets);
 
-  const selectedProfile = filteredProfiles[selectedProfileIndex] ?? null;
+  const selectedProfile =
+    focus === "profile"
+      ? (filteredProfiles[selectedProfileIndex] ?? null)
+      : null;
 
   useInput(
     (input, key) => {
