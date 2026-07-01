@@ -554,6 +554,9 @@ export function App({ store, targets }: AppProps) {
                         >
                           {isSelected && isFocused ? "> " : "  "}
                           {p.alias}
+                          {p.active && (
+                            <Text color={theme.profileActiveFg}> [active]</Text>
+                          )}
                         </Text>
                         <Box flexDirection="row" gap={1}>
                           {p.providerId && (
