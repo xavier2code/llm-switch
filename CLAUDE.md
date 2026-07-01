@@ -63,7 +63,17 @@ When the team decides the criteria are met:
 3. `git tag -a vX.Y.Z -m "vX.Y.Z: brief description"``
 4. `git push origin main` and `git push origin vX.Y.Z`
 5. `gh release create vX.Y.Z` with notes summarizing the changes
-6. `npm publish` for `@xavier2code/llm-switch` (requires an Automation token; never commit the token)
+6. `npm publish` for `@xavier2code/llm-switch` (requires an Automation token;
+   never commit the token). Set it via the `NPM_TOKEN` environment variable:
+
+   ```bash
+   export NPM_TOKEN=<your-npm-automation-token>
+   pnpm -F @xavier2code/llm-switch build
+   pnpm -F @xavier2code/llm-switch publish --access public
+   ```
+
+   CI publishes automatically on tag pushes using the `NPM_TOKEN` repository
+   secret.
 7. **Plugin sync**: `packages/claude-code-plugin/package.json` and
    `packages/claude-code-plugin/.claude-plugin/plugin.json` — bump to the
    same `X.Y.Z` as the CLI. The plugin follows the CLI version verbatim
