@@ -1,6 +1,6 @@
 {
   "name": "@llm-switch/tui",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "type": "module",
   "description": "Ink-based terminal UI for llm-switch",
   "exports": {
