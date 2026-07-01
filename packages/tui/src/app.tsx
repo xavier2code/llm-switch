@@ -406,8 +406,6 @@ export function App({ store, targets }: AppProps) {
                 gap={1}
                 paddingX={1}
                 paddingY={1}
-                borderStyle={isActive && isFocused ? "single" : undefined}
-                borderColor={theme.targetSelectedBorder}
               >
                 <Text
                   bold
@@ -417,7 +415,7 @@ export function App({ store, targets }: AppProps) {
                       : theme.targetNormalFg
                   }
                 >
-                  {isActive && isFocused ? "> " : "  "}
+                  {isActive ? "> " : "  "}
                   {t.displayName}
                 </Text>
               </Box>
@@ -480,8 +478,6 @@ export function App({ store, targets }: AppProps) {
                   alignItems="center"
                   paddingX={2}
                   paddingY={1}
-                  borderStyle={isSelected && isFocused ? "single" : undefined}
-                  borderColor={theme.profileSelectedBorder}
                   height={3}
                 >
                   <Box flexDirection="row" alignItems="center" gap={1}>
@@ -508,6 +504,7 @@ export function App({ store, targets }: AppProps) {
                             : theme.profileNormalFg
                         }
                       >
+                        {isSelected ? "> " : "  "}
                         {p.alias}
                       </Text>
                       <Box flexDirection="row" gap={1}>
