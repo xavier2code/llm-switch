@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { summarize } from '../src/display.js';
 import { ProfileStore } from '@llm-switch/core/store/index.js';
-import { ConfigDirNotFoundError } from '../src/errors.js';
+import { ConfigDirNotFoundError } from '@llm-switch/core';
 import { mockClaudeTarget } from './helpers.js';
 
 let tmpDir: string;

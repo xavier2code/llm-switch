@@ -55,4 +55,32 @@ describe('ProfileStore', () => {
     const read = await store.readProfile(getTarget('claude'), 'glm');
     expect(read).toBeNull();
   });
+
+  it('clears active record when deleting the active profile', async () => {
+    const target = getTarget('claude');
+    await store.writeProfile(target, 'glm', content);
+    await store.activateProfile(target, 'glm');
+    expect(await store.readActiveRecord(target)).not.toBeNull();
+
+    await store.deleteProfile(target, 'glm');
+    expect(await store.readActiveRecord(target)).toBeNull();
+  });
+
+  it('detects drift when active config is modified externally', async () => {
+    const target = getTarget('claude');
+    await store.writeProfile(target, 'glm', content);
+    await store.activateProfile(target, 'glm');
+
+    const adapter = store.adapter(target);
+    const activePath = adapter.activePath();
+    const raw = await fs.readFile(activePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    parsed.env.ANTHROPIC_MODEL = 'drifted-model';
+    await fs.writeFile(activePath, JSON.stringify(parsed, null, 2));
+
+    const profiles = await store.listProfiles(target);
+    const glm = profiles.find((p) => p.alias === 'glm');
+    expect(glm?.active).toBe(true);
+    expect(glm?.drifted).toBe(true);
+  });
 });

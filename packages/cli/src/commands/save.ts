@@ -4,7 +4,7 @@ import type { TargetConfig } from '@llm-switch/core/config.js';
 import { assertAlias } from '@llm-switch/core/config.js';
 import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { promptAlias } from '../ui.js';
-import { NoCurrentSettingsError, UserCancelledError } from '../errors.js';
+import { NoCurrentSettingsError, UserCancelledError } from '@llm-switch/core';
 import { interactiveTtyRequiredHint } from '../messages.js';
 
 export interface SaveIO {

@@ -7,7 +7,7 @@ import {
   type TargetConfig,
   type TargetId,
 } from '@llm-switch/core/config.js';
-import { AppError, UserCancelledError } from './errors.js';
+import { AppError, UserCancelledError } from '@llm-switch/core';
 import { isCancel } from './ui.js';
 import type { StateManager } from '@llm-switch/core/state/index.js';
 import { detectInstalledTargets } from '@llm-switch/core/detector.js';

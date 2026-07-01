@@ -9,8 +9,8 @@ import {
   type TargetId,
 } from '@llm-switch/core/config.js';
 import { detectInstalledTargets } from '@llm-switch/core/detector.js';
-import { exists } from '../fs-utils.js';
-import { UserCancelledError } from '../errors.js';
+import { exists } from '@llm-switch/core/fs-utils.js';
+import { UserCancelledError } from '@llm-switch/core';
 import { INTERACTIVE_TTY_REQUIRED } from '../messages.js';
 import { isInquirerCancelError } from '../ui.js';
 import { StateManager } from '@llm-switch/core/state/index.js';

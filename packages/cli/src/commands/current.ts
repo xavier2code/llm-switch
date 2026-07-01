@@ -19,6 +19,7 @@ export async function run(io: CurrentIO): Promise<void> {
     if (s.warning) lines.push(`  Warning: ${s.warning}`);
     if (s.baseUrl) lines.push(`  Base URL: ${s.baseUrl}`);
     if (s.model) lines.push(`  Model: ${s.model}`);
+    if (s.drifted) lines.push(`  Warning: active config has drifted from profile '${s.source}'`);
     lines.push(`  MCP servers: ${s.hasMcp ? 'yes' : 'no'}`);
   }
 

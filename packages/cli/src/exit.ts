@@ -7,7 +7,7 @@ import {
   NoProfilesError,
   ProfileNotFoundError,
   UserCancelledError,
-} from './errors.js';
+} from '@llm-switch/core';
 
 export function toExitCode(err: unknown): number {
   if (err == null) return 0;

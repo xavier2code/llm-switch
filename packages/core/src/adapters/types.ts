@@ -12,6 +12,8 @@ export interface Profile {
   alias: string;
   path: string;
   active: boolean;
+  /** True when the active config file no longer matches the recorded active profile. */
+  drifted?: boolean;
   providerId?: string;
   baseUrl?: string;
   model?: string;

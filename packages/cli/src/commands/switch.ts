@@ -3,8 +3,8 @@ import type { TargetConfig } from '@llm-switch/core/config.js';
 import { assertAlias } from '@llm-switch/core/config.js';
 import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { pickProfile } from '../ui.js';
-import { ProfileNotFoundError, UserCancelledError } from '../errors.js';
-import { restartHint, interactiveTtyRequiredHint } from '../messages.js';
+import { ProfileNotFoundError, UserCancelledError } from '@llm-switch/core';
+import { interactiveTtyRequiredHint, printSwitched } from '../messages.js';
 import type { Profile, ProfileContent } from '@llm-switch/core/adapters/types.js';
 
 export interface SwitchIO {
@@ -59,6 +59,7 @@ export async function run(io: SwitchIO): Promise<void> {
         io.stdout.write(`[dry-run] Would switch ${target.displayName} to '${alias}'.\n`);
       } else {
         await adapter.writeActive(content);
+        await store.writeActiveRecord(target, alias);
       }
       switchedAny = true;
     }
@@ -68,10 +69,7 @@ export async function run(io: SwitchIO): Promise<void> {
       );
     }
     if (!io.dryRun) {
-      io.stdout.write(`Switched to ${alias}:\n`);
-      for (const target of io.targets) {
-        io.stdout.write(`  ${target.displayName}  ${restartHint(target)}\n`);
-      }
+      printSwitched(io.stdout, alias, io.targets);
     }
     return;
   }
@@ -99,12 +97,10 @@ export async function run(io: SwitchIO): Promise<void> {
       continue;
     }
     await adapter.writeActive(content);
+    await store.writeActiveRecord(target, chosen.alias);
   }
   if (!io.dryRun) {
-    io.stdout.write(`Switched to ${chosen.alias}:\n`);
-    for (const target of io.targets) {
-      io.stdout.write(`  ${target.displayName}  ${restartHint(target)}\n`);
-    }
+    printSwitched(io.stdout, chosen.alias, io.targets);
   }
 }
 

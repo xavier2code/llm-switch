@@ -4,7 +4,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { run } from '../../src/commands/switch.js';
 import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
-import { ProfileNotFoundError, UserCancelledError, InvalidAliasError } from '../../src/errors.js';
+import { ProfileNotFoundError, UserCancelledError, InvalidAliasError } from '@llm-switch/core';
 import { mockClaudeTarget, mockOpencodeTarget } from '../helpers.js';
 import { createAdapter } from '@llm-switch/core/adapters/index.js';
 

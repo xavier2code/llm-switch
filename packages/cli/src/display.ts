@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { ConfigDirNotFoundError } from './errors.js';
+import { ConfigDirNotFoundError } from '@llm-switch/core';
 import type { TargetConfig } from '@llm-switch/core/config.js';
 import { getConfigDir } from '@llm-switch/core/config.js';
 import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
@@ -11,6 +11,7 @@ export interface CurrentSummary {
   baseUrl?: string;
   model?: string;
   hasMcp: boolean;
+  drifted?: boolean;
   warning?: string;
 }
 
@@ -84,6 +85,7 @@ export async function summarize(
     sourcePath: matched ? matched.path : settingsPath,
     baseUrl: active.baseUrl || undefined,
     model: active.model || undefined,
+    drifted: matched?.drifted,
     hasMcp,
   };
 }

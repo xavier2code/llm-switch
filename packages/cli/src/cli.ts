@@ -4,15 +4,9 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { log } from './logger.js';
 import { toExitCode } from './exit.js';
-import { AppError } from './errors.js';
+import { AppError } from '@llm-switch/core';
 import { isInquirerCancelError } from './ui.js';
-import {
-  ensureMigrated,
-  TARGETS,
-  getTarget,
-  type TargetConfig,
-  type TargetId,
-} from '@llm-switch/core/config.js';
+import { ensureMigrated, type TargetConfig } from '@llm-switch/core/config.js';
 import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
 import { defaultProfileStore, type ProfileStore } from '@llm-switch/core/store/index.js';
 import { selectTargets } from './target-selector.js';
@@ -25,6 +19,8 @@ import { registerCreate } from './commands/register/register-create.js';
 import { registerRestore } from './commands/register/register-restore.js';
 import { registerCurrent } from './commands/register/register-current.js';
 import { registerInit } from './commands/register/register-init.js';
+import { buildAfterHelp, targetNames } from './help-text.js';
+import { prepareTui } from './tui-bootstrap.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8')) as {
@@ -33,9 +29,7 @@ const pkg = JSON.parse(readFileSync(resolve(__dirname, '../package.json'), 'utf8
 
 export interface CliContext {
   program: Command;
-  resolveTargets: (
-    targetFlag?: string,
-  ) => Promise<{ targets: TargetConfig[]; store: ProfileStore }>;
+  resolveTargets: () => Promise<{ targets: TargetConfig[]; store: ProfileStore }>;
   targetFlagFromCli: (program: Command) => string | undefined;
 }
 
@@ -77,43 +71,6 @@ async function resolveTargets(
   return { targets, store };
 }
 
-function parseTargetFlagFromArgs(args: string[]): string | undefined {
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    if (arg === '--target' || arg === '-t') {
-      return args[i + 1]?.trim();
-    }
-    if (arg?.startsWith('--target=') || arg?.startsWith('-t=')) {
-      return arg.slice(arg.indexOf('=') + 1).trim();
-    }
-  }
-  return undefined;
-}
-
-async function prepareTui(): Promise<{ targets: TargetConfig[]; store: ProfileStore }> {
-  const store = defaultProfileStore();
-  const flag = parseTargetFlagFromArgs(process.argv.slice(2));
-  const targets =
-    flag && TARGETS.some((t) => t.id === flag) ? [getTarget(flag as TargetId)] : [...TARGETS];
-  for (const target of targets) {
-    await ensureMigrated(target);
-  }
-  await ensureMigratedToCentralStore(store.baseDir, targets);
-  return { targets, store };
-}
-
-const targetNames = TARGETS.map((t) => t.id).join('|');
-const providerRows = [
-  ['GLM (智谱)', 'https://open.bigmodel.cn/api/anthropic', 'glm-4.5'],
-  ['DeepSeek', 'https://api.deepseek.com/anthropic', 'deepseek-chat'],
-  ['Kimi (Moonshot)', 'https://api.kimi.com/coding/', 'kimi-for-coding'],
-  ['MiniMax', 'https://api.minimaxi.com/anthropic', 'MiniMax-Text-01'],
-  ['Qwen (DashScope)', 'https://dashscope.aliyuncs.com/compatible-mode/anthropic', 'qwen-plus'],
-  ['OpenAI', 'https://api.openai.com/v1', 'gpt-4.1'],
-]
-  .map(([name, url, model]) => `  ${name.padEnd(18)} ${url.padEnd(50)} ${model}`)
-  .join('\n');
-
 const program = new Command();
 program
   .name('sw')
@@ -124,36 +81,7 @@ program
     'Act on a single tool and skip the target prompt (claude, opencode, or codex)',
     'claude',
   )
-  .addHelpText(
-    'after',
-    `
-Targets:
-  Claude Code, OpenCode, and Codex are supported. In a TTY each command prompts
-  you to multi-select which tools to act on (your last choice is remembered).
-  Pass --target <id> to skip the prompt and act on exactly one tool. In
-  non-interactive contexts the last-selected set is reused, falling back to
-  --target, then LLM_SWITCH_TARGET, then claude.
-
-Environment:
-  CLAUDE_CONFIG_DIR   Config directory for Claude Code (default: ~/.claude).
-  OPENCODE_CONFIG_DIR Config directory for OpenCode (default: ~/.config/opencode).
-  CODEX_HOME          Config directory for Codex (default: ~/.codex).
-  LLM_SWITCH_TARGET   Default target tool before any selection is remembered;
-                      overrides the default but not --target.
-
-Profile store (centralized):
-  ~/.llm-switch/profiles/<target-id>/<alias>.[json|toml]   saved profiles
-  ~/.llm-switch/state.json                                   last-selected targets
-  ~/.llm-switch/backups/<target-id>/<active>.bak             backup before a switch
-
-Built-in providers for \`create\`:
-${providerRows}
-
-Claude Code and OpenCode use Anthropic-compatible env vars
-(ANTHROPIC_BASE_URL, ANTHROPIC_MODEL, ANTHROPIC_AUTH_TOKEN). Codex uses a TOML
-config (model, base_url, api_key).
-`,
-  );
+  .addHelpText('after', buildAfterHelp());
 
 const ctx: CliContext = {
   program,

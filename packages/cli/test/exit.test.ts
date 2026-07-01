@@ -9,7 +9,7 @@ import {
   UserCancelledError,
   InvalidAliasError,
   AppError,
-} from '../src/errors.js';
+} from '@llm-switch/core';
 
 describe('toExitCode', () => {
   it('returns 0 for null/undefined', () => {

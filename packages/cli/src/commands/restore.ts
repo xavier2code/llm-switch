@@ -1,8 +1,8 @@
 import type { TargetConfig } from '@llm-switch/core/config.js';
 import { getBackupPath } from '@llm-switch/core/config.js';
-import { restoreBackup, isSameContent } from '../backup.js';
-import { exists } from '../fs-utils.js';
-import { NoBackupError } from '../errors.js';
+import { restoreBackup, isSameContent } from '@llm-switch/core/backup.js';
+import { exists } from '@llm-switch/core/fs-utils.js';
+import { NoBackupError } from '@llm-switch/core';
 import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
 
 export interface RestoreIO {
@@ -35,6 +35,7 @@ export async function run(io: RestoreIO): Promise<void> {
     }
 
     await restoreBackup(settingsPath, backupPath);
+    await store.clearActiveRecord(target);
     restored.push(`${target.displayName}: restored from backup.`);
   }
 

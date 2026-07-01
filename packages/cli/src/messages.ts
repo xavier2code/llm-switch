@@ -22,3 +22,25 @@ export const INTERACTIVE_TTY_REQUIRED = 'Interactive mode requires a TTY.';
 export function interactiveTtyRequiredHint(command: string): string {
   return `${INTERACTIVE_TTY_REQUIRED} Use: sw ${command} <alias>`;
 }
+
+export function printCreatedAndActivated(
+  stdout: { write(s: string): unknown },
+  alias: string,
+  targets: TargetConfig[],
+): void {
+  stdout.write(`Created and activated '${alias}':\n`);
+  for (const target of targets) {
+    stdout.write(`  ${target.displayName}  ${restartHint(target)}\n`);
+  }
+}
+
+export function printSwitched(
+  stdout: { write(s: string): unknown },
+  alias: string,
+  targets: TargetConfig[],
+): void {
+  stdout.write(`Switched to ${alias}:\n`);
+  for (const target of targets) {
+    stdout.write(`  ${target.displayName}  ${restartHint(target)}\n`);
+  }
+}

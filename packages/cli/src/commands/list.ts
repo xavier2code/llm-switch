@@ -1,6 +1,6 @@
 import type { TargetConfig } from '@llm-switch/core/config.js';
 import { ProfileStore, defaultProfileStore } from '@llm-switch/core/store/profile-store.js';
-import { NoProfilesError } from '../errors.js';
+import { NoProfilesError } from '@llm-switch/core';
 
 export interface CommandIO {
   targets: TargetConfig[];
@@ -25,8 +25,8 @@ export async function run(io: CommandIO): Promise<void> {
 
     sections.push(`${target.displayName} profiles:`);
     for (const p of sorted) {
-      const marker = p.active ? '●' : '○';
-      const tag = p.active ? ' (active)' : '';
+      const marker = p.active ? (p.drifted ? '◐' : '●') : '○';
+      const tag = p.active ? (p.drifted ? ' (active, drifted)' : ' (active)') : '';
       const padded = p.alias.padEnd(maxAliasLen);
       sections.push(`  ${marker} ${padded}${tag}  ${p.path}`);
     }

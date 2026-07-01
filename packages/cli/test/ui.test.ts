@@ -18,9 +18,9 @@ import {
   isInquirerCancelError,
   pickTargets,
 } from '../src/ui.js';
-import { UserCancelledError } from '../src/errors.js';
+import { UserCancelledError } from '@llm-switch/core';
 import { getTarget } from '@llm-switch/core/config.js';
-import type { Profile } from '../src/scanner.js';
+import type { Profile } from '@llm-switch/core/adapters/types.js';
 
 const mockSelect = vi.mocked(select);
 const mockInput = vi.mocked(input);

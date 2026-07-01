@@ -20,7 +20,7 @@ vi.mock('@llm-switch/core/validator.js', () => ({
 import { select, input, password, confirm } from '@inquirer/prompts';
 import { validateAnthropic, validateOpenAi } from '@llm-switch/core/validator.js';
 import { run } from '../../src/commands/create.js';
-import { UserCancelledError, ValidationError } from '../../src/errors.js';
+import { UserCancelledError, ValidationError } from '@llm-switch/core';
 import { ProfileStore } from '@llm-switch/core/store/profile-store.js';
 import { mockClaudeTarget, mockCodexTarget } from '../helpers.js';
 

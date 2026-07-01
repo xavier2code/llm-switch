@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { runInitWizard, maybeRunInitWizard } from '../../src/commands/init.js';
-import { UserCancelledError } from '../../src/errors.js';
+import { UserCancelledError } from '@llm-switch/core';
 import { getActiveConfigPath, getTarget, type TargetId } from '@llm-switch/core/config.js';
 import { StateManager } from '@llm-switch/core/state/index.js';
 import { defaultBaseDir } from '@llm-switch/core/store/profile-store.js';
