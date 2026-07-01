@@ -397,6 +397,7 @@ export function App({ store, targets }: AppProps) {
           </Box>
           {targets.map((t, i) => {
             const isActive = i === selectedTargetIndex;
+            const isFocused = focus === "target";
             return (
               <Box
                 key={t.id}
@@ -405,16 +406,18 @@ export function App({ store, targets }: AppProps) {
                 gap={1}
                 paddingX={1}
                 paddingY={1}
-                borderStyle={isActive ? "single" : undefined}
+                borderStyle={isActive && isFocused ? "single" : undefined}
                 borderColor={theme.targetSelectedBorder}
               >
                 <Text
                   bold
                   color={
-                    isActive ? theme.targetSelectedFg : theme.targetNormalFg
+                    isActive && isFocused
+                      ? theme.targetSelectedFg
+                      : theme.targetNormalFg
                   }
                 >
-                  {isActive ? "> " : "  "}
+                  {isActive && isFocused ? "> " : "  "}
                   {t.displayName}
                 </Text>
               </Box>
@@ -463,6 +466,7 @@ export function App({ store, targets }: AppProps) {
             )}
             {filteredProfiles.map((p, i) => {
               const isSelected = i === selectedProfileIndex;
+              const isFocused = focus === "profile";
               return (
                 <Box
                   key={p.alias}
@@ -471,7 +475,7 @@ export function App({ store, targets }: AppProps) {
                   alignItems="center"
                   paddingX={2}
                   paddingY={1}
-                  borderStyle={isSelected ? "single" : undefined}
+                  borderStyle={isSelected && isFocused ? "single" : undefined}
                   borderColor={theme.profileSelectedBorder}
                 >
                   <Box flexDirection="row" alignItems="center" gap={1}>
@@ -493,7 +497,7 @@ export function App({ store, targets }: AppProps) {
                       <Text
                         bold
                         color={
-                          isSelected
+                          isSelected && isFocused
                             ? theme.profileSelectedFg
                             : theme.profileNormalFg
                         }
@@ -512,13 +516,12 @@ export function App({ store, targets }: AppProps) {
                     </Box>
                   </Box>
 
-                  {(isSelected || focus === "profile") &&
-                    filteredProfiles.length > 0 && (
-                      <Box flexDirection="row" gap={1}>
-                        <Text color={theme.profileHintFg}>Enter activate</Text>
-                        <Text color={theme.profileHintFg}>d delete</Text>
-                      </Box>
-                    )}
+                  {isSelected && isFocused && filteredProfiles.length > 0 && (
+                    <Box flexDirection="row" gap={1}>
+                      <Text color={theme.profileHintFg}>Enter activate</Text>
+                      <Text color={theme.profileHintFg}>d delete</Text>
+                    </Box>
+                  )}
                 </Box>
               );
             })}
