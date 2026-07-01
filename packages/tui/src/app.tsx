@@ -600,17 +600,6 @@ export function App({ store, targets }: AppProps) {
               </Box>
 
               <Box flexDirection="column" gap={1}>
-                <Text color={theme.detailLabelFg}>Provider</Text>
-                <Text
-                  color={theme.detailValueFg}
-                  backgroundColor={theme.detailValueBg}
-                >
-                  {" "}
-                  {selectedProfile.providerId ?? "custom"}
-                </Text>
-              </Box>
-
-              <Box flexDirection="column" gap={1}>
                 <Text color={theme.detailLabelFg}>Base URL</Text>
                 <Text
                   color={theme.detailValueFg}
@@ -618,17 +607,6 @@ export function App({ store, targets }: AppProps) {
                 >
                   {" "}
                   {selectedProfile.baseUrl ?? "-"}
-                </Text>
-              </Box>
-
-              <Box flexDirection="column" gap={1}>
-                <Text color={theme.detailLabelFg}>Model</Text>
-                <Text
-                  color={theme.detailValueFg}
-                  backgroundColor={theme.detailValueBg}
-                >
-                  {" "}
-                  {selectedProfile.model ?? "-"}
                 </Text>
               </Box>
 
