@@ -614,6 +614,23 @@ export function App({ store, targets }: AppProps) {
                 <Text color={theme.textMuted}>q quit</Text>
               </Box>
             </Box>
+
+            {(modal.type === "activate" || modal.type === "delete") && (
+              <Box marginTop={1} flexDirection="row" justifyContent="center">
+                <ConfirmDialog
+                  message={
+                    modal.type === "activate"
+                      ? `Activate '${modal.alias}' on ${selectedTarget?.displayName ?? ""}?`
+                      : `Delete '${modal.alias}' from ${selectedTarget?.displayName ?? ""}?`
+                  }
+                  onConfirm={
+                    modal.type === "activate" ? confirmActivate : confirmDelete
+                  }
+                  onCancel={closeModal}
+                  isActive
+                />
+              </Box>
+            )}
           </Box>
 
           <Box
@@ -794,28 +811,6 @@ export function App({ store, targets }: AppProps) {
                 <Text color={theme.wizardHint}>Enter save · Esc cancel</Text>
               </Box>
             </Box>
-          </Box>
-        )}
-
-        {modal.type === "delete" && (
-          <Box marginTop={1}>
-            <ConfirmDialog
-              message={`Delete '${modal.alias}' from ${selectedTarget?.displayName ?? ""}?`}
-              onConfirm={confirmDelete}
-              onCancel={closeModal}
-              isActive
-            />
-          </Box>
-        )}
-
-        {modal.type === "activate" && (
-          <Box marginTop={1}>
-            <ConfirmDialog
-              message={`Activate '${modal.alias}' on ${selectedTarget?.displayName ?? ""}?`}
-              onConfirm={confirmActivate}
-              onCancel={closeModal}
-              isActive
-            />
           </Box>
         )}
 
