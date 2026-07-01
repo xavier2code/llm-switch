@@ -504,7 +504,7 @@ export function App({ store, targets }: AppProps) {
                             : theme.profileNormalFg
                         }
                       >
-                        {isSelected ? "> " : "  "}
+                        {isSelected && isFocused ? "> " : "  "}
                         {p.alias}
                       </Text>
                       <Box flexDirection="row" gap={1}>
