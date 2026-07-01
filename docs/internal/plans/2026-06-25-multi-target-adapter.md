@@ -7,7 +7,7 @@
 
 **Goal:** Refactor `llm-switch` so every command can act on multiple selected
 CLI tools, add Codex as a first-class TOML-based target, and move profiles into
-a centralized store under `~/.config/llm-switch/profiles/<target-id>/`.
+a centralized store under `~/.llm-switch/profiles/<target-id>/`.
 
 **Architecture:** Introduce a `TargetAdapter` abstraction
 (`AnthropicJsonAdapter`, `OpenAiTomlAdapter`) to isolate format differences. A
@@ -34,7 +34,7 @@ refactored to loop over resolved targets serially.
 - `packages/cli/src/adapters/index.ts` — adapter factory.
 - `packages/cli/src/store/profile-store.ts` — centralized profile CRUD and
   listing.
-- `packages/cli/src/state/state-manager.ts` — `~/.config/llm-switch/state.json`
+- `packages/cli/src/state/state-manager.ts` — `~/.llm-switch/state.json`
   persistence.
 - `packages/cli/src/target-selector.ts` — resolves targets per invocation.
 - `packages/cli/src/migrate.ts` — one-time migration to the centralized store.

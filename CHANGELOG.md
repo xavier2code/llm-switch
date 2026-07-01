@@ -7,12 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- README and CHANGELOG now consistently reference the centralized profile store
+  path as `~/.llm-switch/` (the actual location since 0.9.0).
+- README provider table now includes the OpenAI provider used for Codex.
+- CLI `--help` provider list now includes OpenAI alongside the Anthropic-compatible
+  providers.
+
 ## [0.9.0] - 2026-06-26
 
 ### Added
 - Interactive multi-target selection. In a TTY, every command now prompts you to
   multi-select which CLI tools (Claude Code, OpenCode, Codex) to act on, remembers
-  your choice in `~/.config/llm-switch/state.json`, and reuses it next time.
+  your choice in `~/.llm-switch/state.json`, and reuses it next time.
   `--target <id>` skips the prompt and acts on exactly one tool. In non-interactive
   contexts the remembered set is reused, falling back to `--target`, then
   `LLM_SWITCH_TARGET`, then `claude`.
@@ -24,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `TargetAdapter` abstraction (`AnthropicJsonAdapter`, `OpenAiTomlAdapter`) that
   isolates per-format (JSON vs TOML) serialization, plus a `createAdapter` factory.
 - Centralized profile store: profiles now live in
-  `~/.config/llm-switch/profiles/<target-id>/<alias>.[json|toml]`, shared across
+  `~/.llm-switch/profiles/<target-id>/<alias>.[json|toml]`, shared across
   tools instead of duplicated under each config directory.
 - OpenAI provider and `validateOpenAi` validator for Codex `create`.
 - Supporting modules: `ProfileStore`, `StateManager`, `TargetSelector`
@@ -33,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Breaking**: profiles moved to the centralized store
-  (`~/.config/llm-switch/profiles/<target-id>/...`). Existing per-tool
+  (`~/.llm-switch/profiles/<target-id>/...`). Existing per-tool
   `llm-switch/profiles/` profiles are copied into the central store automatically
   on first run (the originals are left in place); a per-target marker prevents
   re-copying.

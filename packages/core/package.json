@@ -20,6 +20,10 @@
       "types": "./dist/migrate.d.ts",
       "default": "./dist/migrate.js"
     },
+    "./backup.js": {
+      "types": "./dist/backup.d.ts",
+      "default": "./dist/backup.js"
+    },
     "./fs-utils.js": {
       "types": "./dist/fs-utils.d.ts",
       "default": "./dist/fs-utils.js"

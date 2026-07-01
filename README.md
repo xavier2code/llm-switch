@@ -12,7 +12,7 @@ single centralized store, shared across tools, while each tool's own config
 folder stays tidy:
 
 ```
-~/.config/llm-switch/
+~/.llm-switch/
   profiles/<target-id>/<alias>.[json|toml]   ← saved profiles (central store)
   state.json                                 ← your last-selected targets
 ~/.claude/
@@ -53,8 +53,7 @@ TOML config (`model`, `base_url`, `api_key`).
 
 ## Built-in providers
 
-`llm-switch create` ships with built-in defaults for five Anthropic-compatible
-providers:
+`llm-switch create` ships with built-in defaults for six providers:
 
 | Provider      | Default BASE URL                                           | Default model       |
 | ------------- | ---------------------------------------------------------- | ------------------- |
@@ -63,6 +62,7 @@ providers:
 | Kimi (Moonshot)| `https://api.kimi.com/coding/`                            | `kimi-for-coding`   |
 | MiniMax       | `https://api.minimaxi.com/anthropic`                       | `MiniMax-Text-01`   |
 | Qwen (DashScope)| `https://dashscope.aliyuncs.com/compatible-mode/anthropic`| `qwen-plus`       |
+| OpenAI        | `https://api.openai.com/v1`                                | `gpt-4.1`           |
 
 You can override the BASE URL and model during the wizard. The default alias for
 each provider is its short id (e.g., `glm`, `kimi`). When you select an
@@ -117,7 +117,7 @@ Set the config-dir env var to override a target's default location
 ### Migration from 0.7.x
 
 In 0.9.0 profiles moved into the centralized store
-(`~/.config/llm-switch/profiles/<target-id>/...`). On first run, `sw`
+(`~/.llm-switch/profiles/<target-id>/...`). On first run, `sw`
 copies your existing per-tool `llm-switch/profiles/` profiles into the central
 store automatically (the originals are left in place). No manual intervention is
 required. Upgrading from 0.5.x or earlier is also handled: the older flat

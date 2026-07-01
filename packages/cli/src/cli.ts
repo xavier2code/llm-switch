@@ -6,7 +6,13 @@ import { log } from './logger.js';
 import { toExitCode } from './exit.js';
 import { AppError } from './errors.js';
 import { isInquirerCancelError } from './ui.js';
-import { ensureMigrated, TARGETS, type TargetConfig } from '@llm-switch/core/config.js';
+import {
+  ensureMigrated,
+  TARGETS,
+  getTarget,
+  type TargetConfig,
+  type TargetId,
+} from '@llm-switch/core/config.js';
 import { ensureMigratedToCentralStore } from '@llm-switch/core/migrate.js';
 import { defaultProfileStore, type ProfileStore } from '@llm-switch/core/store/index.js';
 import { selectTargets } from './target-selector.js';
@@ -71,6 +77,31 @@ async function resolveTargets(
   return { targets, store };
 }
 
+function parseTargetFlagFromArgs(args: string[]): string | undefined {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === '--target' || arg === '-t') {
+      return args[i + 1]?.trim();
+    }
+    if (arg?.startsWith('--target=') || arg?.startsWith('-t=')) {
+      return arg.slice(arg.indexOf('=') + 1).trim();
+    }
+  }
+  return undefined;
+}
+
+async function prepareTui(): Promise<{ targets: TargetConfig[]; store: ProfileStore }> {
+  const store = defaultProfileStore();
+  const flag = parseTargetFlagFromArgs(process.argv.slice(2));
+  const targets =
+    flag && TARGETS.some((t) => t.id === flag) ? [getTarget(flag as TargetId)] : [...TARGETS];
+  for (const target of targets) {
+    await ensureMigrated(target);
+  }
+  await ensureMigratedToCentralStore(store.baseDir, targets);
+  return { targets, store };
+}
+
 const targetNames = TARGETS.map((t) => t.id).join('|');
 const providerRows = [
   ['GLM (智谱)', 'https://open.bigmodel.cn/api/anthropic', 'glm-4.5'],
@@ -78,6 +109,7 @@ const providerRows = [
   ['Kimi (Moonshot)', 'https://api.kimi.com/coding/', 'kimi-for-coding'],
   ['MiniMax', 'https://api.minimaxi.com/anthropic', 'MiniMax-Text-01'],
   ['Qwen (DashScope)', 'https://dashscope.aliyuncs.com/compatible-mode/anthropic', 'qwen-plus'],
+  ['OpenAI', 'https://api.openai.com/v1', 'gpt-4.1'],
 ]
   .map(([name, url, model]) => `  ${name.padEnd(18)} ${url.padEnd(50)} ${model}`)
   .join('\n');
@@ -145,7 +177,7 @@ async function main(): Promise<void> {
     const wantsVersion = args.includes('--version') || args.includes('-V');
 
     if (!hasSubcommand && !wantsHelp && !wantsVersion && process.stdout.isTTY) {
-      const { targets, store } = await resolveTargets(program);
+      const { targets, store } = await prepareTui();
       await runTui(store, targets);
       return;
     }

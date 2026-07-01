@@ -6,7 +6,7 @@ Extend `llm-switch` so that every command can act on multiple selected CLI
 tools, not just the single default `claude` target. Introduce a
 `TargetAdapter` abstraction to handle different config formats, add Codex as a
 new target, and move profiles into a centralized store under
-`~/.config/llm-switch/profiles/<target-id>/`.
+`~/.llm-switch/profiles/<target-id>/`.
 
 This document covers both phases in one implementation pass:
 
@@ -98,7 +98,7 @@ CLI commands
 TargetSelector  ──►  resolves targets for this invocation
     │
     ▼
-ProfileStore    ──►  ~/.config/llm-switch/profiles/<target-id>/<alias>.<ext>
+ProfileStore    ──►  ~/.llm-switch/profiles/<target-id>/<alias>.<ext>
     │
     ▼
 TargetAdapter   ──►  reads/writes each tool's active config
@@ -108,7 +108,7 @@ TargetAdapter   ──►  reads/writes each tool's active config
 
 ## Global state
 
-Path: `~/.config/llm-switch/state.json`
+Path: `~/.llm-switch/state.json`
 
 ```json
 {
@@ -196,7 +196,7 @@ Extra fields (approval policy, sandbox mode, MCP servers) are preserved in
 ## Profile store layout
 
 ```
-~/.config/llm-switch/
+~/.llm-switch/
   state.json
   .migrated
   profiles/
@@ -279,11 +279,11 @@ Group output by target:
 
 ```
 Claude Code profiles:
-  ● glm   (active)  ~/.config/llm-switch/profiles/claude/glm.json
-  ○ kimi            ~/.config/llm-switch/profiles/claude/kimi.json
+  ● glm   (active)  ~/.llm-switch/profiles/claude/glm.json
+  ○ kimi            ~/.llm-switch/profiles/claude/kimi.json
 
 OpenCode profiles:
-  ○ glm  ~/.config/llm-switch/profiles/opencode/glm.json
+  ○ glm  ~/.llm-switch/profiles/opencode/glm.json
 ```
 
 ### `current`
@@ -306,23 +306,23 @@ Codex:
 
 - Detect installed tools.
 - Let the user multi-select which tools to manage.
-- Create `~/.config/llm-switch/profiles/<target-id>/` for each selected tool.
+- Create `~/.llm-switch/profiles/<target-id>/` for each selected tool.
 - Write the selected targets to `state.json` as `lastSelectedTargets`.
 - Warn if an active config is missing.
 
-`maybeRunInitWizard` can be simplified: if `~/.config/llm-switch/` does not
+`maybeRunInitWizard` can be simplified: if `~/.llm-switch/` does not
 exist, run `init` once on first TTY use.
 
 ## Migration from pre-0.8.0 layouts
 
 On first run after upgrade, `ensureMigratedToCentralStore()` runs:
 
-1. If `~/.config/llm-switch/.migrated` exists, return.
-2. Create `~/.config/llm-switch/profiles/`.
+1. If `~/.llm-switch/.migrated` exists, return.
+2. Create `~/.llm-switch/profiles/`.
 3. For each target in `TARGETS`:
    - If the old profile directory exists (`<config-dir>/llm-switch/profiles/`),
-     copy its contents to `~/.config/llm-switch/profiles/<target-id>/`.
-4. Create `~/.config/llm-switch/.migrated`.
+     copy its contents to `~/.llm-switch/profiles/<target-id>/`.
+4. Create `~/.llm-switch/.migrated`.
 
 Old directories are not deleted so users can roll back manually if needed.
 

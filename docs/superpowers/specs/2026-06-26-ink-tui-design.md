@@ -14,7 +14,7 @@
 
 - 运行 `sw` 无参数时进入交互式 target 选择
 - 各子命令（`list`、`switch`、`save`、`create`、`restore`、`current`、`init`）以问答形式执行
-- profile 集中存储在 `~/.config/llm-switch/`
+- profile 集中存储在 `~/.llm-switch/`
 - active 配置写入各工具原生配置路径时采用**整文件覆盖**策略
 
 ### 1.2 目标

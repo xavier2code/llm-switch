@@ -7,6 +7,7 @@ export * from './detector.js';
 export * from './errors.js';
 export * from './fs-utils.js';
 export * from './migrate.js';
+export * from './backup.js';
 export * from './store/index.js';
 export * from './state/index.js';
 export * from './adapters/index.js';

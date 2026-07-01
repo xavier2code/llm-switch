@@ -12,6 +12,9 @@ export interface Profile {
   alias: string;
   path: string;
   active: boolean;
+  providerId?: string;
+  baseUrl?: string;
+  model?: string;
 }
 
 export interface TargetAdapter {
