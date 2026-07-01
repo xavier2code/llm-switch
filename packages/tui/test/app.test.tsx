@@ -83,7 +83,7 @@ describe("App", () => {
     await tick(20);
     stdin.write("\r"); // enter opens confirm
     await tick(50);
-    expect(lastFrame()).toContain("Activate 'glm' on Claude Code?");
+    expect(lastFrame()).toContain("Activate 'glm'?");
     stdin.write("\r"); // confirm
     await tick(50);
     expect(lastFrame()).toContain("Switched Claude Code to glm");

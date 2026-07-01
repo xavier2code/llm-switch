@@ -351,6 +351,18 @@ export function App({ store, targets }: AppProps) {
         }
         return;
       }
+      if (modal.type === "activate" || modal.type === "delete") {
+        if (key.return) {
+          if (modal.type === "activate") {
+            confirmActivate();
+          } else {
+            confirmDelete();
+          }
+        } else if (key.escape) {
+          closeModal();
+        }
+        return;
+      }
       if (modalIsOpen(modal)) {
         return;
       }
@@ -602,35 +614,32 @@ export function App({ store, targets }: AppProps) {
               paddingTop={1}
               height={1}
             >
-              <Box flexDirection="row" gap={2}>
-                <Text color={theme.keyFg}>[c] Create</Text>
-                <Text color={theme.keyFg}>[r] Restore</Text>
-                <Text color={theme.keyFg}>[s] Save</Text>
-              </Box>
-              <Box flexDirection="row" gap={2}>
-                <Text color={theme.textMuted}>j/k navigate</Text>
-                <Text color={theme.textMuted}>Tab switch</Text>
-                <Text color={theme.textMuted}>? help</Text>
-                <Text color={theme.textMuted}>q quit</Text>
-              </Box>
+              {modal.type === "activate" || modal.type === "delete" ? (
+                <Box flexDirection="row" gap={2}>
+                  <Text bold color={theme.text}>
+                    {modal.type === "activate"
+                      ? `Activate '${modal.alias}'?`
+                      : `Delete '${modal.alias}'?`}
+                  </Text>
+                  <Text color={theme.profileActiveFg}>Enter yes</Text>
+                  <Text color={theme.textMuted}>Esc no</Text>
+                </Box>
+              ) : (
+                <>
+                  <Box flexDirection="row" gap={2}>
+                    <Text color={theme.keyFg}>[c] Create</Text>
+                    <Text color={theme.keyFg}>[r] Restore</Text>
+                    <Text color={theme.keyFg}>[s] Save</Text>
+                  </Box>
+                  <Box flexDirection="row" gap={2}>
+                    <Text color={theme.textMuted}>j/k navigate</Text>
+                    <Text color={theme.textMuted}>Tab switch</Text>
+                    <Text color={theme.textMuted}>? help</Text>
+                    <Text color={theme.textMuted}>q quit</Text>
+                  </Box>
+                </>
+              )}
             </Box>
-
-            {(modal.type === "activate" || modal.type === "delete") && (
-              <Box marginTop={1} flexDirection="row" justifyContent="center">
-                <ConfirmDialog
-                  message={
-                    modal.type === "activate"
-                      ? `Activate '${modal.alias}' on ${selectedTarget?.displayName ?? ""}?`
-                      : `Delete '${modal.alias}' from ${selectedTarget?.displayName ?? ""}?`
-                  }
-                  onConfirm={
-                    modal.type === "activate" ? confirmActivate : confirmDelete
-                  }
-                  onCancel={closeModal}
-                  isActive
-                />
-              </Box>
-            )}
           </Box>
 
           <Box
