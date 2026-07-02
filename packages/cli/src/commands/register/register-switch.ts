@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { runAction } from '../../action-runner.js';
 import type { CliContext } from '../../cli.js';
 import * as switchCmd from '../switch.js';
 
@@ -29,16 +30,18 @@ Exit codes: 0 on success, 2 if the named profile does not exist, 0 (no error)
 if cancelled via Ctrl-C.
 `,
     )
-    .action(async (alias: string | undefined, opts: { dryRun?: boolean }) => {
-      const { targets, store } = await ctx.resolveTargets();
-      await switchCmd.run({
-        targets,
-        alias,
-        stdout: process.stdout,
-        stderr: process.stderr,
-        isTTY: Boolean(process.stdout.isTTY),
-        store,
-        dryRun: opts.dryRun,
-      });
-    });
+    .action(
+      runAction(async (alias: string | undefined, opts: { dryRun?: boolean }) => {
+        const { targets, store } = await ctx.resolveTargets();
+        await switchCmd.run({
+          targets,
+          alias,
+          stdout: process.stdout,
+          stderr: process.stderr,
+          isTTY: Boolean(process.stdout.isTTY),
+          store,
+          dryRun: opts.dryRun,
+        });
+      }),
+    );
 }

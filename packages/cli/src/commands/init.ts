@@ -5,6 +5,7 @@ import {
   TARGETS,
   getActiveConfigPath,
   getTarget,
+  isTargetId,
   type TargetConfig,
   type TargetId,
 } from '@xavier2code/llm-switch-core/config.js';
@@ -64,8 +65,8 @@ export async function runInitWizard(io: InitIO): Promise<void> {
         value: t.id,
         checked: installed[t.id],
       })),
-    })) as TargetId[];
-    choice = result;
+    })) as unknown[];
+    choice = result.filter((v): v is TargetId => isTargetId(v));
   }
 
   if (choice.length === 0) {
@@ -75,21 +76,29 @@ export async function runInitWizard(io: InitIO): Promise<void> {
   await ensureMigratedToCentralStore(baseDir, TARGETS);
 
   const selected = choice.map((id) => getTarget(id));
-  for (const target of selected) {
-    await fs.mkdir(store.profileDir(target), { recursive: true });
-    const active = getActiveConfigPath(target);
-    if (!(await exists(active))) {
-      io.stderr.write(
-        `Warning: ${target.displayName} active config not found at ${active}. Run ${target.displayName} once to create it. Run \`sw create\` to set one up.\n`,
-      );
-    }
-  }
+  await Promise.all(
+    selected.map(async (target) => {
+      await fs.mkdir(store.profileDir(target), { recursive: true });
+      const active = getActiveConfigPath(target);
+      if (!(await exists(active))) {
+        io.stderr.write(
+          `Warning: ${target.displayName} active config not found at ${active}. Run ${target.displayName} once to create it. Run \`sw create\` to set one up.\n`,
+        );
+      }
+    }),
+  );
 
   await stateManager.write({ version: 1, lastSelectedTargets: choice });
 
+  const activeStatuses = await Promise.all(
+    selected.map(async (target) => {
+      const found = await exists(getActiveConfigPath(target));
+      return { target, found };
+    }),
+  );
+
   io.stdout.write('\nInitialized llm-switch for:\n');
-  for (const target of selected) {
-    const found = await exists(getActiveConfigPath(target));
+  for (const { target, found } of activeStatuses) {
     io.stdout.write(
       `  ${target.displayName}: ${store.profileDir(target)} (active config ${found ? 'found' : 'missing'})\n`,
     );

@@ -2,6 +2,7 @@
 /* global console, process */
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -16,7 +17,16 @@ async function updateJson(filePath, version) {
   const raw = await fs.readFile(filePath, 'utf8');
   const json = JSON.parse(raw);
   json.version = version;
-  await fs.writeFile(filePath, `${JSON.stringify(json, null, 2)}\n`);
+  const content = `${JSON.stringify(json, null, 2)}\n`;
+  const dir = path.dirname(filePath);
+  const tmp = path.join(dir, `.tmp.${crypto.randomUUID()}`);
+  try {
+    await fs.writeFile(tmp, content, { mode: 0o644 });
+    await fs.rename(tmp, filePath);
+  } catch (err) {
+    await fs.rm(tmp, { force: true });
+    throw err;
+  }
 }
 
 async function main() {

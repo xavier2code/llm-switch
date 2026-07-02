@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { runAction } from '../../action-runner.js';
 import type { CliContext } from '../../cli.js';
 import * as saveCmd from '../save.js';
 
@@ -34,16 +35,18 @@ Exit codes: 1 if no active config exists, 0 otherwise. Cancellation
 (via prompt decline or Ctrl-C) exits 0.
 `,
     )
-    .action(async (alias: string, opts: { force?: boolean }) => {
-      const { targets, store } = await ctx.resolveTargets();
-      await saveCmd.run({
-        targets,
-        alias,
-        force: opts.force,
-        stdout: process.stdout,
-        stderr: process.stderr,
-        isTTY: Boolean(process.stdout.isTTY),
-        store,
-      });
-    });
+    .action(
+      runAction(async (alias: string, opts: { force?: boolean }) => {
+        const { targets, store } = await ctx.resolveTargets();
+        await saveCmd.run({
+          targets,
+          alias,
+          force: opts.force,
+          stdout: process.stdout,
+          stderr: process.stderr,
+          isTTY: Boolean(process.stdout.isTTY),
+          store,
+        });
+      }),
+    );
 }

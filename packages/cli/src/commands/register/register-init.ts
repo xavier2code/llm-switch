@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { runAction } from '../../action-runner.js';
 import type { CliContext } from '../../cli.js';
 import * as initCmd from '../init.js';
 
@@ -32,12 +33,14 @@ Examples:
 Exit codes: 0 on success or clean cancellation.
 `,
     )
-    .action(async (opts: { yes?: boolean }) => {
-      await initCmd.runInitWizard({
-        stdout: process.stdout,
-        stderr: process.stderr,
-        isTTY: Boolean(process.stdout.isTTY),
-        selectAllDetected: opts.yes,
-      });
-    });
+    .action(
+      runAction(async (opts: { yes?: boolean }) => {
+        await initCmd.runInitWizard({
+          stdout: process.stdout,
+          stderr: process.stderr,
+          isTTY: Boolean(process.stdout.isTTY),
+          selectAllDetected: opts.yes,
+        });
+      }),
+    );
 }

@@ -13,10 +13,16 @@ export interface CommandIO {
 
 export async function run(io: CommandIO): Promise<void> {
   const store = io.store ?? defaultProfileStore();
-  const sections: string[] = [];
 
-  for (const target of io.targets) {
-    const profiles = await store.listProfiles(target);
+  const profileLists = await Promise.all(
+    io.targets.map(async (target) => {
+      const profiles = await store.listProfiles(target);
+      return { target, profiles };
+    }),
+  );
+
+  const sections: string[] = [];
+  for (const { target, profiles } of profileLists) {
     if (profiles.length === 0) continue;
 
     const maxAliasLen = Math.max(...profiles.map((p) => p.alias.length));

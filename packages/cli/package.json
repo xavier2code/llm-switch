@@ -22,6 +22,7 @@
     "url": "https://github.com/xavier2code/llm-switch/issues"
   },
   "homepage": "https://github.com/xavier2code/llm-switch#readme",
+  "license": "MIT",
   "scripts": {
     "build": "tsup",
     "test": "vitest run",
@@ -31,7 +32,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "[ -d .git ] && git config core.hooksPath packages/cli/.githooks || true",
+    "prepare": "node -e \"if (process.env.CI || process.env.INIT_CWD !== process.cwd()) process.exit(0)\" && [ -d .git ] && git config core.hooksPath packages/cli/.githooks || true",
     "sync-plugin-version": "node scripts/sync-plugin-version.js",
     "prepublishOnly": "pnpm typecheck && pnpm test && pnpm build && pnpm sync-plugin-version"
   },

@@ -16,30 +16,42 @@ export interface RestoreIO {
 
 export async function run(io: RestoreIO): Promise<void> {
   const store = io.store ?? defaultProfileStore();
+
+  const results = await Promise.all(
+    io.targets.map(async (target) => {
+      const settingsPath = store.adapter(target).activePath();
+      const backupPath = getBackupPath(target);
+
+      if (!(await exists(backupPath))) {
+        return { kind: 'error' as const, message: `No backup found at ${backupPath}.` };
+      }
+      if (!(await exists(settingsPath))) {
+        return {
+          kind: 'error' as const,
+          message: `No current ${target.activeConfigFileName} to restore at ${settingsPath}.`,
+        };
+      }
+      if (await isSameContent(settingsPath, backupPath)) {
+        return {
+          kind: 'skipped' as const,
+          message: `${target.displayName}: already at backup state.`,
+        };
+      }
+
+      await restoreBackup(settingsPath, backupPath);
+      await store.clearActiveRecord(target);
+      return { kind: 'restored' as const, message: `${target.displayName}: restored from backup.` };
+    }),
+  );
+
   const errors: string[] = [];
   const restored: string[] = [];
   const skipped: string[] = [];
 
-  for (const target of io.targets) {
-    const settingsPath = store.adapter(target).activePath();
-    const backupPath = getBackupPath(target);
-
-    if (!(await exists(backupPath))) {
-      errors.push(`No backup found at ${backupPath}.`);
-      continue;
-    }
-    if (!(await exists(settingsPath))) {
-      errors.push(`No current ${target.activeConfigFileName} to restore at ${settingsPath}.`);
-      continue;
-    }
-    if (await isSameContent(settingsPath, backupPath)) {
-      skipped.push(`${target.displayName}: already at backup state.`);
-      continue;
-    }
-
-    await restoreBackup(settingsPath, backupPath);
-    await store.clearActiveRecord(target);
-    restored.push(`${target.displayName}: restored from backup.`);
+  for (const result of results) {
+    if (result.kind === 'error') errors.push(result.message);
+    else if (result.kind === 'restored') restored.push(result.message);
+    else skipped.push(result.message);
   }
 
   for (const line of restored) io.stdout.write(`${line}\n`);

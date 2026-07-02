@@ -59,7 +59,10 @@ export async function validateAnthropic(
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       const snippet = text.slice(0, BODY_SNIPPET_LEN);
-      throw new ValidationError(`Provider rejected request (${res.status}): ${snippet}`);
+      throw new ValidationError(
+        `Provider rejected request (${res.status}).`,
+        snippet,
+      );
     }
   } catch (err: unknown) {
     if (err instanceof ValidationError) throw err;
@@ -81,7 +84,7 @@ export async function validateOpenAi(
   opts?: ValidateOptions,
 ): Promise<void> {
   assertSecureBaseUrl(baseUrl);
-  const url = new URL('/v1/messages', baseUrl);
+  const url = `${baseUrl.replace(/\/$/, '')}/chat/completions`;
   const controller = new AbortController();
   const timeoutMs = opts?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -90,8 +93,7 @@ export async function validateOpenAi(
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
+        authorization: `Bearer ${apiKey}`,
         'content-type': 'application/json',
       },
       body: JSON.stringify({
@@ -108,7 +110,10 @@ export async function validateOpenAi(
     if (!response.ok) {
       const text = await response.text().catch(() => '');
       const snippet = text.slice(0, BODY_SNIPPET_LEN);
-      throw new ValidationError(`Provider rejected request (${response.status}): ${snippet}`);
+      throw new ValidationError(
+        `Provider rejected request (${response.status}).`,
+        snippet,
+      );
     }
   } catch (err: unknown) {
     if (err instanceof ValidationError) throw err;

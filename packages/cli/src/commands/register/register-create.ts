@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { runAction } from '../../action-runner.js';
 import type { CliContext } from '../../cli.js';
 import * as createCmd from '../create.js';
 
@@ -48,30 +49,32 @@ failure that isn't recovered via the failure submenu.
 `,
     )
     .action(
-      async (opts: {
-        provider?: string;
-        alias?: string;
-        baseUrl?: string;
-        model?: string;
-        apiKey?: string;
-        apiKeyEnv?: string;
-        skipValidation?: boolean;
-      }) => {
-        const { targets, store } = await ctx.resolveTargets();
-        await createCmd.run({
-          targets,
-          stdout: process.stdout,
-          stderr: process.stderr,
-          isTTY: Boolean(process.stdout.isTTY),
-          store,
-          providerId: opts.provider,
-          alias: opts.alias,
-          baseUrl: opts.baseUrl,
-          model: opts.model,
-          apiKey: opts.apiKey ?? process.env.LLM_SWITCH_API_KEY,
-          apiKeyEnv: opts.apiKeyEnv,
-          skipValidation: opts.skipValidation,
-        });
-      },
+      runAction(
+        async (opts: {
+          provider?: string;
+          alias?: string;
+          baseUrl?: string;
+          model?: string;
+          apiKey?: string;
+          apiKeyEnv?: string;
+          skipValidation?: boolean;
+        }) => {
+          const { targets, store } = await ctx.resolveTargets();
+          await createCmd.run({
+            targets,
+            stdout: process.stdout,
+            stderr: process.stderr,
+            isTTY: Boolean(process.stdout.isTTY),
+            store,
+            providerId: opts.provider,
+            alias: opts.alias,
+            baseUrl: opts.baseUrl,
+            model: opts.model,
+            apiKey: opts.apiKey ?? process.env.LLM_SWITCH_API_KEY,
+            apiKeyEnv: opts.apiKeyEnv,
+            skipValidation: opts.skipValidation,
+          });
+        },
+      ),
     );
 }

@@ -1,10 +1,4 @@
-import {
-  ensureMigrated,
-  TARGETS,
-  getTarget,
-  type TargetConfig,
-  type TargetId,
-} from '@xavier2code/llm-switch-core/config.js';
+import { ensureMigrated, TARGETS, type TargetConfig } from '@xavier2code/llm-switch-core/config.js';
 import { ensureMigratedToCentralStore } from '@xavier2code/llm-switch-core/migrate.js';
 import {
   defaultProfileStore,
@@ -30,11 +24,9 @@ export async function prepareTui(): Promise<{
 }> {
   const store = defaultProfileStore();
   const flag = parseTargetFlagFromArgs(process.argv.slice(2));
-  const targets =
-    flag && TARGETS.some((t) => t.id === flag) ? [getTarget(flag as TargetId)] : [...TARGETS];
-  for (const target of targets) {
-    await ensureMigrated(target);
-  }
+  const matched = TARGETS.find((t) => t.id === flag);
+  const targets = matched ? [matched] : [...TARGETS];
+  await Promise.all(targets.map((target) => ensureMigrated(target)));
   await ensureMigratedToCentralStore(store.baseDir, targets);
   return { targets, store };
 }

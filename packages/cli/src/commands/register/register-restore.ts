@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { runAction } from '../../action-runner.js';
 import type { CliContext } from '../../cli.js';
 import * as restoreCmd from '../restore.js';
 
@@ -23,8 +24,10 @@ Examples:
 Exit codes: 1 if no backup exists, 0 otherwise.
 `,
     )
-    .action(async () => {
-      const { targets, store } = await ctx.resolveTargets();
-      await restoreCmd.run({ targets, stdout: process.stdout, store });
-    });
+    .action(
+      runAction(async () => {
+        const { targets, store } = await ctx.resolveTargets();
+        await restoreCmd.run({ targets, stdout: process.stdout, store });
+      }),
+    );
 }

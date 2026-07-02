@@ -41,37 +41,47 @@ export async function run(io: SwitchIO): Promise<void> {
       }
     }
 
-    let switchedAny = false;
-    for (const target of io.targets) {
-      const adapter = store.adapter(target);
-      let content = await adapter.readProfile(alias);
-      if (!content) {
-        if (io.dryRun) {
-          const source = await dryRunAutoCreateSource(io, store, target, alias);
-          if (!source) continue;
-          io.stdout.write(
-            `[dry-run] Would switch ${target.displayName} to '${alias}' (${source}).\n`,
-          );
-          switchedAny = true;
-          continue;
+    const results = await Promise.all(
+      io.targets.map(async (target) => {
+        const adapter = store.adapter(target);
+        let content = await adapter.readProfile(alias);
+        if (!content) {
+          if (io.dryRun) {
+            const source = await dryRunAutoCreateSource(io, store, target, alias);
+            return source
+              ? { kind: 'dryRun' as const, target, source }
+              : { kind: 'missing' as const };
+          }
+          content = await autoCreateProfile(io, store, target, alias);
         }
-        content = await autoCreateProfile(io, store, target, alias);
-      }
-      if (!content) continue;
-      if (io.dryRun) {
-        io.stdout.write(`[dry-run] Would switch ${target.displayName} to '${alias}'.\n`);
-      } else {
+        if (!content) return { kind: 'missing' as const };
+        if (io.dryRun) {
+          return { kind: 'dryRun' as const, target, source: null };
+        }
         await adapter.writeActive(content);
         await store.writeActiveRecord(target, alias);
-      }
-      switchedAny = true;
-    }
+        return { kind: 'switched' as const, target };
+      }),
+    );
+
+    const switchedAny = results.some((r) => r.kind !== 'missing');
     if (!switchedAny) {
       throw new ProfileNotFoundError(
         `Profile '${alias}' not found. Run 'sw list' to see available profiles.`,
       );
     }
-    if (!io.dryRun) {
+    if (io.dryRun) {
+      for (const result of results) {
+        if (result.kind !== 'dryRun') continue;
+        if (result.source) {
+          io.stdout.write(
+            `[dry-run] Would switch ${result.target.displayName} to '${alias}' (${result.source}).\n`,
+          );
+        } else {
+          io.stdout.write(`[dry-run] Would switch ${result.target.displayName} to '${alias}'.\n`);
+        }
+      }
+    } else {
       printSwitched(io.stdout, alias, io.targets);
     }
     return;
@@ -91,17 +101,19 @@ export async function run(io: SwitchIO): Promise<void> {
     throw new UserCancelledError('Cancelled.');
   }
 
-  for (const target of io.targets) {
-    const adapter = store.adapter(target);
-    const content = await adapter.readProfile(chosen.alias);
-    if (!content) continue;
-    if (io.dryRun) {
-      io.stdout.write(`[dry-run] Would switch ${target.displayName} to '${chosen.alias}'.\n`);
-      continue;
-    }
-    await adapter.writeActive(content);
-    await store.writeActiveRecord(target, chosen.alias);
-  }
+  await Promise.all(
+    io.targets.map(async (target) => {
+      const adapter = store.adapter(target);
+      const content = await adapter.readProfile(chosen.alias);
+      if (!content) return;
+      if (io.dryRun) {
+        io.stdout.write(`[dry-run] Would switch ${target.displayName} to '${chosen.alias}'.\n`);
+        return;
+      }
+      await adapter.writeActive(content);
+      await store.writeActiveRecord(target, chosen.alias);
+    }),
+  );
   if (!io.dryRun) {
     printSwitched(io.stdout, chosen.alias, io.targets);
   }

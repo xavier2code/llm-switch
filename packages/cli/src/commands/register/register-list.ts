@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { runAction } from '../../action-runner.js';
 import type { CliContext } from '../../cli.js';
 import * as listCmd from '../list.js';
 
@@ -18,8 +19,10 @@ Profiles are grouped by target. Within each group the active profile is listed
 first (●), the rest alphabetically (○), each with its store path.
 `,
     )
-    .action(async () => {
-      const { targets, store } = await ctx.resolveTargets();
-      await listCmd.run({ targets, stdout: process.stdout, store });
-    });
+    .action(
+      runAction(async () => {
+        const { targets, store } = await ctx.resolveTargets();
+        await listCmd.run({ targets, stdout: process.stdout, store });
+      }),
+    );
 }

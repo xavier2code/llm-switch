@@ -336,22 +336,24 @@ export async function run(io: CreateIO): Promise<void> {
   const familyConfig = await promptFamilyConfig(io, kit, providerByFamily, families);
   const apiKey = await runValidationLoop(io, kit, families, familyConfig);
 
-  for (const target of io.targets) {
-    const provider = providerByFamily[target.family];
-    const config = familyConfig[target.family];
-    if (!provider || !config) {
-      throw new UserCancelledError(`No provider configured for ${target.family}.`);
-    }
-    const content: ProfileContent = {
-      providerId: provider.id,
-      baseUrl: config.baseUrl,
-      model: config.model,
-      apiKey,
-      extra: {},
-    };
-    await promptOverwrite(io, kit, store, target, alias);
-    await writeAndActivate(store, target, alias, content);
-  }
+  await Promise.all(
+    io.targets.map(async (target) => {
+      const provider = providerByFamily[target.family];
+      const config = familyConfig[target.family];
+      if (!provider || !config) {
+        throw new UserCancelledError(`No provider configured for ${target.family}.`);
+      }
+      const content: ProfileContent = {
+        providerId: provider.id,
+        baseUrl: config.baseUrl,
+        model: config.model,
+        apiKey,
+        extra: {},
+      };
+      await promptOverwrite(io, kit, store, target, alias);
+      await writeAndActivate(store, target, alias, content);
+    }),
+  );
 
   printCreatedAndActivated(io.stdout, alias, io.targets);
 }

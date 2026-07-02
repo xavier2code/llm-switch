@@ -12,6 +12,6 @@ export default defineConfig({
   noExternal: ['@xavier2code/llm-switch-core', '@xavier2code/llm-switch-tui'],
   external: ['react-devtools-core'],
   banner: {
-    js: '#!/usr/bin/env node',
+    js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
   },
 });

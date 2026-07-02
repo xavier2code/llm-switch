@@ -13,10 +13,16 @@ export interface CurrentIO {
 
 export async function run(io: CurrentIO): Promise<void> {
   const store = io.store ?? defaultProfileStore();
-  const lines: string[] = [];
 
-  for (const target of io.targets) {
-    const s = await summarize(target, store);
+  const summaries = await Promise.all(
+    io.targets.map(async (target) => {
+      const s = await summarize(target, store);
+      return { target, s };
+    }),
+  );
+
+  const lines: string[] = [];
+  for (const { target, s } of summaries) {
     lines.push(`${target.displayName}:`);
     lines.push(`  Source: ${s.source} (${s.sourcePath})`);
     if (s.warning) lines.push(`  Warning: ${s.warning}`);

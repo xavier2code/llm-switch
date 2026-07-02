@@ -72,10 +72,10 @@ describe('validateAnthropic', () => {
     await expect(validateAnthropic('https://x', 'm', 'k')).rejects.toThrowError(
       /Provider rejected request \(500\)/,
     );
-    // body is truncated to 200 chars
-    await expect(validateAnthropic('https://x', 'm', 'k')).rejects.toThrowError(
-      new RegExp('X{200}'),
-    );
+    // body is kept in the error cause, not the user-facing message, to avoid leaking secrets
+    const err = await validateAnthropic('https://x', 'm', 'k').catch((e) => e);
+    expect(err).toBeInstanceOf(ValidationError);
+    expect((err as ValidationError).cause).toBe(bodyText.slice(0, 200));
   });
 
   it('throws ValidationError with timed out on AbortError', async () => {
@@ -152,6 +152,24 @@ describe('validateAnthropic', () => {
 });
 
 describe('validateOpenAi', () => {
+  it('POSTs to {baseUrl}/v1/chat/completions with Bearer token and minimal body', async () => {
+    mockFetch.mockResolvedValueOnce(makeResponse({ status: 200 }));
+    await validateOpenAi('https://api.openai.com/v1/', 'gpt-4.1', 'sk-abc');
+
+    const [url, init] = mockFetch.mock.calls[0]!;
+    expect(url).toBe('https://api.openai.com/v1/chat/completions');
+    expect(init.method).toBe('POST');
+    expect(init.headers).toMatchObject({
+      authorization: 'Bearer sk-abc',
+      'content-type': 'application/json',
+    });
+    expect(init.headers).not.toHaveProperty('x-api-key');
+    const body = JSON.parse(init.body);
+    expect(body.model).toBe('gpt-4.1');
+    expect(body.max_tokens).toBe(1);
+    expect(body.messages).toEqual([{ role: 'user', content: 'hi' }]);
+  });
+
   it('rejects (throws) on a 401 response', async () => {
     mockFetch.mockResolvedValue({
       ok: false,

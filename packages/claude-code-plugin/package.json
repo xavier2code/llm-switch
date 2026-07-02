@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Claude Code plugin wrapper around the llm-switch CLI",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "node --test test/*.test.mjs"
   }

@@ -67,9 +67,7 @@ async function resolveTargets(
     isTTY: Boolean(process.stdout.isTTY),
     stateManager,
   });
-  for (const target of targets) {
-    await ensureMigrated(target);
-  }
+  await Promise.all(targets.map((target) => ensureMigrated(target)));
   await ensureMigratedToCentralStore(store.baseDir, targets);
   return { targets, store };
 }

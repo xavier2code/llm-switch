@@ -1,4 +1,5 @@
 import type { Command } from 'commander';
+import { runAction } from '../../action-runner.js';
 import type { CliContext } from '../../cli.js';
 import * as currentCmd from '../current.js';
 
@@ -20,8 +21,10 @@ Examples:
 Exit codes: 0 on success, 1 if the config directory is not found.
 `,
     )
-    .action(async () => {
-      const { targets, store } = await ctx.resolveTargets();
-      await currentCmd.run({ targets, stdout: process.stdout, store });
-    });
+    .action(
+      runAction(async () => {
+        const { targets, store } = await ctx.resolveTargets();
+        await currentCmd.run({ targets, stdout: process.stdout, store });
+      }),
+    );
 }

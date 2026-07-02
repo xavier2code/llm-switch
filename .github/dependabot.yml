@@ -4,6 +4,7 @@ updates:
     directory: '/'
     schedule:
       interval: 'weekly'
+      day: 'monday'
     open-pull-requests-limit: 10
     labels:
       - 'dependencies'
@@ -14,6 +15,8 @@ updates:
     directory: '/packages/cli'
     schedule:
       interval: 'weekly'
+      day: 'tuesday'
+    open-pull-requests-limit: 10
     labels:
       - 'dependencies'
     commit-message:
@@ -23,6 +26,8 @@ updates:
     directory: '/packages/core'
     schedule:
       interval: 'weekly'
+      day: 'wednesday'
+    open-pull-requests-limit: 10
     labels:
       - 'dependencies'
     commit-message:
@@ -32,6 +37,8 @@ updates:
     directory: '/packages/claude-code-plugin'
     schedule:
       interval: 'weekly'
+      day: 'thursday'
+    open-pull-requests-limit: 10
     labels:
       - 'dependencies'
     commit-message:
