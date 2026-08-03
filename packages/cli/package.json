@@ -50,7 +50,7 @@
     "@vitest/coverage-v8": "^4.1.9",
     "@xavier2code/llm-switch-core": "workspace:*",
     "@xavier2code/llm-switch-tui": "workspace:*",
-    "eslint": "^10.6.0",
+    "eslint": "^10.8.0",
     "prettier": "^3.0.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
